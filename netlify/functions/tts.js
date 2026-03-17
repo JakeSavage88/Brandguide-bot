@@ -5,13 +5,16 @@ exports.handler = async function(event) {
 
   const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
   if (!ELEVENLABS_API_KEY) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'ElevenLabs key not configured' }) };
+    return { statusCode: 500, body: JSON.stringify({ error: 'ElevenLabs key not configured', hint: 'Check env vars' }) };
   }
 
   try {
     const body = JSON.parse(event.body);
     const voiceId = body.voiceId || 'UgBBYS2sOqTuMpoF3BR0';
     const text = body.text;
+
+    console.log('TTS request - voiceId:', voiceId, 'text length:', text ? text.length : 0);
+    console.log('API key present:', !!ELEVENLABS_API_KEY, 'key starts with:', ELEVENLABS_API_KEY.substring(0,8));
 
     const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voiceId, {
       method: 'POST',
@@ -31,13 +34,17 @@ exports.handler = async function(event) {
       })
     });
 
+    console.log('ElevenLabs response status:', response.status);
+
     if (!response.ok) {
       const err = await response.text();
-      return { statusCode: response.status, body: JSON.stringify({ error: err }) };
+      console.log('ElevenLabs error:', err);
+      return { statusCode: response.status, body: JSON.stringify({ error: err, status: response.status }) };
     }
 
     const audioBuffer = await response.arrayBuffer();
     const base64Audio = Buffer.from(audioBuffer).toString('base64');
+    console.log('Audio generated, size:', audioBuffer.byteLength);
 
     return {
       statusCode: 200,
@@ -48,6 +55,7 @@ exports.handler = async function(event) {
       body: JSON.stringify({ audio: base64Audio })
     };
   } catch (err) {
+    console.log('TTS catch error:', err.message);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: err.message })
