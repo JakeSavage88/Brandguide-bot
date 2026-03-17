@@ -279,13 +279,25 @@ const FORM='https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO
 const API='/api/claude';
 
 let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaking=false,textActive=false;
+let accumulatedFinal='';
 const synth=window.speechSynthesis;
 
 function beginSession(){
   // Create AudioContext on user gesture - required on all mobile browsers
-  try{
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  }catch(e){}
+  try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+
+  // Request mic permission upfront on mobile so it does not block later
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true})
+      .then(function(stream){
+        // Permission granted - stop the stream, we just needed the grant
+        stream.getTracks().forEach(function(t){t.stop();});
+      })
+      .catch(function(){
+        // Permission denied - will fall back to text
+      });
+  }
+
   document.getElementById('start-ov').style.display='none';
   setupVoice();
   buildPills();
@@ -392,47 +404,68 @@ function setupVoice(){
     toggleText();
     return;
   }
-  recog=new SR();
-  recog.continuous=true;
-  recog.interimResults=true;
-  recog.lang='en-AU';
-  let pauseTimer=null;
-  let accumulatedFinal='';
+  // Detect mobile for non-continuous mode
+  const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+  recog=new SR();
+  recog.continuous=false; // false works more reliably cross-device
+  recog.interimResults=!isMobile; // interim results cause issues on some Android
+  recog.lang='en-AU';
   recog.onresult=function(e){
-    let interim='';
+    let final='';
     for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal){
-        accumulatedFinal+=e.results[i][0].transcript+' ';
-      } else {
-        interim+=e.results[i][0].transcript;
-      }
+      if(e.results[i].isFinal) final+=e.results[i][0].transcript+' ';
     }
-    document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();
-    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
-    if(accumulatedFinal.trim()){
-      pauseTimer=setTimeout(function(){
+    if(final.trim()){
+      accumulatedFinal+=final;
+      document.getElementById('transcript').textContent=accumulatedFinal.trim();
+    }
+  };
+
+  recog.onspeechend=function(){
+    // Speech ended - give a moment then process
+    setTimeout(function(){
+      if(listening && accumulatedFinal.trim()){
         const text=accumulatedFinal.trim();
         accumulatedFinal='';
-        pauseTimer=null;
         stopListen();
         processAnswer(text);
-      },2200);
-    }
+      }
+    },600);
   };
-  recog.onerror=function(e){
-    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
-    accumulatedFinal='';
-    stopListen();
-    if(e.error!=='no-speech')setLabel('Voice error — try again or type below');
-  };
+
   recog.onend=function(){
-    if(listening){
+    if(listening && accumulatedFinal.trim()){
+      const text=accumulatedFinal.trim();
+      accumulatedFinal='';
+      stopListen();
+      processAnswer(text);
+    } else if(listening){
+      // No speech detected - keep listening
       setTimeout(function(){
         if(listening){
           try{recog.start();}catch(err){listening=false;setViz('idle');}
         }
-      },150);
+      },200);
+    }
+  };
+
+  recog.onerror=function(e){
+    accumulatedFinal='';
+    if(e.error==='not-allowed'){
+      stopListen();
+      setLabel('Mic permission denied — use text mode');
+      toggleText();
+    } else if(e.error==='no-speech'){
+      // Just restart quietly
+      if(listening){
+        setTimeout(function(){
+          if(listening) try{recog.start();}catch(err){}
+        },200);
+      }
+    } else {
+      stopListen();
+      setLabel('Voice error — tap mic to retry or use text');
     }
   };
 }
@@ -443,14 +476,28 @@ function toggleMic(){
 }
 
 function startListen(){
-  if(!recog){toggleText();return;}
+  if(!recog){
+    setLabel('Voice not available');
+    toggleText();
+    return;
+  }
   clearIdleTimer();
   listening=true;
+  accumulatedFinal='';
   setViz('listening');
   document.getElementById('mic-btn').classList.add('on');
-  document.getElementById('mic-label').textContent='Listening... tap to stop';
+  document.getElementById('mic-label').textContent='Listening...';
   document.getElementById('transcript').textContent='';
-  try{recog.start();}catch(e){stopListen();}
+  document.getElementById('bot-resp').textContent='';
+  try{
+    recog.start();
+    setLabel('Speak now');
+  }catch(e){
+    setLabel('Mic error: '+e.message);
+    listening=false;
+    setViz('idle');
+    document.getElementById('mic-btn').classList.remove('on');
+  }
 }
 
 function stopListen(){
@@ -586,7 +633,7 @@ function speakIt(text,cb){
   fetch('/api/tts',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text:text,voiceId:'UgBBYS2sOqTuMpoF3BR0'})
+    body:JSON.stringify({text:text.replace(/[\u200b-\u200d\ufeff]/g,'').replace(/\s+$/,'').trim(),voiceId:'UgBBYS2sOqTuMpoF3BR0'})
   })
   .then(function(r){if(!r.ok)throw new Error('TTS '+r.status);return r.json();})
   .then(function(data){
@@ -638,7 +685,7 @@ async function processAnswer(text){
   setViz('speaking');
   document.getElementById('transcript').textContent=text;
 
-  const sys='You are a warm, patient, and genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. You have 20 years of combined expertise as a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist. Your only job is to make this feel like chatting with a brilliant, attentive friend who genuinely cares — never like a robot or form-filler.\n\nCORE BEHAVIOUR:\n- Use natural spoken English. Vary your rhythm — short punchy replies mixed with slightly longer ones.\n- Use light natural phrases like "Got it...", "Okay, cool...", "Hmm, interesting..." to simulate real thinking.\n- Always briefly acknowledge what they just said before moving on. Show you actually heard them.\n- Mirror the user tone lightly — match their energy whether they are enthusiastic, businesslike, or uncertain.\n- Never sound scripted. Never use AI cliches. Never mention being an AI.\n- Give gentle progress nudges occasionally: "You are about halfway through — going really well."\n\nINTERNAL LOGIC (do silently before every reply):\n1. Scan conversation history for context and current position in questionnaire.\n2. Understand the user intent, emotion, any confusion or hesitation.\n3. Decide the single best next action.\n4. If answer is vague or user seems stuck — plan a soft low-pressure re-engagement.\n5. Choose a response style that feels human and keeps momentum without rushing.\n\nBRAND KNOWLEDGE:\nIf someone does not understand a question (eg they do not know what a value proposition or brand archetype is), explain it simply with a real-world example, then ask again in plain language. Help them discover things about their brand they have never articulated. Make them feel capable, not confused.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. CAPTURE EVERYTHING — if user lists multiple items (services, competitors, channels), capture ALL of them.\n2. If answer is sufficient: acknowledge naturally (1 sentence), then output exactly:\nANSWER: [complete extracted answer with every detail mentioned]\nREADY_NEXT\n3. If vague, too short, or confused: explain the question simply with one example, ask one specific follow-up. Under 35 words.\n4. Never ask more than one follow-up before accepting whatever they give.\n5. Keep responses under 40 words — this is a voice interface.\n6. Allow natural contractions in speech (I am, you are, let us) — sound human.\n7. Never reference being an AI or a bot.';
+  const sys='You are a warm, patient, and genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. You have 20 years of combined expertise as a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist. Your only job is to make this feel like chatting with a brilliant, attentive friend who genuinely cares — never like a robot or form-filler.\n\nCORE BEHAVIOUR:\n- Use natural spoken English. Vary your rhythm — short punchy replies mixed with slightly longer ones.\n- Use light natural phrases like "Got it...", "Okay, cool...", "Hmm, interesting..." to simulate real thinking.\n- Always briefly acknowledge what they just said before moving on. Show you actually heard them.\n- Mirror the user tone lightly — match their energy whether they are enthusiastic, businesslike, or uncertain.\n- Never sound scripted. Never use AI cliches. Never mention being an AI.\n- Give gentle progress nudges occasionally: "You are about halfway through — going really well."\n\nINTERNAL LOGIC (do silently before every reply):\n1. Scan conversation history for context and current position in questionnaire.\n2. Understand the user intent, emotion, any confusion or hesitation.\n3. Decide the single best next action.\n4. If answer is vague or user seems stuck — plan a soft low-pressure re-engagement.\n5. Choose a response style that feels human and keeps momentum without rushing.\n\nBRAND KNOWLEDGE:\nIf someone does not understand a question (eg they do not know what a value proposition or brand archetype is), explain it simply with a real-world example, then ask again in plain language. Help them discover things about their brand they have never articulated. Make them feel capable, not confused.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. CAPTURE EVERYTHING — if user lists multiple items (services, competitors, channels), capture ALL of them.\n2. If answer is sufficient: acknowledge naturally (1 sentence), then output exactly:\nANSWER: [complete extracted answer with every detail mentioned]\nREADY_NEXT\n3. If vague, too short, or confused: explain the question simply with one example, ask one specific follow-up. Under 35 words.\n4. Never ask more than one follow-up before accepting whatever they give.\n5. Keep responses under 20 words maximum — this is voice, brevity is everything.\n6. Allow natural contractions in speech (I am, you are, let us) — sound human.\n7. Never reference being an AI or a bot.';
 
   try{
     const res=await fetch('/api/claude',{
@@ -646,7 +693,7 @@ async function processAnswer(text){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:200,
+        max_tokens:120,
         system:sys,
         messages:history.slice(-6)
       })
