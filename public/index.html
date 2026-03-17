@@ -411,6 +411,36 @@ function setMicReady(){
 function setLabel(t){document.getElementById('viz-label').textContent=t;}
 function setViz(m){const v=document.getElementById('viz');v.classList.remove('speaking','listening');if(m!=='idle')v.classList.add(m);}
 
+let audioCtx=null;let analyser=null;let vizRaf=null;
+
+function startAudioViz(audio){
+  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  analyser=audioCtx.createAnalyser();
+  analyser.fftSize=64;
+  const src=audioCtx.createMediaElementSource(audio);
+  src.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  const bars=document.querySelectorAll('.bar');
+  const data=new Uint8Array(analyser.frequencyBinCount);
+  const indices=[2,4,6,9,12,16,20];
+  function frame(){
+    analyser.getByteFrequencyData(data);
+    bars.forEach(function(b,i){
+      const val=data[indices[i]]||0;
+      const h=Math.max(8,Math.min(100,(val/255)*110));
+      b.style.height=h+'px';
+    });
+    vizRaf=requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function stopAudioViz(){
+  if(vizRaf){cancelAnimationFrame(vizRaf);vizRaf=null;}
+  const bars=document.querySelectorAll('.bar');
+  bars.forEach(function(b){b.style.height='';});
+}
+
 function speakIt(text,cb){
   speaking=true;
   setViz('speaking');setLabel('Speaking...');
@@ -425,9 +455,15 @@ function speakIt(text,cb){
     const blob=new Blob([buf],{type:'audio/mpeg'});
     const url=URL.createObjectURL(blob);
     const audio=new Audio(url);
-    audio.onended=function(){speaking=false;setViz('idle');setLabel('');URL.revokeObjectURL(url);if(cb)cb();};
-    audio.onerror=function(){speaking=false;setViz('idle');if(cb)cb();};
-    audio.play();
+    audio.oncanplay=function(){startAudioViz(audio);};
+    audio.onended=function(){
+      stopAudioViz();
+      speaking=false;setViz('idle');setLabel('');
+      URL.revokeObjectURL(url);
+      if(cb)cb();
+    };
+    audio.onerror=function(){stopAudioViz();speaking=false;setViz('idle');if(cb)cb();};
+    audio.play().catch(function(){speaking=false;setViz('idle');if(cb)cb();});
   }).catch(function(){speaking=false;setViz('idle');if(cb)cb();});
 }
 
