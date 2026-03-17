@@ -413,35 +413,47 @@ function setupVoice(){
   recog.lang='en-AU';
   recog.onresult=function(e){
     let final='';
+    let interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal) final+=e.results[i][0].transcript+' ';
+      if(e.results[i].isFinal){
+        final+=e.results[i][0].transcript+' ';
+      } else {
+        interim+=e.results[i][0].transcript;
+      }
+    }
+    if(interim){
+      document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();
     }
     if(final.trim()){
       accumulatedFinal+=final;
       document.getElementById('transcript').textContent=accumulatedFinal.trim();
-    }
-  };
-
-  recog.onspeechend=function(){
-    // Speech ended - give a moment then process
-    setTimeout(function(){
-      if(listening && accumulatedFinal.trim()){
+      // On mobile with continuous:false, process immediately on final result
+      // Don't wait for onend which fires too fast
+      if(isMobile){
         const text=accumulatedFinal.trim();
         accumulatedFinal='';
         stopListen();
         processAnswer(text);
       }
-    },600);
+    }
   };
 
   recog.onend=function(){
-    if(listening && accumulatedFinal.trim()){
+    // Desktop: process accumulated text when recognition ends
+    if(!isMobile && listening && accumulatedFinal.trim()){
       const text=accumulatedFinal.trim();
       accumulatedFinal='';
       stopListen();
       processAnswer(text);
-    } else if(listening){
-      // No speech detected - keep listening
+    } else if(!isMobile && listening){
+      // No speech - restart for desktop continuous-style behaviour
+      setTimeout(function(){
+        if(listening){
+          try{recog.start();}catch(err){listening=false;setViz('idle');}
+        }
+      },200);
+    } else if(isMobile && listening && !accumulatedFinal.trim()){
+      // Mobile: no speech detected, restart
       setTimeout(function(){
         if(listening){
           try{recog.start();}catch(err){listening=false;setViz('idle');}
