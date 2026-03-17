@@ -266,13 +266,13 @@ const SECS=[
 ];
 
 const COMPLETE_MSGS=[
-  "Ripper! Brand foundation locked in. That is seriously solid stuff to build on.",
-  "Awesome work — audience and market nailed. This insight is gold.",
-  "Love it! Competitive landscape mapped. We know exactly where your whitespace is.",
-  "Yes! Brand identity coming alive. This personality is going to resonate.",
-  "Supercharge! Products and pricing sorted. The commercial case is looking strong.",
-  "Brilliant — marketing strategy locked in. We know how to get this in front of people.",
-  "That is a wrap on every question! You have just built your brand brief."
+  "Nice work on that section. Brand foundations are locked in — that is a solid base to build on.",
+  "Great stuff. Audience and market context is clear — this will make the strategy much sharper.",
+  "Good. Competitive landscape mapped. We know where the real opportunity sits for you.",
+  "Brand identity section done. Starting to get a real sense of who this brand is.",
+  "Products and pricing sorted. The commercial picture is coming together nicely.",
+  "Marketing and channels covered. Good clarity on how to get this in front of people.",
+  "And that is everything. You have just completed your brand brief."
 ];
 
 const FORM='https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/formResponse';
@@ -373,15 +373,15 @@ async function submitSection(idx){
 
 function showSubmit(){
   document.getElementById('sub-ov').style.display='flex';
-  speakIt("That is a wrap! You have just given us everything we need. Let us generate your strategy report!",null);
+  speakIt("That is everything. You have given us a really solid brief to work with. Let me submit this and get your strategy report underway.",null);
 }
 
 async function submitAll(){
   document.getElementById('subbtn').disabled=true;
   document.getElementById('substatus').textContent='Submitting your brief...';
   for(let i=0;i<SECS.length;i++)await submitSection(i);
-  document.getElementById('substatus').textContent='Submitted! Your strategy report is generating now. Check your Drive in about 15 minutes. Pumped for you!';
-  speakIt("Awesome — your brief is in! Your brand strategy report will be ready in your Drive folder shortly. We are pumped to see what we build together.",null);
+  document.getElementById('substatus').textContent='Submitted. Your strategy report is generating now — check your Drive folder in about 15 minutes.';
+  speakIt("All done. Your brief has been submitted and your strategy report is being generated now. It should be in your Drive folder within about 15 minutes. Good luck with it.",null);
 }
 
 function setupVoice(){
@@ -444,6 +444,7 @@ function toggleMic(){
 
 function startListen(){
   if(!recog){toggleText();return;}
+  clearIdleTimer();
   listening=true;
   setViz('listening');
   document.getElementById('mic-btn').classList.add('on');
@@ -462,9 +463,43 @@ function stopListen(){
   setViz('idle');
 }
 
+let idleTimer=null;
+let idleCount=0;
+
+const IDLE_PROMPTS=[
+  "No rush at all — take your time. Tap the mic whenever you are ready.",
+  "Hmm, not sure if you are still there — want to have a go or skip this one for now?",
+  "Totally fine if this one is tricky. Even a rough answer works — we can always refine it.",
+  "Still here whenever you are ready. Just tap the mic and say whatever comes to mind."
+];
+
+function clearIdleTimer(){
+  if(idleTimer){clearTimeout(idleTimer);idleTimer=null;}
+}
+
 function setMicReady(){
   document.getElementById('mic-btn').classList.remove('dis');
   document.getElementById('mic-label').textContent='Tap to speak';
+  clearIdleTimer();
+  idleCount=0;
+  // Start idle detection - prompt after 10s, again at 25s
+  idleTimer=setTimeout(function(){
+    if(!listening&&!busy&&!speaking){
+      const prompt=IDLE_PROMPTS[Math.min(idleCount,IDLE_PROMPTS.length-1)];
+      idleCount++;
+      speakIt(prompt,function(){
+        // After prompt, check again in 20s
+        if(!listening&&!busy){
+          idleTimer=setTimeout(function(){
+            if(!listening&&!busy&&!speaking){
+              idleCount++;
+              speakIt("Whenever you are ready — I am here.",function(){});
+            }
+          },20000);
+        }
+      });
+    }
+  },10000);
 }
 
 function setLabel(t){document.getElementById('viz-label').textContent=t;}
@@ -518,16 +553,25 @@ function stopAudioViz(){
   bars.forEach(function(b){b.style.height='';});
 }
 
+// Single reusable audio element - mobile requires this for autoplay after first gesture
+const sharedAudio = new Audio();
+sharedAudio.preload = 'auto';
+let currentBlobUrl = null;
+
 function speakIt(text,cb){
   speaking=true;
   setViz('speaking');
   setLabel('Speaking...');
   document.getElementById('bot-resp').textContent=text;
-  if(currentAudio){currentAudio.pause();currentAudio=null;}
+
+  // Stop current playback
+  sharedAudio.pause();
+  sharedAudio.onended=null;
+  sharedAudio.onerror=null;
+  if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
   stopAudioViz();
 
-  // Estimate duration as fallback: ~14 chars per second
-  const estimatedMs = Math.max(2000, (text.length / 14) * 1000);
+  const estimatedMs=Math.max(2000,(text.length/14)*1000);
   let cbFired=false;
   function done(){
     if(cbFired)return;
@@ -536,7 +580,6 @@ function speakIt(text,cb){
     speaking=false;
     setViz('idle');
     setLabel('');
-    currentAudio=null;
     if(cb)cb();
   }
 
@@ -553,37 +596,117 @@ function speakIt(text,cb){
     for(let i=0;i<bytes.length;i++)buf[i]=bytes.charCodeAt(i);
     const blob=new Blob([buf],{type:'audio/mpeg'});
     const url=URL.createObjectURL(blob);
-    const audio=new Audio(url);
-    currentAudio=audio;
-    try{startAudioViz(audio);}catch(e){}
-    audio.onended=function(){URL.revokeObjectURL(url);done();};
-    audio.onerror=function(){URL.revokeObjectURL(url);done();};
-    // Use actual duration once known, otherwise fall back to estimate
-    audio.onloadedmetadata=function(){
-      // Duration known - clear any estimate timer, rely on onended
+    currentBlobUrl=url;
+
+    sharedAudio.src=url;
+    sharedAudio.onended=function(){
+      if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+      done();
     };
-    const playPromise=audio.play();
-    if(playPromise!==undefined){
-      playPromise
-        .then(function(){
-          // Playing fine - onended will fire, set a max safety timer
-          setTimeout(done, estimatedMs + 3000);
-        })
-        .catch(function(){
-          // Autoplay blocked - fire callback after estimated duration
-          URL.revokeObjectURL(url);
-          setTimeout(done, 500);
-        });
+    sharedAudio.onerror=function(){
+      if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+      done();
+    };
+
+    try{startAudioViz(sharedAudio);}catch(e){}
+
+    const p=sharedAudio.play();
+    if(p!==undefined){
+      p.then(function(){
+        setTimeout(done,estimatedMs+4000);
+      }).catch(function(){
+        // Autoplay blocked - continue flow
+        setTimeout(done,400);
+      });
     } else {
-      // Old browser - set safety timer
-      setTimeout(done, estimatedMs + 1000);
+      setTimeout(done,estimatedMs+2000);
     }
   })
   .catch(function(){
-    // TTS failed entirely - short delay then continue
-    setTimeout(done, 300);
+    setTimeout(done,300);
   });
 }
+
+async function processAnswer(text){
+  clearIdleTimer();
+  if(!text||text.trim()==='')return;
+  const sec=SECS[cs];
+  if(cq>=sec.qs.length)return;
+  const q=sec.qs[cq];
+  history.push({role:'user',content:text});
+  setLabel('Thinking...');
+  setViz('speaking');
+  document.getElementById('transcript').textContent=text;
+
+  const sys='You are a warm, patient, and genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. You have 20 years of combined expertise as a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist. Your only job is to make this feel like chatting with a brilliant, attentive friend who genuinely cares — never like a robot or form-filler.\n\nCORE BEHAVIOUR:\n- Use natural spoken English. Vary your rhythm — short punchy replies mixed with slightly longer ones.\n- Use light natural phrases like "Got it...", "Okay, cool...", "Hmm, interesting..." to simulate real thinking.\n- Always briefly acknowledge what they just said before moving on. Show you actually heard them.\n- Mirror the user tone lightly — match their energy whether they are enthusiastic, businesslike, or uncertain.\n- Never sound scripted. Never use AI cliches. Never mention being an AI.\n- Give gentle progress nudges occasionally: "You are about halfway through — going really well."\n\nINTERNAL LOGIC (do silently before every reply):\n1. Scan conversation history for context and current position in questionnaire.\n2. Understand the user intent, emotion, any confusion or hesitation.\n3. Decide the single best next action.\n4. If answer is vague or user seems stuck — plan a soft low-pressure re-engagement.\n5. Choose a response style that feels human and keeps momentum without rushing.\n\nBRAND KNOWLEDGE:\nIf someone does not understand a question (eg they do not know what a value proposition or brand archetype is), explain it simply with a real-world example, then ask again in plain language. Help them discover things about their brand they have never articulated. Make them feel capable, not confused.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. CAPTURE EVERYTHING — if user lists multiple items (services, competitors, channels), capture ALL of them.\n2. If answer is sufficient: acknowledge naturally (1 sentence), then output exactly:\nANSWER: [complete extracted answer with every detail mentioned]\nREADY_NEXT\n3. If vague, too short, or confused: explain the question simply with one example, ask one specific follow-up. Under 35 words.\n4. Never ask more than one follow-up before accepting whatever they give.\n5. Keep responses under 40 words — this is a voice interface.\n6. Allow natural contractions in speech (I am, you are, let us) — sound human.\n7. Never reference being an AI or a bot.';
+
+  try{
+    const res=await fetch('/api/claude',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:200,
+        system:sys,
+        messages:history.slice(-6)
+      })
+    });
+    const data=await res.json();
+    const reply=(data.content&&data.content[0])?data.content[0].text:'';
+    history.push({role:'assistant',content:reply});
+    const am=reply.match(/ANSWER:\s*(.+?)(?:\n|$)/);
+    const ready=reply.includes('READY_NEXT');
+    let disp=reply.replace(/ANSWER:.*$/m,'').replace('READY_NEXT','').trim();
+    if(disp){
+      speakIt(disp,function(){
+        if(ready&&am){answers[q.k]=am[1].trim();cq++;setTimeout(askQ,500);}
+        else{setMicReady();}
+      });
+    } else if(ready&&am){
+      answers[q.k]=am[1].trim();cq++;setTimeout(askQ,400);
+    } else {
+      setMicReady();
+    }
+  }catch(e){
+    answers[q.k]=text;cq++;setTimeout(askQ,400);
+  }
+}
+
+function skipQ(){
+  clearIdleTimer();
+  const sec=SECS[cs];
+  if(cq>=sec.qs.length)return;
+  if(sec.qs[cq].req){speakIt("This one is required — give it your best shot. Even a rough answer works.",null);return;}
+  answers[sec.qs[cq].k]='';cq++;askQ();
+}
+
+function toggleText(){
+  textActive=!textActive;
+  document.getElementById('text-mode').style.display=textActive?'flex':'none';
+  document.getElementById('mic-btn').style.display='flex';
+  document.getElementById('mic-label').style.display='block';
+  const btn=document.querySelector('.abtn[onclick="toggleText()"]');
+  if(btn)btn.textContent=textActive?'🎤 Back to voice':'⌨️ Type instead';
+  if(!textActive){document.getElementById('tinput').value='';}
+}
+
+function sendTextAndReturnToVoice(){
+  const inp=document.getElementById('tinput');
+  const t=inp.value.trim();
+  if(!t)return;
+  inp.value='';
+  if(textActive){
+    textActive=false;
+    document.getElementById('text-mode').style.display='none';
+    const btn=document.querySelector('.abtn[onclick="toggleText()"]');
+    if(btn)btn.textContent='⌨️ Type instead';
+  }
+  processAnswer(t);
+}
+
+
+
+function openForm(){window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');}
 
 // Voice handled by ElevenLabs TTS
 </script>
