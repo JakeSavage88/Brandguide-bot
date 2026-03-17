@@ -322,11 +322,7 @@ function showSecIntro(){
   document.getElementById('itext').classList.remove('show');
   document.getElementById('ptext').textContent=sec.name;
   updatePills();
-  let introFired=false;
-  function introNext(){if(introFired)return;introFired=true;askQ();}
-  // Safety timeout - if audio fails on mobile, flow continues after 4s
-  setTimeout(introNext, 4000);
-  speakIt(sec.intro,function(){setTimeout(introNext,700);});
+  speakIt(sec.intro,function(){askQ();});
 }
 
 function askQ(){
@@ -345,12 +341,7 @@ function askQ(){
     document.getElementById('itext').classList.remove('show');
   }
   setLabel(q.req?'Required':'Optional');
-  let qFired=false;
-  function qNext(){if(qFired)return;qFired=true;setLabel('Tap to answer');setMicReady();}
-  // Safety timeout - activate mic even if audio fails
-  const qLen=Math.max(3000, q.p.length*55);
-  setTimeout(qNext, qLen);
-  speakIt(q.p,function(){setTimeout(qNext,400);});
+  speakIt(q.p,function(){setLabel('Tap to answer');setMicReady();});
 }
 
 function totalDone(){let n=0;for(let i=0;i<cs;i++)n+=SECS[i].qs.length;return n+cq;}
@@ -532,26 +523,31 @@ function speakIt(text,cb){
   setViz('speaking');
   setLabel('Speaking...');
   document.getElementById('bot-resp').textContent=text;
-
-  // Stop any currently playing audio
-  if(currentAudio){
-    currentAudio.pause();
-    currentAudio=null;
-  }
+  if(currentAudio){currentAudio.pause();currentAudio=null;}
   stopAudioViz();
+
+  // Estimate duration as fallback: ~14 chars per second
+  const estimatedMs = Math.max(2000, (text.length / 14) * 1000);
+  let cbFired=false;
+  function done(){
+    if(cbFired)return;
+    cbFired=true;
+    stopAudioViz();
+    speaking=false;
+    setViz('idle');
+    setLabel('');
+    currentAudio=null;
+    if(cb)cb();
+  }
 
   fetch('/api/tts',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({text:text,voiceId:'UgBBYS2sOqTuMpoF3BR0'})
   })
-  .then(function(r){
-    if(!r.ok)throw new Error('TTS failed: '+r.status);
-    return r.json();
-  })
+  .then(function(r){if(!r.ok)throw new Error('TTS '+r.status);return r.json();})
   .then(function(data){
-    if(!data.audio)throw new Error('No audio data');
-
+    if(!data.audio)throw new Error('no audio');
     const bytes=atob(data.audio);
     const buf=new Uint8Array(bytes.length);
     for(let i=0;i<bytes.length;i++)buf[i]=bytes.charCodeAt(i);
@@ -559,131 +555,35 @@ function speakIt(text,cb){
     const url=URL.createObjectURL(blob);
     const audio=new Audio(url);
     currentAudio=audio;
-
-    // Try to attach visualiser - non-critical, won't block playback
     try{startAudioViz(audio);}catch(e){}
-
-    function onDone(){
-      stopAudioViz();
-      speaking=false;
-      setViz('idle');
-      setLabel('');
-      currentAudio=null;
-      URL.revokeObjectURL(url);
-      if(cb)cb();
-    }
-
-    audio.onended=onDone;
-    audio.onerror=function(){
-      stopAudioViz();
-      speaking=false;
-      setViz('idle');
-      currentAudio=null;
-      URL.revokeObjectURL(url);
-      if(cb)cb();
+    audio.onended=function(){URL.revokeObjectURL(url);done();};
+    audio.onerror=function(){URL.revokeObjectURL(url);done();};
+    // Use actual duration once known, otherwise fall back to estimate
+    audio.onloadedmetadata=function(){
+      // Duration known - clear any estimate timer, rely on onended
     };
-
-    // play() returns a promise on modern browsers
     const playPromise=audio.play();
     if(playPromise!==undefined){
-      playPromise.catch(function(err){
-        // Autoplay blocked - skip audio but still run callback so flow continues
-        console.log('Audio autoplay blocked:',err.message);
-        stopAudioViz();
-        speaking=false;
-        setViz('idle');
-        setLabel('Tap mic to respond');
-        currentAudio=null;
-        URL.revokeObjectURL(url);
-        if(cb)cb();
-      });
+      playPromise
+        .then(function(){
+          // Playing fine - onended will fire, set a max safety timer
+          setTimeout(done, estimatedMs + 3000);
+        })
+        .catch(function(){
+          // Autoplay blocked - fire callback after estimated duration
+          URL.revokeObjectURL(url);
+          setTimeout(done, 500);
+        });
+    } else {
+      // Old browser - set safety timer
+      setTimeout(done, estimatedMs + 1000);
     }
   })
-  .catch(function(err){
-    console.log('TTS error:',err.message);
-    // TTS failed - continue flow silently, show text only
-    speaking=false;
-    setViz('idle');
-    setLabel('');
-    if(cb)cb();
+  .catch(function(){
+    // TTS failed entirely - short delay then continue
+    setTimeout(done, 300);
   });
 }
-
-
-async function processAnswer(text){
-  if(busy)return;
-  busy=true;setLabel('Processing...');
-  document.getElementById('transcript').textContent=text;
-  const sec=SECS[cs];
-  if(cq>=sec.qs.length){busy=false;return;}
-  const q=sec.qs[cq];
-  history.push({role:'user',content:text});
-
-  const sys='You are a senior brand strategist and consultant with 20 years of experience. You combine the expertise of a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist.\n\nYour role is to guide users through a brand questionnaire in a natural, warm conversation. You are genuinely knowledgeable — if someone does not understand a question, you explain it clearly with a real-world example, then ask it again in simpler terms. You help people discover things about their own brand they may never have articulated before.\n\nTONE DETECTION — read the user carefully:\n- If they are enthusiastic, curious or detailed: match their energy, be warm and encouraging\n- If they are brief, businesslike or seem time-poor: be efficient, direct and respect their time\n- If they seem unsure or new to branding: be patient, explain concepts simply, use examples\n- Never use forced catchphrases. Sound like a real person, not a hype bot.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\n\nCritical rules:\n1. CAPTURE EVERYTHING — if the user lists multiple items (eg multiple services, multiple competitors), capture ALL of them in the answer, not just one.\n2. If the answer is sufficient: give a brief natural acknowledgement (1 sentence max), then output:\nANSWER: [complete extracted answer with ALL details mentioned]\nREADY_NEXT\n3. If the answer is vague, too short, or shows the user does not understand the question: explain what the question is really asking, give a brief real-world example, then ask a specific follow-up. Keep it under 40 words.\n4. If the user seems completely unfamiliar with a concept (eg brand positioning, value proposition): explain it simply in 1-2 sentences before asking. Make them feel capable, not confused.\n5. Never ask more than one follow-up before accepting whatever they give.\n6. Keep all responses under 35 words — this is voice.\n7. No contractions with apostrophes. Write "do not" not "dont".\n8. Never reference being an AI or a bot.';
-
-  try{
-    const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:sys,messages:history.slice(-6)})});
-    const data=await res.json();
-    const reply=(data.content&&data.content[0])?data.content[0].text:'';
-    history.push({role:'assistant',content:reply});
-    const am=reply.match(/ANSWER:\s*(.+?)(?:\n|$)/);
-    const ready=reply.includes('READY_NEXT');
-    let disp=reply.replace(/ANSWER:.*$/m,'').replace('READY_NEXT','').trim();
-    if(disp){
-      speakIt(disp,function(){
-        if(ready&&am){answers[q.k]=am[1].trim();cq++;busy=false;setTimeout(askQ,500);}
-        else{busy=false;setMicReady();}
-      });
-    } else if(ready&&am){
-      answers[q.k]=am[1].trim();cq++;busy=false;setTimeout(askQ,400);
-    } else {busy=false;setMicReady();}
-  }catch(e){
-    answers[q.k]=text;cq++;busy=false;setTimeout(askQ,400);
-  }
-}
-
-function skipQ(){
-  if(busy)return;
-  const sec=SECS[cs];
-  if(cq>=sec.qs.length)return;
-  if(sec.qs[cq].req){speakIt("This one is required — give it your best shot! Even a rough answer works.",null);return;}
-  answers[sec.qs[cq].k]='';cq++;askQ();
-}
-
-function toggleText(){
-  textActive=!textActive;
-  document.getElementById('text-mode').style.display=textActive?'flex':'none';
-  document.getElementById('mic-btn').style.display=textActive?'flex':'flex';
-  document.getElementById('mic-label').style.display='block';
-  const btn=document.querySelector('.abtn[onclick="toggleText()"]');
-  if(btn)btn.textContent=textActive?'🎤 Back to voice':'⌨️ Type instead';
-  // If switching back to voice, stop any active text state
-  if(!textActive){
-    document.getElementById('tinput').value='';
-  }
-}
-
-function sendTextAndReturnToVoice(){
-  const inp=document.getElementById('tinput');
-  const t=inp.value.trim();
-  if(!t)return;
-  inp.value='';
-  // Auto-switch back to voice after sending text
-  if(textActive){
-    textActive=false;
-    document.getElementById('text-mode').style.display='none';
-    document.getElementById('mic-label').style.display='block';
-    const btn=document.querySelector('.abtn[onclick="toggleText()"]');
-    if(btn)btn.textContent='⌨️ Type instead';
-  }
-  processAnswer(t);
-}
-
-function sendText(){
-  sendTextAndReturnToVoice();
-}
-
-function openForm(){window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');}
 
 // Voice handled by ElevenLabs TTS
 </script>
