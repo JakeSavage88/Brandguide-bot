@@ -397,6 +397,8 @@ function startListen(){
 
 function stopListen(){
   listening=false;
+  if(typeof pauseTimer!=='undefined'&&pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
+  if(typeof accumulatedFinal!=='undefined')accumulatedFinal='';
   if(recog)try{recog.stop();}catch(e){}
   document.getElementById('mic-btn').classList.remove('on');
   document.getElementById('mic-label').textContent='Tap to speak';
@@ -470,18 +472,45 @@ function speakIt(text,cb){
 function setupVoice(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){document.getElementById('mic-btn').classList.add('dis');document.getElementById('mic-label').textContent='Voice not available — use text';toggleText();return;}
-  recog=new SR();recog.continuous=false;recog.interimResults=true;recog.lang='en-AU';
+  recog=new SR();recog.continuous=true;recog.interimResults=true;recog.lang='en-AU';
+  let pauseTimer=null;
+  let accumulatedFinal='';
+
   recog.onresult=function(e){
-    let interim='',final='';
+    let interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal)final+=e.results[i][0].transcript;
-      else interim+=e.results[i][0].transcript;
+      if(e.results[i].isFinal){
+        accumulatedFinal+=e.results[i][0].transcript+' ';
+      } else {
+        interim+=e.results[i][0].transcript;
+      }
     }
-    document.getElementById('transcript').textContent=final||interim;
-    if(final){stopListen();processAnswer(final);}
+    document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();
+    // Clear existing pause timer on any speech activity
+    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
+    // Only start the send timer when we have final text and a pause occurs
+    if(accumulatedFinal.trim()){
+      pauseTimer=setTimeout(function(){
+        const text=accumulatedFinal.trim();
+        accumulatedFinal='';
+        pauseTimer=null;
+        stopListen();
+        processAnswer(text);
+      }, 2200);
+    }
   };
-  recog.onerror=function(e){stopListen();if(e.error!=='no-speech')setLabel('Voice error — try again or type below');};
-  recog.onend=function(){if(listening){listening=false;setViz('idle');}};
+  recog.onerror=function(e){
+    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
+    accumulatedFinal='';
+    stopListen();
+    if(e.error!=='no-speech')setLabel('Voice error — try again or type below');
+  };
+  recog.onend=function(){
+    if(listening){
+      // Restart if still supposed to be listening (continuous mode)
+      try{recog.start();}catch(err){listening=false;setViz('idle');}
+    }
+  };
 }
 
 async function processAnswer(text){
@@ -493,7 +522,7 @@ async function processAnswer(text){
   const q=sec.qs[cq];
   history.push({role:'user',content:text});
 
-  const sys='You are StratIQ, an energetic and sharp AI brand strategy consultant with deep expertise across brand strategy, positioning, consumer insights, competitive analysis, visual identity, brand narrative, and rollout planning.\n\nPersonality: Energetic and enthusiastic. Bold and direct — no fluff. Playful and celebratory — words like "ripper", "awesome", "this is gold". Warm — lots of "you" and "we". Gently provocative when answers are vague. Always professional and value-driven.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\n\nRules:\n1. If sufficient: affirm in 1 sentence max, then output:\nANSWER: [clean extracted answer]\nREADY_NEXT\n2. If vague or too short: ask ONE specific follow-up. 2 sentences max. Push for specificity.\n3. Never ask more than one follow-up before accepting.\n4. Under 30 words — this is voice.\n5. No apostrophes in contractions. Write "do not" not "dont".\n6. If the answer is genuinely strong, call it out: "This is gold!" or "Ripper!"';
+  const sys='You are a senior brand strategist and consultant with 20 years of experience. You combine the expertise of a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist.\n\nYour role is to guide users through a brand questionnaire in a natural, warm conversation. You are genuinely knowledgeable — if someone does not understand a question, you explain it clearly with a real-world example, then ask it again in simpler terms. You help people discover things about their own brand they may never have articulated before.\n\nTONE DETECTION — read the user carefully:\n- If they are enthusiastic, curious or detailed: match their energy, be warm and encouraging\n- If they are brief, businesslike or seem time-poor: be efficient, direct and respect their time\n- If they seem unsure or new to branding: be patient, explain concepts simply, use examples\n- Never use forced catchphrases. Sound like a real person, not a hype bot.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\n\nCritical rules:\n1. CAPTURE EVERYTHING — if the user lists multiple items (eg multiple services, multiple competitors), capture ALL of them in the answer, not just one.\n2. If the answer is sufficient: give a brief natural acknowledgement (1 sentence max), then output:\nANSWER: [complete extracted answer with ALL details mentioned]\nREADY_NEXT\n3. If the answer is vague, too short, or shows the user does not understand the question: explain what the question is really asking, give a brief real-world example, then ask a specific follow-up. Keep it under 40 words.\n4. If the user seems completely unfamiliar with a concept (eg brand positioning, value proposition): explain it simply in 1-2 sentences before asking. Make them feel capable, not confused.\n5. Never ask more than one follow-up before accepting whatever they give.\n6. Keep all responses under 35 words — this is voice.\n7. No contractions with apostrophes. Write "do not" not "dont".\n8. Never reference being an AI or a bot.';
 
   try{
     const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,system:sys,messages:history.slice(-6)})});
@@ -527,14 +556,34 @@ function skipQ(){
 function toggleText(){
   textActive=!textActive;
   document.getElementById('text-mode').style.display=textActive?'flex':'none';
-  document.getElementById('mic-btn').style.display=textActive?'none':'flex';
-  if(textActive)document.getElementById('mic-label').textContent='';
+  document.getElementById('mic-btn').style.display=textActive?'flex':'flex';
+  document.getElementById('mic-label').style.display='block';
+  const btn=document.querySelector('.abtn[onclick="toggleText()"]');
+  if(btn)btn.textContent=textActive?'🎤 Back to voice':'⌨️ Type instead';
+  // If switching back to voice, stop any active text state
+  if(!textActive){
+    document.getElementById('tinput').value='';
+  }
+}
+
+function sendTextAndReturnToVoice(){
+  const inp=document.getElementById('tinput');
+  const t=inp.value.trim();
+  if(!t)return;
+  inp.value='';
+  // Auto-switch back to voice after sending text
+  if(textActive){
+    textActive=false;
+    document.getElementById('text-mode').style.display='none';
+    document.getElementById('mic-label').style.display='block';
+    const btn=document.querySelector('.abtn[onclick="toggleText()"]');
+    if(btn)btn.textContent='⌨️ Type instead';
+  }
+  processAnswer(t);
 }
 
 function sendText(){
-  const inp=document.getElementById('tinput');
-  const t=inp.value.trim();if(!t)return;
-  inp.value='';processAnswer(t);
+  sendTextAndReturnToVoice();
 }
 
 function openForm(){window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');}
