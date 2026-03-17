@@ -286,15 +286,15 @@ function beginSession(){
   // Create AudioContext on user gesture - required on all mobile browsers
   try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
 
-  // Request mic permission upfront on mobile so it does not block later
+  // Request mic permission immediately on button tap (user gesture = permission prompt)
   if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     navigator.mediaDevices.getUserMedia({audio:true})
       .then(function(stream){
-        // Permission granted - stop the stream, we just needed the grant
         stream.getTracks().forEach(function(t){t.stop();});
+        console.log('Mic permission granted');
       })
-      .catch(function(){
-        // Permission denied - will fall back to text
+      .catch(function(err){
+        console.log('Mic permission denied:', err.message);
       });
   }
 
@@ -452,10 +452,26 @@ function setupVoice(){
 
   recog.onerror=function(e){
     accumulatedFinal='';
-    if(e.error==='not-allowed'){
+    if(e.error==='not-allowed'||e.error==='permission-denied'){
       stopListen();
-      setLabel('Mic permission denied — use text mode');
-      toggleText();
+      // Show permission instructions in the UI
+      document.getElementById('transcript').textContent='';
+      document.getElementById('bot-resp').textContent='Mic access is needed for voice mode. Please tap the mic button, then allow microphone access when your browser asks.';
+      setLabel('Tap Allow when prompted');
+      // Try requesting permission explicitly
+      if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+        navigator.mediaDevices.getUserMedia({audio:true})
+          .then(function(stream){
+            stream.getTracks().forEach(function(t){t.stop();});
+            document.getElementById('bot-resp').textContent='Mic access granted. Tap the mic button to try again.';
+            setLabel('Tap to speak');
+          })
+          .catch(function(){
+            document.getElementById('bot-resp').textContent='Mic access was denied. To use voice, please enable microphone permission in your browser settings, or use text mode below.';
+            setLabel('');
+            toggleText();
+          });
+      }
     } else if(e.error==='no-speech'){
       // Just restart quietly
       if(listening){
@@ -489,15 +505,18 @@ function startListen(){
   document.getElementById('mic-label').textContent='Listening...';
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').textContent='';
-  try{
-    recog.start();
-    setLabel('Speak now');
-  }catch(e){
-    setLabel('Mic error: '+e.message);
-    listening=false;
-    setViz('idle');
-    document.getElementById('mic-btn').classList.remove('on');
-  }
+  try{recog.abort();}catch(e){}
+  setTimeout(function(){
+    try{
+      recog.start();
+      setLabel('Speak now');
+    }catch(e){
+      setLabel('Mic error: '+e.message);
+      listening=false;
+      setViz('idle');
+      document.getElementById('mic-btn').classList.remove('on');
+    }
+  },100);
 }
 
 function stopListen(){
