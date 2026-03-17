@@ -412,18 +412,23 @@ function setLabel(t){document.getElementById('viz-label').textContent=t;}
 function setViz(m){const v=document.getElementById('viz');v.classList.remove('speaking','listening');if(m!=='idle')v.classList.add(m);}
 
 function speakIt(text,cb){
-  if(!synth){if(cb)cb();return;}
-  synth.cancel();speaking=true;
+  speaking=true;
   setViz('speaking');setLabel('Speaking...');
   document.getElementById('bot-resp').textContent=text;
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang='en-AU';u.rate=1.05;u.pitch=1.05;
-  const vs=synth.getVoices();
-  const v=vs.find(function(x){return x.lang==='en-AU';})||vs.find(function(x){return x.lang.startsWith('en');});
-  if(v)u.voice=v;
-  u.onend=function(){speaking=false;setViz('idle');setLabel('');if(cb)cb();};
-  u.onerror=function(){speaking=false;setViz('idle');if(cb)cb();};
-  synth.speak(u);
+  fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,voiceId:'UgBBYS2sOqTuMpoF3BR0'})})
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(!data.audio){throw new Error('no audio');}
+    const bytes=atob(data.audio);
+    const buf=new Uint8Array(bytes.length);
+    for(let i=0;i<bytes.length;i++)buf[i]=bytes.charCodeAt(i);
+    const blob=new Blob([buf],{type:'audio/mpeg'});
+    const url=URL.createObjectURL(blob);
+    const audio=new Audio(url);
+    audio.onended=function(){speaking=false;setViz('idle');setLabel('');URL.revokeObjectURL(url);if(cb)cb();};
+    audio.onerror=function(){speaking=false;setViz('idle');if(cb)cb();};
+    audio.play();
+  }).catch(function(){speaking=false;setViz('idle');if(cb)cb();});
 }
 
 function setupVoice(){
