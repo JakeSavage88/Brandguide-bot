@@ -282,6 +282,10 @@ let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaki
 const synth=window.speechSynthesis;
 
 function beginSession(){
+  // Create AudioContext on user gesture - required on all mobile browsers
+  try{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  }catch(e){}
   document.getElementById('start-ov').style.display='none';
   setupVoice();
   buildPills();
@@ -318,7 +322,11 @@ function showSecIntro(){
   document.getElementById('itext').classList.remove('show');
   document.getElementById('ptext').textContent=sec.name;
   updatePills();
-  speakIt(sec.intro,function(){setTimeout(askQ,700);});
+  let introFired=false;
+  function introNext(){if(introFired)return;introFired=true;askQ();}
+  // Safety timeout - if audio fails on mobile, flow continues after 4s
+  setTimeout(introNext, 4000);
+  speakIt(sec.intro,function(){setTimeout(introNext,700);});
 }
 
 function askQ(){
@@ -337,7 +345,12 @@ function askQ(){
     document.getElementById('itext').classList.remove('show');
   }
   setLabel(q.req?'Required':'Optional');
-  speakIt(q.p,function(){setLabel('Tap to answer');setMicReady();});
+  let qFired=false;
+  function qNext(){if(qFired)return;qFired=true;setLabel('Tap to answer');setMicReady();}
+  // Safety timeout - activate mic even if audio fails
+  const qLen=Math.max(3000, q.p.length*55);
+  setTimeout(qNext, qLen);
+  speakIt(q.p,function(){setTimeout(qNext,400);});
 }
 
 function totalDone(){let n=0;for(let i=0;i<cs;i++)n+=SECS[i].qs.length;return n+cq;}
@@ -380,6 +393,59 @@ async function submitAll(){
   speakIt("Awesome — your brief is in! Your brand strategy report will be ready in your Drive folder shortly. We are pumped to see what we build together.",null);
 }
 
+function setupVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('mic-btn').classList.add('dis');
+    document.getElementById('mic-label').textContent='Voice not available — use text';
+    toggleText();
+    return;
+  }
+  recog=new SR();
+  recog.continuous=true;
+  recog.interimResults=true;
+  recog.lang='en-AU';
+  let pauseTimer=null;
+  let accumulatedFinal='';
+
+  recog.onresult=function(e){
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal){
+        accumulatedFinal+=e.results[i][0].transcript+' ';
+      } else {
+        interim+=e.results[i][0].transcript;
+      }
+    }
+    document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();
+    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
+    if(accumulatedFinal.trim()){
+      pauseTimer=setTimeout(function(){
+        const text=accumulatedFinal.trim();
+        accumulatedFinal='';
+        pauseTimer=null;
+        stopListen();
+        processAnswer(text);
+      },2200);
+    }
+  };
+  recog.onerror=function(e){
+    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
+    accumulatedFinal='';
+    stopListen();
+    if(e.error!=='no-speech')setLabel('Voice error — try again or type below');
+  };
+  recog.onend=function(){
+    if(listening){
+      setTimeout(function(){
+        if(listening){
+          try{recog.start();}catch(err){listening=false;setViz('idle');}
+        }
+      },150);
+    }
+  };
+}
+
 function toggleMic(){
   if(busy||speaking)return;
   if(listening){stopListen();}else{startListen();}
@@ -414,104 +480,135 @@ function setLabel(t){document.getElementById('viz-label').textContent=t;}
 function setViz(m){const v=document.getElementById('viz');v.classList.remove('speaking','listening');if(m!=='idle')v.classList.add(m);}
 
 let audioCtx=null;let analyser=null;let vizRaf=null;
+let currentAudio=null;
+
+function getAudioCtx(){
+  if(!audioCtx){
+    try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}
+  }
+  if(audioCtx.state==='suspended'){
+    audioCtx.resume().catch(function(){});
+  }
+  return audioCtx;
+}
 
 function startAudioViz(audio){
-  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  analyser=audioCtx.createAnalyser();
-  analyser.fftSize=64;
-  const src=audioCtx.createMediaElementSource(audio);
-  src.connect(analyser);
-  analyser.connect(audioCtx.destination);
-  const bars=document.querySelectorAll('.bar');
-  const data=new Uint8Array(analyser.frequencyBinCount);
-  const indices=[2,4,6,9,12,16,20];
-  function frame(){
-    analyser.getByteFrequencyData(data);
-    bars.forEach(function(b,i){
-      const val=data[indices[i]]||0;
-      const h=Math.max(8,Math.min(100,(val/255)*110));
-      b.style.height=h+'px';
-    });
-    vizRaf=requestAnimationFrame(frame);
+  const ctx=getAudioCtx();
+  if(!ctx)return;
+  try{
+    analyser=ctx.createAnalyser();
+    analyser.fftSize=64;
+    const src=ctx.createMediaElementSource(audio);
+    src.connect(analyser);
+    analyser.connect(ctx.destination);
+    const bars=document.querySelectorAll('.bar');
+    const data=new Uint8Array(analyser.frequencyBinCount);
+    const indices=[2,4,6,9,12,16,20];
+    function frame(){
+      if(!analyser)return;
+      analyser.getByteFrequencyData(data);
+      bars.forEach(function(b,i){
+        const val=data[indices[i]]||0;
+        const h=Math.max(8,Math.min(100,(val/255)*110));
+        b.style.height=h+'px';
+      });
+      vizRaf=requestAnimationFrame(frame);
+    }
+    frame();
+  }catch(e){
+    // AudioContext failed - viz still works via CSS animation
   }
-  frame();
 }
 
 function stopAudioViz(){
   if(vizRaf){cancelAnimationFrame(vizRaf);vizRaf=null;}
+  analyser=null;
   const bars=document.querySelectorAll('.bar');
   bars.forEach(function(b){b.style.height='';});
 }
 
 function speakIt(text,cb){
   speaking=true;
-  setViz('speaking');setLabel('Speaking...');
+  setViz('speaking');
+  setLabel('Speaking...');
   document.getElementById('bot-resp').textContent=text;
-  fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text,voiceId:'UgBBYS2sOqTuMpoF3BR0'})})
-  .then(function(r){return r.json();})
+
+  // Stop any currently playing audio
+  if(currentAudio){
+    currentAudio.pause();
+    currentAudio=null;
+  }
+  stopAudioViz();
+
+  fetch('/api/tts',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:text,voiceId:'UgBBYS2sOqTuMpoF3BR0'})
+  })
+  .then(function(r){
+    if(!r.ok)throw new Error('TTS failed: '+r.status);
+    return r.json();
+  })
   .then(function(data){
-    if(!data.audio){throw new Error('no audio');}
+    if(!data.audio)throw new Error('No audio data');
+
     const bytes=atob(data.audio);
     const buf=new Uint8Array(bytes.length);
     for(let i=0;i<bytes.length;i++)buf[i]=bytes.charCodeAt(i);
     const blob=new Blob([buf],{type:'audio/mpeg'});
     const url=URL.createObjectURL(blob);
     const audio=new Audio(url);
-    audio.oncanplay=function(){startAudioViz(audio);};
-    audio.onended=function(){
+    currentAudio=audio;
+
+    // Try to attach visualiser - non-critical, won't block playback
+    try{startAudioViz(audio);}catch(e){}
+
+    function onDone(){
       stopAudioViz();
-      speaking=false;setViz('idle');setLabel('');
+      speaking=false;
+      setViz('idle');
+      setLabel('');
+      currentAudio=null;
+      URL.revokeObjectURL(url);
+      if(cb)cb();
+    }
+
+    audio.onended=onDone;
+    audio.onerror=function(){
+      stopAudioViz();
+      speaking=false;
+      setViz('idle');
+      currentAudio=null;
       URL.revokeObjectURL(url);
       if(cb)cb();
     };
-    audio.onerror=function(){stopAudioViz();speaking=false;setViz('idle');if(cb)cb();};
-    audio.play().catch(function(){speaking=false;setViz('idle');if(cb)cb();});
-  }).catch(function(){speaking=false;setViz('idle');if(cb)cb();});
+
+    // play() returns a promise on modern browsers
+    const playPromise=audio.play();
+    if(playPromise!==undefined){
+      playPromise.catch(function(err){
+        // Autoplay blocked - skip audio but still run callback so flow continues
+        console.log('Audio autoplay blocked:',err.message);
+        stopAudioViz();
+        speaking=false;
+        setViz('idle');
+        setLabel('Tap mic to respond');
+        currentAudio=null;
+        URL.revokeObjectURL(url);
+        if(cb)cb();
+      });
+    }
+  })
+  .catch(function(err){
+    console.log('TTS error:',err.message);
+    // TTS failed - continue flow silently, show text only
+    speaking=false;
+    setViz('idle');
+    setLabel('');
+    if(cb)cb();
+  });
 }
 
-function setupVoice(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){document.getElementById('mic-btn').classList.add('dis');document.getElementById('mic-label').textContent='Voice not available — use text';toggleText();return;}
-  recog=new SR();recog.continuous=true;recog.interimResults=true;recog.lang='en-AU';
-  let pauseTimer=null;
-  let accumulatedFinal='';
-
-  recog.onresult=function(e){
-    let interim='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal){
-        accumulatedFinal+=e.results[i][0].transcript+' ';
-      } else {
-        interim+=e.results[i][0].transcript;
-      }
-    }
-    document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();
-    // Clear existing pause timer on any speech activity
-    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
-    // Only start the send timer when we have final text and a pause occurs
-    if(accumulatedFinal.trim()){
-      pauseTimer=setTimeout(function(){
-        const text=accumulatedFinal.trim();
-        accumulatedFinal='';
-        pauseTimer=null;
-        stopListen();
-        processAnswer(text);
-      }, 2200);
-    }
-  };
-  recog.onerror=function(e){
-    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
-    accumulatedFinal='';
-    stopListen();
-    if(e.error!=='no-speech')setLabel('Voice error — try again or type below');
-  };
-  recog.onend=function(){
-    if(listening){
-      // Restart if still supposed to be listening (continuous mode)
-      try{recog.start();}catch(err){listening=false;setViz('idle');}
-    }
-  };
-}
 
 async function processAnswer(text){
   if(busy)return;
@@ -588,7 +685,7 @@ function sendText(){
 
 function openForm(){window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');}
 
-synth&&synth.getVoices();
+// Voice handled by ElevenLabs TTS
 </script>
 </body>
 </html>
