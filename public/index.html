@@ -20,42 +20,60 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .orb3{width:350px;height:350px;background:#0d10ee;top:40%;left:40%;animation-delay:-15s}
 @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(25px,-25px) scale(1.04)}66%{transform:translate(-20px,20px) scale(0.96)}}
 #app{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:0 1.25rem}
-header{width:100%;max-width:680px;padding:1.5rem 0 0.75rem;display:flex;align-items:center;justify-content:space-between}
-.logo{font-size:20px;font-weight:700;letter-spacing:-0.5px;background:linear-gradient(135deg,#c4b5fd,#7c6aff,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.logo-tag{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
-#pills{display:none;gap:5px;flex-wrap:wrap;justify-content:center;width:100%;max-width:680px;margin-bottom:0.5rem}
-.pill{padding:4px 12px;border-radius:20px;font-size:10px;font-weight:500;border:0.5px solid var(--gb);background:var(--glass);color:var(--muted);transition:all 0.3s;letter-spacing:0.3px}
-.pill.active{background:rgba(124,106,255,0.2);border-color:rgba(124,106,255,0.5);color:var(--acc2)}
-.pill.done{background:rgba(124,106,255,0.08);border-color:rgba(124,106,255,0.2);color:rgba(167,139,250,0.5)}
-#panel{width:100%;max-width:680px;flex:1;display:flex;flex-direction:column;align-items:center;padding:1.5rem 0 2.5rem;gap:1.75rem}
+header{width:100%;max-width:700px;padding:1.25rem 0 0.75rem;display:flex;flex-direction:column;align-items:center;gap:0.6rem}
+.logo-wrap{display:flex;align-items:center;gap:11px}
+.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,#7c6aff,#5a4de6);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo{font-size:26px;font-weight:700;letter-spacing:-0.5px;background:linear-gradient(135deg,#c4b5fd,#7c6aff,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* Section nav — two rows of plain text labels, no pill borders */
+#sec-nav{display:none;flex-direction:column;align-items:center;gap:3px;width:100%}
+.sec-row{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:nowrap}
+.sec-item{font-size:10.5px;font-weight:500;color:rgba(240,238,255,0.28);transition:color 0.35s ease;letter-spacing:0.25px;white-space:nowrap;padding:2px 8px;position:relative}
+.sec-item+.sec-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:1px;height:10px;background:rgba(255,255,255,0.1)}
+.sec-item.active{color:var(--acc)}
+.sec-item.done{color:rgba(124,106,255,0.5)}
+
+/* Tighter panel on mobile so nothing clips */
+#panel{width:100%;max-width:680px;flex:1;display:flex;flex-direction:column;align-items:center;padding:0.75rem 0 1.5rem;gap:1.25rem}
+
+@media(max-width:480px){
+  header{padding:1rem 0 0.5rem}
+  .logo-icon{width:34px;height:34px;border-radius:9px}
+  .logo{font-size:22px}
+  .sec-item{font-size:9.5px;padding:2px 6px}
+  #panel{gap:1rem;padding:0.5rem 0 1rem}
+  #viz{height:70px}
+  #qtext{font-size:17px}
+  #mic-btn{width:62px;height:62px}
+}
 #viz-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:500;min-height:14px;text-align:center;transition:opacity 0.3s}
 #viz{display:flex;align-items:center;justify-content:center;gap:9px;height:100px}
 /* Bars: wider + pill-shaped to match PDF mockup */
 .bar{width:14px;border-radius:8px;background:linear-gradient(to top,#7c6aff,#c4b5fd);transition:height 0.06s ease;flex-shrink:0}
-/* IDLE — gentle breathing, CSS animation only */
+/* IDLE — gentle breathing, symmetric from centre */
 .bar:nth-child(1){animation:i1 2.1s ease-in-out infinite}
 .bar:nth-child(2){animation:i2 1.8s ease-in-out infinite}
 .bar:nth-child(3){animation:i3 2.4s ease-in-out infinite}
 .bar:nth-child(4){animation:i4 1.9s ease-in-out infinite}
-.bar:nth-child(5){animation:i3 2.2s ease-in-out infinite}
-.bar:nth-child(6){animation:i2 2.0s ease-in-out infinite}
-.bar:nth-child(7){animation:i1 1.7s ease-in-out infinite}
+.bar:nth-child(5){animation:i3 2.4s ease-in-out infinite}
+.bar:nth-child(6){animation:i2 1.8s ease-in-out infinite}
+.bar:nth-child(7){animation:i1 2.1s ease-in-out infinite}
 @keyframes i1{0%,100%{height:10px}50%{height:22px}}
-@keyframes i2{0%,100%{height:16px}50%{height:34px}}
-@keyframes i3{0%,100%{height:22px}50%{height:50px}}
-@keyframes i4{0%,100%{height:28px}50%{height:62px}}
-/* SPEAKING — CSS fallback only; Web Audio API overrides height directly when audio plays */
+@keyframes i2{0%,100%{height:16px}50%{height:38px}}
+@keyframes i3{0%,100%{height:22px}50%{height:56px}}
+@keyframes i4{0%,100%{height:28px}50%{height:72px}}
+/* SPEAKING — CSS fallback; symmetric from centre. Web Audio overrides when active */
 #viz.speaking .bar{background:linear-gradient(to top,#7c6aff,#c4b5fd)}
-#viz.speaking .bar:nth-child(1){animation:s1 0.38s ease-in-out infinite}
-#viz.speaking .bar:nth-child(2){animation:s2 0.32s ease-in-out infinite}
+#viz.speaking .bar:nth-child(1){animation:s1 0.40s ease-in-out infinite}
+#viz.speaking .bar:nth-child(2){animation:s2 0.34s ease-in-out infinite}
 #viz.speaking .bar:nth-child(3){animation:s3 0.28s ease-in-out infinite}
 #viz.speaking .bar:nth-child(4){animation:s4 0.24s ease-in-out infinite}
-#viz.speaking .bar:nth-child(5){animation:s3 0.30s ease-in-out infinite}
-#viz.speaking .bar:nth-child(6){animation:s2 0.35s ease-in-out infinite}
+#viz.speaking .bar:nth-child(5){animation:s3 0.28s ease-in-out infinite}
+#viz.speaking .bar:nth-child(6){animation:s2 0.34s ease-in-out infinite}
 #viz.speaking .bar:nth-child(7){animation:s1 0.40s ease-in-out infinite}
 @keyframes s1{0%,100%{height:18px}50%{height:52px}}
-@keyframes s2{0%,100%{height:32px}50%{height:82px}}
-@keyframes s3{0%,100%{height:48px}50%{height:96px}}
+@keyframes s2{0%,100%{height:32px}50%{height:78px}}
+@keyframes s3{0%,100%{height:48px}50%{height:94px}}
 @keyframes s4{0%,100%{height:58px}50%{height:100px}}
 /* LIVE — Web Audio API drives heights; pause CSS so it doesn't fight */
 #viz.live .bar{animation:none!important;background:linear-gradient(to top,#7c6aff,#c4b5fd);transition:height 0.05s ease}
@@ -160,8 +178,28 @@ header{width:100%;max-width:680px;padding:1.5rem 0 0.75rem;display:flex;align-it
 
 <div id="app">
   <header>
-    <div><div class="logo">StratIQ</div><div class="logo-tag">AI Brand Strategy</div></div>
-    <div id="pills" style="display:flex"></div>
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="9.5" y="1" width="3" height="8" rx="1.5" fill="white" opacity="0.95"/><rect x="9.5" y="13" width="3" height="8" rx="1.5" fill="white" opacity="0.95"/><rect x="1" y="9.5" width="8" height="3" rx="1.5" fill="white" opacity="0.95"/><rect x="13" y="9.5" width="8" height="3" rx="1.5" fill="white" opacity="0.95"/><circle cx="11" cy="11" r="3" fill="white" opacity="0.95"/></svg>
+      </div>
+      <span class="logo">StratIQ</span>
+    </div>
+    <!-- Two-row section nav matching PDF layout -->
+    <div id="sec-nav">
+      <div class="sec-row">
+        <span class="sec-item" id="s0">Brand Overview</span>
+        <span class="sec-item" id="s1">Audience &amp; Market</span>
+        <span class="sec-item" id="s2">Competition</span>
+        <span class="sec-item" id="s3">Brand Identity</span>
+      </div>
+      <div class="sec-row">
+        <span class="sec-item" id="s4">Products &amp; Pricing</span>
+        <span class="sec-item" id="s5">Marketing &amp; Channels</span>
+        <span class="sec-item" id="s6">Final Details</span>
+      </div>
+    </div>
+    <!-- Keep #pills for JS compatibility but hidden -->
+    <div id="pills" style="display:none!important"></div>
   </header>
 
   <div id="panel">
@@ -313,29 +351,24 @@ function beginSession(){
 
   document.getElementById('start-ov').style.display='none';
   tryHideURLBar();
+  initAudioGraph(); // wire audio graph on user gesture — required for mobile
   setupVoice();
   buildPills();
   showSecIntro();
 }
 
 function buildPills(){
-  const w=document.getElementById('pills');
-  w.style.display='flex';
-  w.innerHTML='';
-  SECS.forEach(function(s,i){
-    const p=document.createElement('div');
-    p.className='pill'+(i===0?' active':'');
-    p.id='p'+i;
-    p.textContent=s.name;
-    w.appendChild(p);
-  });
+  // Show the static sec-nav (items already in HTML)
+  document.getElementById('sec-nav').style.display='flex';
+  // Set initial active state
+  updatePills();
 }
 
 function updatePills(){
   SECS.forEach(function(s,i){
-    const p=document.getElementById('p'+i);
-    if(!p)return;
-    p.className='pill'+(i<cs?' done':i===cs?' active':'');
+    const el=document.getElementById('s'+i);
+    if(!el)return;
+    el.className='sec-item'+(i<cs?' done':i===cs?' active':'');
   });
 }
 
@@ -360,7 +393,7 @@ function askQ(){
   document.getElementById('qtext').textContent=q.p;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
   if(q.ins){
-    document.getElementById('itext').textContent='💡 '+q.ins;
+    document.getElementById('itext').textContent=q.ins;
     setTimeout(function(){document.getElementById('itext').classList.add('show');},500);
   } else {
     document.getElementById('itext').textContent='';
@@ -599,55 +632,57 @@ function setViz(m){const v=document.getElementById('viz');v.classList.remove('sp
 
 let audioCtx=null;let analyser=null;let vizRaf=null;
 let currentAudio=null;
+let audioSource=null; // MediaElementSource — created ONCE, reused every call
 
 function getAudioCtx(){
   if(!audioCtx){
     try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}
   }
-  if(audioCtx.state==='suspended'){
-    audioCtx.resume().catch(function(){});
-  }
+  if(audioCtx.state==='suspended'){audioCtx.resume().catch(function(){});}
   return audioCtx;
 }
 
-function startAudioViz(audio){
+// Called once after first user gesture to wire up the audio graph permanently
+function initAudioGraph(){
   const ctx=getAudioCtx();
-  if(!ctx)return;
+  if(!ctx||audioSource)return; // already wired
   try{
     analyser=ctx.createAnalyser();
-    analyser.fftSize=64;
-    const src=ctx.createMediaElementSource(audio);
-    src.connect(analyser);
+    analyser.fftSize=128;           // 64 bins — good speech resolution
+    analyser.smoothingTimeConstant=0.7;
+    audioSource=ctx.createMediaElementSource(sharedAudio);
+    audioSource.connect(analyser);
     analyser.connect(ctx.destination);
-    const bars=document.querySelectorAll('.bar');
-    const data=new Uint8Array(analyser.frequencyBinCount);
-    // Use spread-out frequency indices for more visual interest
-    const indices=[2,4,7,10,13,17,21];
-    // Switch to 'live' mode — CSS animations paused, Web Audio drives heights
-    document.getElementById('viz').classList.add('live');
-    function frame(){
-      if(!analyser)return;
-      analyser.getByteFrequencyData(data);
-      bars.forEach(function(b,i){
-        const val=data[indices[i]]||0;
-        // Scale: quiet audio still shows some movement (min 8px), loud hits 100px
-        const h=Math.max(8,Math.min(100,8+(val/255)*92));
-        b.style.height=h+'px';
-      });
-      vizRaf=requestAnimationFrame(frame);
-    }
-    frame();
-  }catch(e){
-    // AudioContext failed — CSS animation fallback already running
+  }catch(e){}
+}
+
+function startAudioViz(){
+  if(!analyser)return;
+  const bars=document.querySelectorAll('.bar');
+  const data=new Uint8Array(analyser.frequencyBinCount);
+  // Asymmetric freq map peaking toward centre — non-uniform for realism
+  // Bins cover speech fundamentals (100Hz-3kHz) mapped to 64 bins @ ~44kHz
+  const freqMap=[2,5,8,13,19,11,6];
+  document.getElementById('viz').classList.add('live');
+  function frame(){
+    if(!analyser){stopAudioViz();return;}
+    analyser.getByteFrequencyData(data);
+    bars.forEach(function(b,i){
+      const val=data[freqMap[i]]||0;
+      const h=Math.max(6,Math.min(100,6+(val/255)*94));
+      b.style.height=h+'px';
+    });
+    vizRaf=requestAnimationFrame(frame);
   }
+  if(vizRaf){cancelAnimationFrame(vizRaf);vizRaf=null;}
+  frame();
 }
 
 function stopAudioViz(){
   if(vizRaf){cancelAnimationFrame(vizRaf);vizRaf=null;}
-  analyser=null;
+  // Don't null analyser — keep the graph wired for next call
   document.getElementById('viz').classList.remove('live');
-  const bars=document.querySelectorAll('.bar');
-  bars.forEach(function(b){b.style.height='';});
+  document.querySelectorAll('.bar').forEach(function(b){b.style.height='';});
 }
 
 // Single reusable audio element - mobile requires this for autoplay after first gesture
@@ -705,16 +740,18 @@ function speakIt(text,cb){
       done();
     };
 
-    try{startAudioViz(sharedAudio);}catch(e){}
+    // Wire audio graph once, then start the viz loop
+    initAudioGraph();
+    try{startAudioViz();}catch(e){}
 
     const p=sharedAudio.play();
     if(p!==undefined){
-      p.then(function(){
-        setTimeout(done,estimatedMs+4000);
-      }).catch(function(){
-        // Autoplay blocked - continue flow
+      p.catch(function(){
+        // Autoplay blocked - continue flow without audio
         setTimeout(done,400);
       });
+      // Safety net: if onended never fires (rare), bail after generous timeout
+      setTimeout(done,estimatedMs+6000);
     } else {
       setTimeout(done,estimatedMs+2000);
     }
@@ -799,6 +836,20 @@ function toggleText(){
   const btn=document.querySelector('.abtn[onclick="toggleText()"]');
   if(btn)btn.textContent=textActive?'🎤 Back to voice':'⌨️ Type instead';
   if(!textActive){document.getElementById('tinput').value='';}
+}
+
+function sendText(){
+  const inp=document.getElementById('tinput');
+  const t=inp.value.trim();
+  if(!t)return;
+  inp.value='';
+  if(textActive){
+    textActive=false;
+    document.getElementById('text-mode').style.display='none';
+    const btn=document.querySelector('.abtn[onclick="toggleText()"]');
+    if(btn)btn.textContent='⌨️ Type instead';
+  }
+  processAnswer(t);
 }
 
 function sendTextAndReturnToVoice(){
