@@ -1220,12 +1220,12 @@ window.addEventListener('resize',function(){positionMic();});
   document.addEventListener('touchmove',function(e){
     var dy=e.touches[0].clientY-startY;
     var dx=e.touches[0].clientX-startX;
-    // Only block pull-to-refresh if it's a genuine downward drag (>10px),
-    // not a tap (which has tiny movement). This preserves button taps.
-    if(dy>10 && Math.abs(dy)>Math.abs(dx) && Math.abs(dy)>Math.abs(dx)*0.8 && window.scrollY<=0){
-      e.preventDefault(); // stops pull-to-refresh
+    // ONLY block pull-to-refresh if the touch STARTED in the top 60px
+    // and is a genuine downward drag. Never block taps or gestures elsewhere.
+    if(startY<60 && dy>8 && Math.abs(dy)>Math.abs(dx) && window.scrollY<=0){
+      e.preventDefault();
     }
-  },{passive:false}); // passive:false required to call preventDefault
+  },{passive:false});
 
   document.addEventListener('touchend',function(e){
     var endY=e.changedTouches[0].clientY;
