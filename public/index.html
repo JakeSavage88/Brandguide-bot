@@ -43,8 +43,8 @@ header{
 }
 header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-events:none}
 .logo-wrap{display:flex;align-items:center;gap:11px}
-.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,#7c6aff,#5a4de6);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.logo{font-size:26px;font-weight:700;letter-spacing:-0.5px;background:linear-gradient(135deg,#c4b5fd,#7c6aff,#93c5fd);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-icon{width:40px;height:40px;background:#7c6aff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:#ffffff}
 #sec-nav{display:none;flex-direction:column;align-items:center;gap:4px;width:100%}
 .sec-row{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap}
 .sec-item{font-size:10.5px;font-weight:500;color:rgba(240,238,255,0.25);transition:color 0.35s;letter-spacing:0.3px;white-space:nowrap;padding:3px 10px;position:relative}
@@ -119,7 +119,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* FIXED BOTTOM DOCK — starts off-screen, slides in */
 #bottom-dock{
   position:fixed;bottom:0;left:0;right:0;z-index:10;
-  display:flex;flex-direction:column;align-items:center;gap:11px;
+  display:flex;flex-direction:column;align-items:center;gap:0;
   padding:14px 20px 22px;
   background:linear-gradient(to top,rgba(8,8,15,0.98) 60%,transparent);
   pointer-events:none;
@@ -128,8 +128,22 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 }
 #bottom-dock.visible{transform:translateY(0)}
 #bottom-dock>*{pointer-events:all}
-#mic-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
-#mic-btn{width:68px;height:68px;background:linear-gradient(135deg,#7c6aff,#5a4de6);border:none;border-radius:50%;cursor:pointer;box-shadow:0 0 30px rgba(124,106,255,0.4);transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+/* MIC — fixed position, JS-controlled vertical centering */
+#mic-wrap{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%) translateY(200px);
+  z-index:20;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1),transform 0.6s cubic-bezier(0.34,1.2,0.64,1);
+  pointer-events:none;
+  bottom:120px; /* default — JS overrides */
+}
+#mic-wrap.visible{
+  transform:translateX(-50%) translateY(0);
+  pointer-events:all;
+}
+#mic-btn{width:68px;height:68px;background:linear-gradient(135deg,#7c6aff,#5a4de6);border:none;border-radius:50%;cursor:pointer;box-shadow:0 0 30px rgba(124,106,255,0.4);transition:box-shadow 0.2s,background 0.2s,transform 0.15s;display:flex;align-items:center;justify-content:center}
 #mic-btn:hover{transform:scale(1.06);box-shadow:0 0 44px rgba(124,106,255,0.6)}
 #mic-btn.on{background:linear-gradient(135deg,#06b6d4,#0891b2);box-shadow:0 0 40px rgba(6,182,212,0.5);animation:pring 1.5s ease-in-out infinite}
 #mic-btn.dis{opacity:0.4;cursor:not-allowed}
@@ -168,10 +182,10 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #substatus{font-size:13px;color:var(--acc2);min-height:20px}
 /* DESKTOP */
 @media(min-width:768px){
-  #app{padding:0 2rem calc(var(--dock-h-desk) + 120px)}
+  #app{padding:0 2rem calc(var(--dock-h-desk) + 160px)}
   header{padding:1.75rem 0 1rem}
-  .logo-icon{width:44px;height:44px;border-radius:11px}
-  .logo{font-size:30px}
+  .logo-icon{width:44px;height:44px;border-radius:11px;background:#7c6aff}
+  .logo{font-size:30px;color:#ffffff}
   .sec-item{font-size:11.5px;padding:3px 12px}
   #viz{height:100px;gap:10px}
   .bar{width:16px;border-radius:50px}
@@ -181,7 +195,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   #transcript-area{margin-top:28px;max-width:600px}
   #bot-resp{font-size:16px}
   /* Desktop dock: generous padding from screen bottom */
-  #bottom-dock{gap:16px;padding:20px 40px 64px}
+  #bottom-dock{gap:0;padding:12px 40px 52px}
   /* Desktop: single row for all buttons */
   #alts{flex-direction:row;align-items:center;gap:10px}
   #alts-row1{gap:10px}
@@ -190,6 +204,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   .abtn{font-size:11.5px;padding:8px 16px}
   #skip-btn{font-size:11.5px;padding:4px 10px}
 }
+/* Header swipe-down-to-reveal touch target */
+#header-swipe{position:fixed;top:0;left:0;right:0;height:20px;z-index:30;pointer-events:all}
 /* SMALL MOBILE */
 @media(max-width:400px){
   .sec-item{font-size:9px;padding:2px 6px}
@@ -213,7 +229,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 <div class="orb orb3"></div>
 
 <div id="start-ov">
-  <div style="font-size:20px;font-weight:700;background:linear-gradient(135deg,#c4b5fd,#7c6aff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-0.5px">StratIQ</div>
+  <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">Strat<span style="color:#7c6aff">IQ</span></div>
   <h1>Your brand strategy<br>starts here.</h1>
   <p>I am your AI brand consultant. We will chat through your brand brief together — I ask the questions, you bring the insights. About 15 minutes and your full strategy report lands shortly after.</p>
   <div class="feats">
@@ -249,9 +265,9 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   <header>
     <div class="logo-wrap">
       <div class="logo-icon">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="9.5" y="1" width="3" height="8" rx="1.5" fill="white" opacity="0.95"/><rect x="9.5" y="13" width="3" height="8" rx="1.5" fill="white" opacity="0.95"/><rect x="1" y="9.5" width="8" height="3" rx="1.5" fill="white" opacity="0.95"/><rect x="13" y="9.5" width="8" height="3" rx="1.5" fill="white" opacity="0.95"/><circle cx="11" cy="11" r="3" fill="white" opacity="0.95"/></svg>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 2L4 6.5V15.5L11 20L18 15.5V6.5L11 2Z" stroke="white" stroke-width="1.5" stroke-linejoin="round" fill="none"/><path d="M4 6.5L11 11L18 6.5" stroke="white" stroke-width="1.5" stroke-linejoin="round" fill="none"/><path d="M11 11V20" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
       </div>
-      <span class="logo">StratIQ</span>
+      <span class="logo">Strat<span style="color:#7c6aff">IQ</span></span>
     </div>
     <div id="sec-nav">
       <div class="sec-row">
@@ -303,14 +319,19 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   </div>
 </div>
 
-<!-- Fixed bottom dock — mic + actions, never moves -->
+<!-- Swipe-down-to-reveal header zone -->
+<div id="header-swipe"></div>
+
+<!-- MIC — fixed position, JS-centred between content and buttons -->
+<div id="mic-wrap">
+  <button id="mic-btn" onclick="toggleMic()">
+    <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><rect x="9" y="2" width="10" height="16" rx="5" fill="white"/><path d="M5 14a9 9 0 0 0 18 0" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/><line x1="14" y1="23" x2="14" y2="27" stroke="white" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="27" x2="18" y2="27" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
+  </button>
+  <div id="mic-label">Tap to speak</div>
+</div>
+
+<!-- Fixed bottom dock — action buttons only -->
 <div id="bottom-dock">
-  <div id="mic-wrap">
-    <button id="mic-btn" onclick="toggleMic()">
-      <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><rect x="9" y="2" width="10" height="16" rx="5" fill="white"/><path d="M5 14a9 9 0 0 0 18 0" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/><line x1="14" y1="23" x2="14" y2="27" stroke="white" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="27" x2="18" y2="27" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
-    </button>
-    <div id="mic-label">Tap to speak</div>
-  </div>
   <div id="alts">
     <!-- Row 1: three pill buttons -->
     <div id="alts-row1">
@@ -505,10 +526,15 @@ function askQ(){
 
   setLabel(q.req?'Required':'Optional');
 
-  // Slide dock in from bottom on first question (only once)
+  // Slide dock + mic in from bottom on first question (only once)
   const dock=document.getElementById('bottom-dock');
+  const micWrap=document.getElementById('mic-wrap');
   if(!dock.classList.contains('visible')){
-    setTimeout(function(){dock.classList.add('visible');},300);
+    setTimeout(function(){
+      dock.classList.add('visible');
+      micWrap.classList.add('visible');
+      setTimeout(positionMic,100);
+    },300);
   }
 
   // Auto-hide header to reclaim screen space
@@ -839,34 +865,45 @@ let currentBlobUrl = null;
 
 // Dynamic mic positioning — centres mic between panel content bottom and alts top on desktop
 function positionMic(){
-  if(window.innerWidth < 768) return; // mobile: mic stays in natural flow
-  const panel=document.getElementById('panel');
-  const alts=document.getElementById('alts');
   const micWrap=document.getElementById('mic-wrap');
-  if(!panel||!alts||!micWrap)return;
+  const panel=document.getElementById('panel');
+  const dock=document.getElementById('bottom-dock');
+  if(!micWrap||!panel||!dock)return;
 
-  // Measure bottom of scrollable content and top of alts
+  // Mic height including label
+  const micH=micWrap.offsetHeight||90;
+
+  // Bottom of panel content in viewport coords
   const panelRect=panel.getBoundingClientRect();
-  const altsRect=alts.getBoundingClientRect();
-  const micH=micWrap.offsetHeight;
+  const contentBottom=Math.min(panelRect.bottom, window.innerHeight - dock.offsetHeight - micH - 20);
 
-  const contentBottom=panelRect.bottom;
-  const buttonsTop=altsRect.top;
-  const gap=buttonsTop-contentBottom;
+  // Top of action buttons in viewport coords
+  const dockRect=dock.getBoundingClientRect();
+  const buttonsTop=dockRect.top;
 
-  if(gap > micH + 32){
-    // Enough room — centre mic in the gap with a buffer
-    const centre=contentBottom+(gap/2)-(micH/2);
-    const dockRect=document.getElementById('bottom-dock').getBoundingClientRect();
-    // Convert viewport position to position within dock
-    const offsetFromDockTop=centre-dockRect.top;
-    // Only adjust if it pushes mic upward from its natural position
-    if(offsetFromDockTop < 0){
-      micWrap.style.marginTop=Math.max(0,-offsetFromDockTop-8)+'px';
-    }
+  // Centre of the gap between content and buttons
+  const gap=buttonsTop - contentBottom;
+  const minGap=micH + 24;
+
+  let targetBottom; // bottom edge position from viewport bottom
+  if(gap >= minGap){
+    // Enough space — centre mic exactly in the gap
+    const centreY=contentBottom + gap/2; // viewport y of mic centre
+    targetBottom=window.innerHeight - centreY - micH/2;
+  } else {
+    // Not enough space — sit just above the dock with a buffer
+    targetBottom=dock.offsetHeight + 16;
   }
+
+  // Clamp: never below dock, never above 70% of screen
+  const minBottom=dock.offsetHeight + 8;
+  const maxBottom=window.innerHeight * 0.55;
+  targetBottom=Math.max(minBottom, Math.min(maxBottom, targetBottom));
+
+  micWrap.style.bottom=targetBottom+'px';
 }
 
+let wordTimings=null;
 function speakIt(text,cb){
   speaking=true;
   setViz('speaking');
@@ -919,6 +956,8 @@ function speakIt(text,cb){
   .then(function(r){if(!r.ok)throw new Error('TTS '+r.status);return r.json();})
   .then(function(data){
     if(!data.audio)throw new Error('no audio');
+    // Capture word timings if available from /with-timestamps endpoint
+    wordTimings=data.alignment||null;
     const bytes=atob(data.audio);
     const buf=new Uint8Array(bytes.length);
     for(let i=0;i<bytes.length;i++)buf[i]=bytes.charCodeAt(i);
@@ -927,17 +966,29 @@ function speakIt(text,cb){
     currentBlobUrl=url;
     sharedAudio.src=url;
 
+    // animateWords is set before play — either from alignment data or estimated
     sharedAudio.onplay=function(){
-      // Audio is actually playing — now animate words in sync
-      const audioDur=(sharedAudio.duration||estimatedMs/1000)*1000;
-      const msPerWord=audioDur/Math.max(words.length,1);
-      const spans=botEl.querySelectorAll('.bot-word');
-      spans.forEach(function(s,i){
-        s.style.animation=''; // re-enable animation
-        s.style.animationDelay=(i*msPerWord)+'ms';
-        // Slightly faster individual reveal than the inter-word gap
-        s.style.animationDuration='0.18s';
-      });
+      if(wordTimings){
+        // Use real ElevenLabs timestamps — most accurate
+        const spans=botEl.querySelectorAll('.bot-word');
+        spans.forEach(function(s,i){
+          if(!wordTimings[i])return;
+          const startMs=wordTimings[i].startMs;
+          s.style.animationDelay=startMs+'ms';
+          s.style.animationDuration='0.15s';
+          s.style.animation='wordIn 0.15s ease forwards';
+        });
+      } else {
+        // Fallback: distribute evenly across audio duration
+        const audioDur=(sharedAudio.duration||estimatedMs/1000)*1000;
+        const msPerWord=audioDur/Math.max(words.length,1);
+        const spans=botEl.querySelectorAll('.bot-word');
+        spans.forEach(function(s,i){
+          s.style.animationDelay=(i*msPerWord)+'ms';
+          s.style.animationDuration='0.15s';
+          s.style.animation='wordIn 0.15s ease forwards';
+        });
+      }
     };
     sharedAudio.onended=function(){
       if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
@@ -1159,24 +1210,46 @@ document.addEventListener('visibilitychange',function(){
 });
 window.addEventListener('resize',function(){positionMic();});
 
+// Swipe down from top to reveal header, swipe up to hide
+(function(){
+  var swipeEl=document.getElementById('header-swipe');
+  var startY=0;
+  document.addEventListener('touchstart',function(e){
+    startY=e.touches[0].clientY;
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    var endY=e.changedTouches[0].clientY;
+    var delta=endY-startY;
+    var hdr=document.querySelector('header');
+    if(!hdr)return;
+    if(delta>40&&e.changedTouches[0].clientY<120){
+      // Swiped down near top — reveal header
+      hdr.classList.remove('hidden');
+    } else if(delta<-30&&!hdr.classList.contains('hidden')){
+      // Swiped up — hide header
+      hdr.classList.add('hidden');
+    }
+  },{passive:true});
+})();
+
 // Mobile keyboard handling — when keyboard opens, adjust bottom dock
 // so text input stays visible above keyboard, not hidden behind it
+// Mobile keyboard: dock and mic stay fixed at bottom.
+// Panel content scrolls up naturally. #app padding ensures input visible.
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',function(){
-    const dock=document.getElementById('bottom-dock');
-    if(!dock)return;
     const keyboardH=window.innerHeight-window.visualViewport.height;
-    if(keyboardH>100&&textActive){
-      // Keyboard is open and text mode is active — lift dock above keyboard
-      dock.style.bottom=keyboardH+'px';
-      // Scroll text input into view
+    if(keyboardH>80&&textActive){
+      // Add bottom padding to app so input scrolls above keyboard
+      document.getElementById('app').style.paddingBottom=(keyboardH+20)+'px';
       setTimeout(function(){
         var inp=document.getElementById('tinput');
-        if(inp)inp.scrollIntoView({behavior:'smooth',block:'nearest'});
-      },50);
+        if(inp)inp.scrollIntoView({behavior:'smooth',block:'center'});
+      },80);
     } else {
-      dock.style.bottom='0px';
+      document.getElementById('app').style.paddingBottom='';
     }
+    positionMic();
   });
 }
 </script>
