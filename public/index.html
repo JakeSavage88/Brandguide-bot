@@ -85,48 +85,55 @@ header{
 }
 
 /* ── VISUALISER ── */
-#viz{display:flex;align-items:center;justify-content:center;gap:9px;height:90px;margin-bottom:0}
-.bar{width:14px;border-radius:8px;background:linear-gradient(to top,#7c6aff,#c4b5fd);transition:height 0.06s ease;flex-shrink:0}
-/* IDLE — centre-peak breathing */
-.bar:nth-child(1){animation:i1 2.2s ease-in-out infinite}
-.bar:nth-child(2){animation:i2 1.9s ease-in-out infinite}
-.bar:nth-child(3){animation:i3 2.3s ease-in-out infinite}
-.bar:nth-child(4){animation:i4 1.8s ease-in-out infinite}
-.bar:nth-child(5){animation:i3 2.1s ease-in-out infinite}
-.bar:nth-child(6){animation:i2 2.0s ease-in-out infinite}
+#viz{display:flex;align-items:center;justify-content:center;gap:8px;height:90px;margin-bottom:0}
+/* Solid purple pill bars — no gradient, fully rounded, matching PDF */
+.bar{
+  width:11px;
+  border-radius:6px;
+  background:#7c6aff;
+  transition:height 0.05s ease;
+  flex-shrink:0;
+}
+/* IDLE — centre-peak gentle breathing */
+.bar:nth-child(1){animation:i1 2.3s ease-in-out infinite}
+.bar:nth-child(2){animation:i2 2.0s ease-in-out infinite}
+.bar:nth-child(3){animation:i3 1.8s ease-in-out infinite}
+.bar:nth-child(4){animation:i4 1.6s ease-in-out infinite}
+.bar:nth-child(5){animation:i3 1.9s ease-in-out infinite}
+.bar:nth-child(6){animation:i2 2.1s ease-in-out infinite}
 .bar:nth-child(7){animation:i1 2.4s ease-in-out infinite}
-@keyframes i1{0%,100%{height:8px}50%{height:18px}}
-@keyframes i2{0%,100%{height:14px}50%{height:32px}}
-@keyframes i3{0%,100%{height:22px}50%{height:52px}}
-@keyframes i4{0%,100%{height:30px}50%{height:70px}}
-/* SPEAKING CSS fallback — centre peak */
-#viz.speaking .bar{background:linear-gradient(to top,#7c6aff,#c4b5fd)}
-#viz.speaking .bar:nth-child(1){animation:s1 0.42s ease-in-out infinite}
-#viz.speaking .bar:nth-child(2){animation:s2 0.35s ease-in-out infinite}
-#viz.speaking .bar:nth-child(3){animation:s3 0.28s ease-in-out infinite}
-#viz.speaking .bar:nth-child(4){animation:s4 0.22s ease-in-out infinite}
-#viz.speaking .bar:nth-child(5){animation:s3 0.30s ease-in-out infinite}
-#viz.speaking .bar:nth-child(6){animation:s2 0.36s ease-in-out infinite}
-#viz.speaking .bar:nth-child(7){animation:s1 0.44s ease-in-out infinite}
-@keyframes s1{0%,100%{height:14px}50%{height:46px}}
-@keyframes s2{0%,100%{height:26px}50%{height:72px}}
-@keyframes s3{0%,100%{height:42px}50%{height:90px}}
-@keyframes s4{0%,100%{height:54px}50%{height:100px}}
-/* LIVE — Web Audio drives heights */
-#viz.live .bar{animation:none!important;background:linear-gradient(to top,#7c6aff,#c4b5fd);transition:height 0.05s ease}
-/* LISTENING — cyan */
-#viz.listening .bar{background:linear-gradient(to top,#06b6d4,#a5f3fc)}
-#viz.listening .bar:nth-child(1){animation:l1 0.58s ease-in-out infinite}
-#viz.listening .bar:nth-child(2){animation:l2 0.49s ease-in-out infinite}
-#viz.listening .bar:nth-child(3){animation:l3 0.40s ease-in-out infinite}
-#viz.listening .bar:nth-child(4){animation:l4 0.36s ease-in-out infinite}
+@keyframes i1{0%,100%{height:7px} 50%{height:16px}}
+@keyframes i2{0%,100%{height:11px}50%{height:28px}}
+@keyframes i3{0%,100%{height:18px}50%{height:48px}}
+@keyframes i4{0%,100%{height:24px}50%{height:66px}}
+/* SPEAKING CSS fallback — centre peak, solid purple */
+#viz.speaking .bar{background:#7c6aff}
+#viz.speaking .bar:nth-child(1){animation:s1 0.44s ease-in-out infinite}
+#viz.speaking .bar:nth-child(2){animation:s2 0.36s ease-in-out infinite}
+#viz.speaking .bar:nth-child(3){animation:s3 0.29s ease-in-out infinite}
+#viz.speaking .bar:nth-child(4){animation:s4 0.23s ease-in-out infinite}
+#viz.speaking .bar:nth-child(5){animation:s3 0.31s ease-in-out infinite}
+#viz.speaking .bar:nth-child(6){animation:s2 0.37s ease-in-out infinite}
+#viz.speaking .bar:nth-child(7){animation:s1 0.45s ease-in-out infinite}
+@keyframes s1{0%,100%{height:12px}50%{height:42px}}
+@keyframes s2{0%,100%{height:22px}50%{height:68px}}
+@keyframes s3{0%,100%{height:38px}50%{height:86px}}
+@keyframes s4{0%,100%{height:50px}50%{height:100px}}
+/* LIVE — Web Audio drives heights, CSS paused */
+#viz.live .bar{animation:none!important;background:#7c6aff;transition:height 0.05s ease}
+/* LISTENING — solid cyan */
+#viz.listening .bar{background:#06b6d4}
+#viz.listening .bar:nth-child(1){animation:l1 0.60s ease-in-out infinite}
+#viz.listening .bar:nth-child(2){animation:l2 0.50s ease-in-out infinite}
+#viz.listening .bar:nth-child(3){animation:l3 0.41s ease-in-out infinite}
+#viz.listening .bar:nth-child(4){animation:l4 0.35s ease-in-out infinite}
 #viz.listening .bar:nth-child(5){animation:l3 0.43s ease-in-out infinite}
-#viz.listening .bar:nth-child(6){animation:l2 0.51s ease-in-out infinite}
-#viz.listening .bar:nth-child(7){animation:l1 0.60s ease-in-out infinite}
-@keyframes l1{0%,100%{height:10px}50%{height:36px}}
-@keyframes l2{0%,100%{height:20px}50%{height:60px}}
-@keyframes l3{0%,100%{height:32px}50%{height:84px}}
-@keyframes l4{0%,100%{height:44px}50%{height:100px}}
+#viz.listening .bar:nth-child(6){animation:l2 0.52s ease-in-out infinite}
+#viz.listening .bar:nth-child(7){animation:l1 0.62s ease-in-out infinite}
+@keyframes l1{0%,100%{height:8px} 50%{height:32px}}
+@keyframes l2{0%,100%{height:16px}50%{height:56px}}
+@keyframes l3{0%,100%{height:28px}50%{height:78px}}
+@keyframes l4{0%,100%{height:38px}50%{height:96px}}
 
 /* ── QUESTION DISPLAY — generous breathing room ── */
 #qdisplay{
@@ -824,17 +831,41 @@ function startAudioViz(){
   if(!analyser)return;
   const bars=document.querySelectorAll('.bar');
   const data=new Uint8Array(analyser.frequencyBinCount);
-  // Centre-peak freq map: bar 4 (centre) reads the highest-energy speech bin
-  // Speech fundamentals sit in bins 8-16 at 128-point FFT @ 44.1kHz
-  // Outer bars read lower energy bins so centre always peaks tallest
-  const freqMap=[2,4,8,14,9,5,3];
+
+  // Bell-curve multipliers: bar 4 (centre, index 3) = 1.0, falls off each side.
+  // This guarantees centre always peaks visually regardless of which
+  // frequency bin is loudest — the energy is shaped onto the bars.
+  const bellCurve=[0.35, 0.62, 0.85, 1.0, 0.85, 0.62, 0.35];
+
+  // Sample a band of speech-energy bins (roughly 200Hz–3kHz range)
+  // fftSize=128 → 64 bins, bin width ≈ 344Hz at 44.1kHz
+  // bins 1–9 cover ~86Hz–775Hz (voice fundamentals + harmonics)
+  const speechBins=[1,2,3,4,5,6,7,8,9];
+
   document.getElementById('viz').classList.add('live');
+
   function frame(){
     if(!analyser){stopAudioViz();return;}
     analyser.getByteFrequencyData(data);
+
+    // Get the peak energy value across the speech band
+    let peak=0;
+    for(let i=0;i<speechBins.length;i++){
+      if(data[speechBins[i]]>peak) peak=data[speechBins[i]];
+    }
+
+    // Also use a weighted average for smoother response
+    let sum=0;
+    for(let i=0;i<speechBins.length;i++) sum+=data[speechBins[i]];
+    const avg=sum/speechBins.length;
+
+    // Blend peak and avg — peak gives snap, avg gives body
+    const energy=(peak*0.6+avg*0.4);
+
     bars.forEach(function(b,i){
-      const val=data[freqMap[i]]||0;
-      const h=Math.max(6,Math.min(100,6+(val/255)*94));
+      // Apply bell-curve shape to the energy reading
+      const scaled=energy*bellCurve[i];
+      const h=Math.max(6,Math.min(100,6+(scaled/255)*94));
       b.style.height=h+'px';
     });
     vizRaf=requestAnimationFrame(frame);
