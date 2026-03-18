@@ -97,8 +97,9 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #slabel{font-size:10px;color:var(--acc2);text-transform:uppercase;letter-spacing:2px;font-weight:600;min-height:14px}
 #ptext{font-size:11px;color:var(--muted);margin-top:2px}
 #qtext{font-size:22px;font-weight:600;line-height:1.5;letter-spacing:-0.3px;max-width:560px;margin-top:8px}
-#itext{font-size:12px;color:var(--acc2);font-style:italic;opacity:0;transition:opacity 0.5s;max-width:460px;line-height:1.5;margin-top:4px}
-#itext.show{opacity:1}
+#itext{font-size:12px;color:var(--acc2);font-style:italic;opacity:0;transition:opacity 0.6s ease,max-height 0.5s ease,margin-top 0.5s ease;max-width:460px;line-height:1.5;margin-top:4px;overflow:hidden;max-height:0}
+#itext.show{opacity:1;max-height:80px}
+#itext.fade-out{opacity:0;max-height:0;margin-top:0}
 /* TRANSCRIPT + BOT RESPONSE */
 #transcript-area{width:100%;max-width:560px;text-align:center;margin-top:20px;margin-bottom:4px;min-height:28px}
 #transcript{font-size:14px;color:rgba(240,238,255,0.65);font-style:italic;line-height:1.7}
@@ -115,14 +116,17 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 .sbtn{padding:0 18px;height:44px;background:linear-gradient(135deg,#7c6aff,#6054cc);border:none;border-radius:12px;color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
 .skipbtn{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--font);text-align:right}
 .skipbtn:hover{color:var(--text)}
-/* FIXED BOTTOM DOCK */
+/* FIXED BOTTOM DOCK — starts off-screen, slides in */
 #bottom-dock{
   position:fixed;bottom:0;left:0;right:0;z-index:10;
-  display:none;flex-direction:column;align-items:center;gap:11px;
+  display:flex;flex-direction:column;align-items:center;gap:11px;
   padding:14px 20px 22px;
   background:linear-gradient(to top,rgba(8,8,15,0.98) 60%,transparent);
   pointer-events:none;
+  transform:translateY(110%);
+  transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1);
 }
+#bottom-dock.visible{transform:translateY(0)}
 #bottom-dock>*{pointer-events:all}
 #mic-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
 #mic-btn{width:68px;height:68px;background:linear-gradient(135deg,#7c6aff,#5a4de6);border:none;border-radius:50%;cursor:pointer;box-shadow:0 0 30px rgba(124,106,255,0.4);transition:all 0.2s;display:flex;align-items:center;justify-content:center}
@@ -164,7 +168,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #substatus{font-size:13px;color:var(--acc2);min-height:20px}
 /* DESKTOP */
 @media(min-width:768px){
-  #app{padding:0 2rem calc(var(--dock-h-desk) + 100px)}
+  #app{padding:0 2rem calc(var(--dock-h-desk) + 120px)}
   header{padding:1.75rem 0 1rem}
   .logo-icon{width:44px;height:44px;border-radius:11px}
   .logo{font-size:30px}
@@ -176,8 +180,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   #slabel{font-size:11px}
   #transcript-area{margin-top:28px;max-width:600px}
   #bot-resp{font-size:16px}
-  /* Desktop dock: more padding from bottom edge */
-  #bottom-dock{gap:16px;padding:20px 40px 52px}
+  /* Desktop dock: generous padding from screen bottom */
+  #bottom-dock{gap:16px;padding:20px 40px 64px}
   /* Desktop: single row for all buttons */
   #alts{flex-direction:row;align-items:center;gap:10px}
   #alts-row1{gap:10px}
@@ -436,9 +440,9 @@ function beginSession(){
   }
 
   document.getElementById('start-ov').style.display='none';
-  document.getElementById('bottom-dock').style.display='flex';
+  // Dock is always in DOM but off-screen — slides in when first question fires
   tryHideURLBar();
-  initAudioGraph(); // wire audio graph on user gesture — required for mobile
+  initAudioGraph();
   setupVoice();
   buildPills();
   showSecIntro();
@@ -481,17 +485,41 @@ function askQ(){
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.p;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
+
+  // Reset itext state for each new question
+  const itEl=document.getElementById('itext');
+  itEl.classList.remove('show','fade-out');
   if(q.ins){
-    document.getElementById('itext').textContent=q.ins;
-    setTimeout(function(){document.getElementById('itext').classList.add('show');},500);
+    itEl.textContent=q.ins;
+    // Show after short delay, then auto-fade after 4s
+    setTimeout(function(){
+      itEl.classList.add('show');
+      setTimeout(function(){
+        itEl.classList.remove('show');
+        itEl.classList.add('fade-out');
+      },4000);
+    },600);
   } else {
-    document.getElementById('itext').textContent='';
-    document.getElementById('itext').classList.remove('show');
+    itEl.textContent='';
   }
+
   setLabel(q.req?'Required':'Optional');
-  // Auto-hide header once questions start to reclaim screen space
+
+  // Slide dock in from bottom on first question (only once)
+  const dock=document.getElementById('bottom-dock');
+  if(!dock.classList.contains('visible')){
+    setTimeout(function(){dock.classList.add('visible');},300);
+  }
+
+  // Auto-hide header to reclaim screen space
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
-  speakIt(q.p,function(){setLabel('Tap to answer');setMicReady();});
+
+  speakIt(q.p,function(){
+    setLabel('Tap to answer');
+    setMicReady();
+    positionMic(); // dynamically centre mic between content and buttons
+  });
+  positionMic(); // also call immediately for layout
 }
 
 function totalDone(){let n=0;for(let i=0;i<cs;i++)n+=SECS[i].qs.length;return n+cq;}
@@ -809,12 +837,41 @@ const sharedAudio = new Audio();
 sharedAudio.preload = 'auto';
 let currentBlobUrl = null;
 
+// Dynamic mic positioning — centres mic between panel content bottom and alts top on desktop
+function positionMic(){
+  if(window.innerWidth < 768) return; // mobile: mic stays in natural flow
+  const panel=document.getElementById('panel');
+  const alts=document.getElementById('alts');
+  const micWrap=document.getElementById('mic-wrap');
+  if(!panel||!alts||!micWrap)return;
+
+  // Measure bottom of scrollable content and top of alts
+  const panelRect=panel.getBoundingClientRect();
+  const altsRect=alts.getBoundingClientRect();
+  const micH=micWrap.offsetHeight;
+
+  const contentBottom=panelRect.bottom;
+  const buttonsTop=altsRect.top;
+  const gap=buttonsTop-contentBottom;
+
+  if(gap > micH + 32){
+    // Enough room — centre mic in the gap with a buffer
+    const centre=contentBottom+(gap/2)-(micH/2);
+    const dockRect=document.getElementById('bottom-dock').getBoundingClientRect();
+    // Convert viewport position to position within dock
+    const offsetFromDockTop=centre-dockRect.top;
+    // Only adjust if it pushes mic upward from its natural position
+    if(offsetFromDockTop < 0){
+      micWrap.style.marginTop=Math.max(0,-offsetFromDockTop-8)+'px';
+    }
+  }
+}
+
 function speakIt(text,cb){
   speaking=true;
   setViz('speaking');
   setLabel('Speaking...');
 
-  // Clean text for TTS — strip any protocol tokens before sending to voice
   const ttsText=text
     .replace(/ANSWER:[\s\S]*$/m,'')
     .replace(/READY_NEXT/g,'')
@@ -822,21 +879,20 @@ function speakIt(text,cb){
     .replace(/\s+/g,' ')
     .trim();
 
-  // Animate bot-resp word by word
+  // Prepare word spans but keep them invisible — reveal on audio start
   const botEl=document.getElementById('bot-resp');
   botEl.innerHTML='';
   const words=ttsText.split(' ');
-  const totalDuration=Math.max(1500,(ttsText.length/13)*1000);
-  const delayPerWord=totalDuration/Math.max(words.length,1);
   words.forEach(function(w,i){
     const span=document.createElement('span');
     span.className='bot-word';
-    span.style.animationDelay=(i*delayPerWord)+'ms';
+    span.style.animationDelay='0ms'; // delay set dynamically on play
+    span.style.opacity='0';
+    span.style.animation='none'; // hold until audio starts
     span.textContent=(i>0?' ':'')+w;
     botEl.appendChild(span);
   });
 
-  // Stop any current playback
   sharedAudio.pause();
   sharedAudio.onended=null;
   sharedAudio.onerror=null;
@@ -870,6 +926,19 @@ function speakIt(text,cb){
     const url=URL.createObjectURL(blob);
     currentBlobUrl=url;
     sharedAudio.src=url;
+
+    sharedAudio.onplay=function(){
+      // Audio is actually playing — now animate words in sync
+      const audioDur=(sharedAudio.duration||estimatedMs/1000)*1000;
+      const msPerWord=audioDur/Math.max(words.length,1);
+      const spans=botEl.querySelectorAll('.bot-word');
+      spans.forEach(function(s,i){
+        s.style.animation=''; // re-enable animation
+        s.style.animationDelay=(i*msPerWord)+'ms';
+        // Slightly faster individual reveal than the inter-word gap
+        s.style.animationDuration='0.18s';
+      });
+    };
     sharedAudio.onended=function(){
       if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
       done();
@@ -882,13 +951,23 @@ function speakIt(text,cb){
     try{startAudioViz();}catch(e){}
     const p=sharedAudio.play();
     if(p!==undefined){
-      p.catch(function(){setTimeout(done,400);});
+      p.catch(function(){
+        // Autoplay blocked — show all words immediately
+        botEl.querySelectorAll('.bot-word').forEach(function(s){
+          s.style.opacity='1';s.style.animation='none';
+        });
+        setTimeout(done,400);
+      });
       setTimeout(done,estimatedMs+6000);
     } else {
       setTimeout(done,estimatedMs+2000);
     }
   })
   .catch(function(){
+    // TTS failed — show text immediately
+    botEl.querySelectorAll('.bot-word').forEach(function(s){
+      s.style.opacity='1';s.style.animation='none';
+    });
     setTimeout(done,300);
   });
 }
@@ -903,7 +982,8 @@ async function processAnswer(text){
   setLabel('Thinking...');
   setViz('speaking');
   document.getElementById('transcript').textContent=text;
-  document.getElementById('bot-resp').textContent='';
+  document.getElementById('bot-resp').innerHTML='';
+  positionMic();
 
   // Safety timeout - if API takes too long, move on
   const safetyTimer=setTimeout(function(){
@@ -1077,6 +1157,7 @@ window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);});
 document.addEventListener('visibilitychange',function(){
   if(!document.hidden)setTimeout(tryHideURLBar,300);
 });
+window.addEventListener('resize',function(){positionMic();});
 
 // Mobile keyboard handling — when keyboard opens, adjust bottom dock
 // so text input stays visible above keyboard, not hidden behind it
