@@ -19,7 +19,7 @@
   --dock-h:96px;
   --dock-h-desk:80px;
 }
-html,body{font-family:var(--font);background:var(--bg);color:var(--text);height:100%;overflow-x:hidden}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);height:100%;overflow-x:hidden;overscroll-behavior:none}
 body{display:flex;flex-direction:column}
 .orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:0.28;pointer-events:none;z-index:0;animation:drift 22s ease-in-out infinite}
 .orb1{width:600px;height:600px;background:#2d0fff;top:-200px;left:-150px}
@@ -31,6 +31,7 @@ body{display:flex;flex-direction:column}
   display:flex;flex-direction:column;align-items:center;
   min-height:100vh;
   padding:0 1.25rem calc(var(--dock-h) + 20px);
+  overscroll-behavior:none;
 }
 /* HEADER — smooth hide/show */
 header{
@@ -43,7 +44,7 @@ header{
 }
 header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-events:none}
 .logo-wrap{display:flex;align-items:center;gap:11px}
-.logo-icon{width:40px;height:40px;background:#7c6aff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon{width:40px;height:40px;background:none;border-radius:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .logo{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:#ffffff}
 #sec-nav{display:none;flex-direction:column;align-items:center;gap:4px;width:100%}
 .sec-row{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap}
@@ -104,8 +105,9 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #transcript-area{width:100%;max-width:560px;text-align:center;margin-top:20px;margin-bottom:4px;min-height:28px}
 #transcript{font-size:14px;color:rgba(240,238,255,0.65);font-style:italic;line-height:1.7}
 #bot-resp{font-size:15px;color:var(--acc2);font-style:italic;line-height:1.7;margin-top:4px;min-height:22px}
-/* Word-by-word animation */
-.bot-word{display:inline;opacity:0;animation:wordIn 0.22s ease forwards}
+/* Word-by-word animation — .reveal class triggers the animation */
+.bot-word{display:inline;opacity:0}
+.bot-word.reveal{animation:wordIn 0.15s ease forwards}
 @keyframes wordIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
 /* TEXT INPUT */
 #text-mode{display:none;width:100%;max-width:540px;flex-direction:column;gap:8px;margin-top:8px}
@@ -184,7 +186,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 @media(min-width:768px){
   #app{padding:0 2rem calc(var(--dock-h-desk) + 160px)}
   header{padding:1.75rem 0 1rem}
-  .logo-icon{width:44px;height:44px;border-radius:11px;background:#7c6aff}
+  .logo-icon{width:44px;height:44px;background:none;border-radius:0}
   .logo{font-size:30px;color:#ffffff}
   .sec-item{font-size:11.5px;padding:3px 12px}
   #viz{height:100px;gap:10px}
@@ -229,7 +231,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 <div class="orb orb3"></div>
 
 <div id="start-ov">
-  <div style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">Strat<span style="color:#7c6aff">IQ</span></div>
+  <div style="display:flex;align-items:center;gap:12px"><svg width="52" height="57" viewBox="0 0 115 126" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M105.6,69l-11.6-29.8c-.5-1.4-2-2.2-3.4-2.3s-3.1.9-4.1,2.3c-2,3-3.4,6.3-3.7,9.9l-.2,1.7c0,.6,0,1.1,0,1.7v1c.2,2.1.8,4.3,1.6,6.3l12.4,31.9c.7,1.9,1,4.3.8,6.2-.8,6.9-6.6,12-13.6,12h-32.3c-8.8,0-17.3-5.3-20.5-13.4l-10.9-27.9-1.8-4.8c-.5-1.3-.9-2.5-.9-3.9s0-1.7,0-2.5c.6-5.9,4.9-10.8,10.7-11.9l.9-.2h1c0,0,6.6,0,6.6,0l-2.5-6.5c-.4-.9-.6-1.8-.7-2.8s-.2-2.9,0-4.2c1-5.9,5.8-10.5,11.7-11.2.5,0,.9-.1,1.4-.1h33.4c8.3,0,16.7,5.8,19.7,13.4l13,33.4c.6,1.5.7,3.2.7,4.8-.2,6.6-5.1,12-11.6,12.9-.2,0-.4,0-.7,0l-2.7-7c0,0,.1-.2.2-.2h.6c1.4,0,2.7-.2,3.9-.9,2.8-1.6,3.6-4.9,2.5-7.8ZM48,76.9c0-.4,0-.7-.1-1.1v-.9c-.3-1.2-.6-2.3-1-3.4l-7.2-18.6c0-.1-.2-.5-.3-.5h-8.8c-3.2,0-6.1,3.1-5.8,6.8s.4,2,.8,3l11.2,28.8c.6,1.5,2.3,2.3,3.7,2.3s3-.9,3.8-2.3c2-2.9,3.3-6.2,3.7-9.7s0-.6,0-.9v-1.4c0-.2,0-.5,0-.8v-1.3ZM63.2,45.2c.4,0,.9,0,1.3,0,6.8-.7,12.5-4.4,16.2-10.1l.6-1c.5-.8.7-1.6.6-2.5-.2-1.8-1.7-3.8-3.8-3.8h-31.9c-3,0-5.3,2.8-5.6,5.5-.1,1.4.1,2.5.6,3.7l7.6,19.5,3,7.6c3.2,8.1,11.2,13.8,19.9,13.8h11.7s-4.3-10.9-4.3-10.9c-1.2-3.1-3.1-5.9-5.5-8.2-4-3.8-9.2-5.9-14.8-6.1h-4.5s-2.8-7.3-2.8-7.3h11.6ZM86.3,85.1h-19c-.4,0-1.9.2-2.3.3-5.5.9-10.4,3.8-13.7,8.3-.7,1-1.4,1.9-2,3s-.6,2.7.2,3.9c.7,1.1,1.9,2,3.4,2h31.6c1.2,0,2.4-.6,3.3-1.2s.8-.7,1.2-1.2c1.4-1.8,1.6-4.3.8-6.4l-3.4-8.7Z" fill="#7462f9"/></svg><span style="font-size:32px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">Strat<span style="color:#7462f9">IQ</span></span></div>
   <h1>Your brand strategy<br>starts here.</h1>
   <p>I am your AI brand consultant. We will chat through your brand brief together — I ask the questions, you bring the insights. About 15 minutes and your full strategy report lands shortly after.</p>
   <div class="feats">
@@ -265,9 +267,9 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   <header>
     <div class="logo-wrap">
       <div class="logo-icon">
-        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 2L4 6.5V15.5L11 20L18 15.5V6.5L11 2Z" stroke="white" stroke-width="1.5" stroke-linejoin="round" fill="none"/><path d="M4 6.5L11 11L18 6.5" stroke="white" stroke-width="1.5" stroke-linejoin="round" fill="none"/><path d="M11 11V20" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+        <svg width="26" height="28" viewBox="0 0 115 126" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M105.6,69l-11.6-29.8c-.5-1.4-2-2.2-3.4-2.3s-3.1.9-4.1,2.3c-2,3-3.4,6.3-3.7,9.9l-.2,1.7c0,.6,0,1.1,0,1.7v1c.2,2.1.8,4.3,1.6,6.3l12.4,31.9c.7,1.9,1,4.3.8,6.2-.8,6.9-6.6,12-13.6,12h-32.3c-8.8,0-17.3-5.3-20.5-13.4l-10.9-27.9-1.8-4.8c-.5-1.3-.9-2.5-.9-3.9s0-1.7,0-2.5c.6-5.9,4.9-10.8,10.7-11.9l.9-.2h1c0,0,6.6,0,6.6,0l-2.5-6.5c-.4-.9-.6-1.8-.7-2.8s-.2-2.9,0-4.2c1-5.9,5.8-10.5,11.7-11.2.5,0,.9-.1,1.4-.1h33.4c8.3,0,16.7,5.8,19.7,13.4l13,33.4c.6,1.5.7,3.2.7,4.8-.2,6.6-5.1,12-11.6,12.9-.2,0-.4,0-.7,0l-2.7-7c0,0,.1-.2.2-.2h.6c1.4,0,2.7-.2,3.9-.9,2.8-1.6,3.6-4.9,2.5-7.8ZM48,76.9c0-.4,0-.7-.1-1.1v-.9c-.3-1.2-.6-2.3-1-3.4l-7.2-18.6c0-.1-.2-.5-.3-.5h-8.8c-3.2,0-6.1,3.1-5.8,6.8s.4,2,.8,3l11.2,28.8c.6,1.5,2.3,2.3,3.7,2.3s3-.9,3.8-2.3c2-2.9,3.3-6.2,3.7-9.7s0-.6,0-.9v-1.4c0-.2,0-.5,0-.8v-1.3ZM63.2,45.2c.4,0,.9,0,1.3,0,6.8-.7,12.5-4.4,16.2-10.1l.6-1c.5-.8.7-1.6.6-2.5-.2-1.8-1.7-3.8-3.8-3.8h-31.9c-3,0-5.3,2.8-5.6,5.5-.1,1.4.1,2.5.6,3.7l7.6,19.5,3,7.6c3.2,8.1,11.2,13.8,19.9,13.8h11.7s-4.3-10.9-4.3-10.9c-1.2-3.1-3.1-5.9-5.5-8.2-4-3.8-9.2-5.9-14.8-6.1h-4.5s-2.8-7.3-2.8-7.3h11.6ZM86.3,85.1h-19c-.4,0-1.9.2-2.3.3-5.5.9-10.4,3.8-13.7,8.3-.7,1-1.4,1.9-2,3s-.6,2.7.2,3.9c.7,1.1,1.9,2,3.4,2h31.6c1.2,0,2.4-.6,3.3-1.2s.8-.7,1.2-1.2c1.4-1.8,1.6-4.3.8-6.4l-3.4-8.7Z" fill="white"/></svg>
       </div>
-      <span class="logo">Strat<span style="color:#7c6aff">IQ</span></span>
+      <span class="logo">Strat<span style="color:#7462f9">IQ</span></span>
     </div>
     <div id="sec-nav">
       <div class="sec-row">
@@ -490,11 +492,13 @@ function showSecIntro(){
   document.getElementById('slabel').textContent='Section '+(cs+1)+' of '+SECS.length;
   document.getElementById('qtext').textContent=sec.intro;
   document.getElementById('itext').textContent='';
-  document.getElementById('itext').classList.remove('show');
+  document.getElementById('itext').classList.remove('show','fade-out');
   document.getElementById('ptext').textContent=sec.name;
-  // Show header for section intro
+  // Show header briefly, then hide as soon as voice starts
   document.querySelector('header').classList.remove('hidden');
   updatePills();
+  // Hide header as soon as speech starts (300ms grace to see it)
+  setTimeout(function(){document.querySelector('header').classList.add('hidden');},300);
   speakIt(sec.intro,function(){askQ();});
 }
 
@@ -922,10 +926,7 @@ function speakIt(text,cb){
   const words=ttsText.split(' ');
   words.forEach(function(w,i){
     const span=document.createElement('span');
-    span.className='bot-word';
-    span.style.animationDelay='0ms'; // delay set dynamically on play
-    span.style.opacity='0';
-    span.style.animation='none'; // hold until audio starts
+    span.className='bot-word'; // starts invisible, .reveal added with delay on play
     span.textContent=(i>0?' ':'')+w;
     botEl.appendChild(span);
   });
@@ -966,27 +967,22 @@ function speakIt(text,cb){
     currentBlobUrl=url;
     sharedAudio.src=url;
 
-    // animateWords is set before play — either from alignment data or estimated
     sharedAudio.onplay=function(){
-      if(wordTimings){
-        // Use real ElevenLabs timestamps — most accurate
-        const spans=botEl.querySelectorAll('.bot-word');
+      // Reveal each word with a setTimeout so timing is driven by the JS event loop
+      // This is more reliable cross-browser than CSS animation-delay juggling
+      var spans=botEl.querySelectorAll('.bot-word');
+      if(wordTimings&&wordTimings.length>=spans.length){
+        // ElevenLabs real timestamps — most accurate
         spans.forEach(function(s,i){
-          if(!wordTimings[i])return;
-          const startMs=wordTimings[i].startMs;
-          s.style.animationDelay=startMs+'ms';
-          s.style.animationDuration='0.15s';
-          s.style.animation='wordIn 0.15s ease forwards';
+          var startMs=wordTimings[i]?wordTimings[i].startMs:0;
+          setTimeout(function(){s.classList.add('reveal');},startMs);
         });
       } else {
-        // Fallback: distribute evenly across audio duration
-        const audioDur=(sharedAudio.duration||estimatedMs/1000)*1000;
-        const msPerWord=audioDur/Math.max(words.length,1);
-        const spans=botEl.querySelectorAll('.bot-word');
+        // Fallback: evenly distribute across estimated audio duration
+        var audioDur=(sharedAudio.duration>0?sharedAudio.duration*1000:estimatedMs);
+        var msPerWord=Math.max(60,audioDur/Math.max(spans.length,1));
         spans.forEach(function(s,i){
-          s.style.animationDelay=(i*msPerWord)+'ms';
-          s.style.animationDuration='0.15s';
-          s.style.animation='wordIn 0.15s ease forwards';
+          setTimeout(function(){s.classList.add('reveal');},i*msPerWord);
         });
       }
     };
@@ -1004,9 +1000,7 @@ function speakIt(text,cb){
     if(p!==undefined){
       p.catch(function(){
         // Autoplay blocked — show all words immediately
-        botEl.querySelectorAll('.bot-word').forEach(function(s){
-          s.style.opacity='1';s.style.animation='none';
-        });
+        botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
         setTimeout(done,400);
       });
       setTimeout(done,estimatedMs+6000);
@@ -1016,9 +1010,7 @@ function speakIt(text,cb){
   })
   .catch(function(){
     // TTS failed — show text immediately
-    botEl.querySelectorAll('.bot-word').forEach(function(s){
-      s.style.opacity='1';s.style.animation='none';
-    });
+    botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
     setTimeout(done,300);
   });
 }
@@ -1043,7 +1035,8 @@ async function processAnswer(text){
     setMicReady();
   }, 15000);
 
-  const sys='You are a warm, patient, and genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. You have 20 years of combined expertise as a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist. Your only job is to make this feel like chatting with a brilliant, attentive friend who genuinely cares — never like a robot or form-filler.\n\nCORE BEHAVIOUR:\n- Use natural spoken English. Vary your rhythm — short punchy replies mixed with slightly longer ones.\n- Use light natural phrases like "Got it...", "Okay, cool...", "Hmm, interesting..." to simulate real thinking.\n- Always briefly acknowledge what they just said before moving on. Show you actually heard them.\n- Mirror the user tone lightly — match their energy whether they are enthusiastic, businesslike, or uncertain.\n- Never sound scripted. Never use AI cliches. Never mention being an AI.\n- Give gentle progress nudges occasionally: "You are about halfway through — going really well."\n\nINTERNAL LOGIC (do silently before every reply):\n1. Scan conversation history for context and current position in questionnaire.\n2. Understand the user intent, emotion, any confusion or hesitation.\n3. Decide the single best next action.\n4. If answer is vague or user seems stuck — plan a soft low-pressure re-engagement.\n5. Choose a response style that feels human and keeps momentum without rushing.\n\nBRAND KNOWLEDGE:\nIf someone does not understand a question (eg they do not know what a value proposition or brand archetype is), explain it simply with a real-world example, then ask again in plain language. Help them discover things about their brand they have never articulated. Make them feel capable, not confused.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. CAPTURE EVERYTHING — if user lists multiple items (services, competitors, channels), capture ALL of them.\n2. If answer is sufficient: acknowledge naturally (1 sentence), then output exactly:\nANSWER: [complete extracted answer with every detail mentioned]\nREADY_NEXT\n3. If vague, too short, or confused: explain the question simply with one example, ask one specific follow-up. Under 35 words.\n4. Never ask more than one follow-up before accepting whatever they give.\n5. Keep responses under 20 words maximum — this is voice, brevity is everything.\n6. Allow natural contractions in speech (I am, you are, let us) — sound human.\n7. Never reference being an AI or a bot.';
+  const sys='You are a warm, patient, and genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. You have 20 years of combined expertise as a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist. Your only job is to make this feel like chatting with a brilliant, attentive friend who genuinely cares — never like a robot or form-filler.\n\nCORE BEHAVIOUR:\n- Use natural spoken English. Vary your rhythm — short punchy replies mixed with slightly longer ones.\n- Use light natural phrases like "Got it...", "Okay, cool...", "Hmm, interesting..." to simulate real thinking.\n- Always briefly acknowledge what they just said before moving on. Show you actually heard them.\n- Mirror the user tone lightly — match their energy whether they are enthusiastic, businesslike, or uncertain.\n- Never sound scripted. Never use AI cliches. Never mention being an AI.\n- Give gentle progress nudges occasionally: "You are about halfway through — going really well."\n\nINTERNAL LOGIC (do silently before every reply):\n1. Scan conversation history for context and current position in questionnaire.\n2. Understand the user intent, emotion, any confusion or hesitation.\n3. Decide the single best next action.\n4. If answer is vague or user seems stuck — plan a soft low-pressure re-engagement.\n5. Choose a response style that feels human and keeps momentum without rushing.\n\nBRAND KNOWLEDGE:\nIf someone does not understand a question (eg they do not know what a value proposition or brand archetype is), explain it simply with a real-world example, then ask again in plain language. Help them discover things about their brand they have never articulated. Make them feel capable, not confused.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. CAPTURE EVERYTHING — if user lists multiple items (services, competitors, channels), capture ALL of them.\n2. If answer is sufficient: acknowledge naturally (1 sentence), then output exactly:\nANSWER: [complete extracted answer with every detail mentioned]\nREADY_NEXT\n3. If vague, too short, or confused: explain the question simply with one example, ask one specific follow-up. Under 35 words.\n4. Never ask more than one follow-up before accepting whatever they give.\n5. Keep responses under 20 words maximum — this is voice, brevity is everything.\n6. Allow natural contractions in speech (I am, you are, let us) — sound human.\n7. Never reference being an AI or a bot.
+8. CRITICAL: Your response text must end cleanly. Never output ANSWER:, READY_NEXT, or any protocol tokens in the spoken portion of your reply. These must ONLY appear on their own line after the spoken response.';
 
   try{
     const res=await fetch('/api/claude',{
@@ -1051,7 +1044,7 @@ async function processAnswer(text){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:180,
+        max_tokens:200,
         system:sys,
         messages:history.slice(-6)
       })
@@ -1210,22 +1203,43 @@ document.addEventListener('visibilitychange',function(){
 });
 window.addEventListener('resize',function(){positionMic();});
 
-// Swipe down from top to reveal header, swipe up to hide
+// Swipe gesture handler for header show/hide
+// IMPORTANT: passive:false on touchstart so we can call preventDefault()
+// to block the browser's native pull-to-refresh gesture
 (function(){
-  var swipeEl=document.getElementById('header-swipe');
   var startY=0;
+  var startX=0;
+  var blockScroll=false;
+
   document.addEventListener('touchstart',function(e){
     startY=e.touches[0].clientY;
-  },{passive:true});
+    startX=e.touches[0].clientX;
+    blockScroll=false;
+  },{passive:true}); // passive:true here is fine — we act on touchmove
+
+  document.addEventListener('touchmove',function(e){
+    var dy=e.touches[0].clientY-startY;
+    var dx=e.touches[0].clientX-startX;
+    // If swiping down near the top of the page AND page is at scroll top
+    // → block the native pull-to-refresh
+    if(dy>0 && Math.abs(dy)>Math.abs(dx) && window.scrollY<=0){
+      e.preventDefault(); // stops pull-to-refresh
+    }
+  },{passive:false}); // passive:false required to call preventDefault
+
   document.addEventListener('touchend',function(e){
     var endY=e.changedTouches[0].clientY;
-    var delta=endY-startY;
+    var endX=e.changedTouches[0].clientX;
+    var dy=endY-startY;
+    var dx=endX-startX;
+    // Only act on predominantly vertical swipes
+    if(Math.abs(dy)<Math.abs(dx)*0.8)return;
     var hdr=document.querySelector('header');
     if(!hdr)return;
-    if(delta>40&&e.changedTouches[0].clientY<120){
-      // Swiped down near top — reveal header
+    if(dy>50&&startY<80){
+      // Swiped down from near top edge — reveal header
       hdr.classList.remove('hidden');
-    } else if(delta<-30&&!hdr.classList.contains('hidden')){
+    } else if(dy<-40&&!hdr.classList.contains('hidden')){
       // Swiped up — hide header
       hdr.classList.add('hidden');
     }
