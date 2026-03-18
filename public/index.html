@@ -1220,9 +1220,9 @@ window.addEventListener('resize',function(){positionMic();});
   document.addEventListener('touchmove',function(e){
     var dy=e.touches[0].clientY-startY;
     var dx=e.touches[0].clientX-startX;
-    // If swiping down near the top of the page AND page is at scroll top
-    // → block the native pull-to-refresh
-    if(dy>0 && Math.abs(dy)>Math.abs(dx) && window.scrollY<=0){
+    // Only block pull-to-refresh if it's a genuine downward drag (>10px),
+    // not a tap (which has tiny movement). This preserves button taps.
+    if(dy>10 && Math.abs(dy)>Math.abs(dx) && Math.abs(dy)>Math.abs(dx)*0.8 && window.scrollY<=0){
       e.preventDefault(); // stops pull-to-refresh
     }
   },{passive:false}); // passive:false required to call preventDefault
