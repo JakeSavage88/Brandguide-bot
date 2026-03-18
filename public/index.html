@@ -2,7 +2,11 @@
 <html lang="en-AU">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#08080f">
 <title>StratIQ — AI Brand Strategy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -25,8 +29,10 @@ header{width:100%;max-width:680px;padding:1.5rem 0 0.75rem;display:flex;align-it
 .pill.done{background:rgba(124,106,255,0.08);border-color:rgba(124,106,255,0.2);color:rgba(167,139,250,0.5)}
 #panel{width:100%;max-width:680px;flex:1;display:flex;flex-direction:column;align-items:center;padding:1.5rem 0 2.5rem;gap:1.75rem}
 #viz-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:500;min-height:14px;text-align:center;transition:opacity 0.3s}
-#viz{display:flex;align-items:center;justify-content:center;gap:7px;height:100px}
-.bar{width:10px;border-radius:6px;background:linear-gradient(to top,#7c6aff,#c4b5fd);transition:height 0.07s ease}
+#viz{display:flex;align-items:center;justify-content:center;gap:9px;height:100px}
+/* Bars: wider + pill-shaped to match PDF mockup */
+.bar{width:14px;border-radius:8px;background:linear-gradient(to top,#7c6aff,#c4b5fd);transition:height 0.06s ease;flex-shrink:0}
+/* IDLE — gentle breathing, CSS animation only */
 .bar:nth-child(1){animation:i1 2.1s ease-in-out infinite}
 .bar:nth-child(2){animation:i2 1.8s ease-in-out infinite}
 .bar:nth-child(3){animation:i3 2.4s ease-in-out infinite}
@@ -34,10 +40,12 @@ header{width:100%;max-width:680px;padding:1.5rem 0 0.75rem;display:flex;align-it
 .bar:nth-child(5){animation:i3 2.2s ease-in-out infinite}
 .bar:nth-child(6){animation:i2 2.0s ease-in-out infinite}
 .bar:nth-child(7){animation:i1 1.7s ease-in-out infinite}
-@keyframes i1{0%,100%{height:10px}50%{height:20px}}
-@keyframes i2{0%,100%{height:16px}50%{height:30px}}
-@keyframes i3{0%,100%{height:22px}50%{height:42px}}
-@keyframes i4{0%,100%{height:28px}50%{height:54px}}
+@keyframes i1{0%,100%{height:10px}50%{height:22px}}
+@keyframes i2{0%,100%{height:16px}50%{height:34px}}
+@keyframes i3{0%,100%{height:22px}50%{height:50px}}
+@keyframes i4{0%,100%{height:28px}50%{height:62px}}
+/* SPEAKING — CSS fallback only; Web Audio API overrides height directly when audio plays */
+#viz.speaking .bar{background:linear-gradient(to top,#7c6aff,#c4b5fd)}
 #viz.speaking .bar:nth-child(1){animation:s1 0.38s ease-in-out infinite}
 #viz.speaking .bar:nth-child(2){animation:s2 0.32s ease-in-out infinite}
 #viz.speaking .bar:nth-child(3){animation:s3 0.28s ease-in-out infinite}
@@ -45,10 +53,13 @@ header{width:100%;max-width:680px;padding:1.5rem 0 0.75rem;display:flex;align-it
 #viz.speaking .bar:nth-child(5){animation:s3 0.30s ease-in-out infinite}
 #viz.speaking .bar:nth-child(6){animation:s2 0.35s ease-in-out infinite}
 #viz.speaking .bar:nth-child(7){animation:s1 0.40s ease-in-out infinite}
-@keyframes s1{0%,100%{height:18px}50%{height:50px}}
-@keyframes s2{0%,100%{height:32px}50%{height:80px}}
-@keyframes s3{0%,100%{height:48px}50%{height:95px}}
+@keyframes s1{0%,100%{height:18px}50%{height:52px}}
+@keyframes s2{0%,100%{height:32px}50%{height:82px}}
+@keyframes s3{0%,100%{height:48px}50%{height:96px}}
 @keyframes s4{0%,100%{height:58px}50%{height:100px}}
+/* LIVE — Web Audio API drives heights; pause CSS so it doesn't fight */
+#viz.live .bar{animation:none!important;background:linear-gradient(to top,#7c6aff,#c4b5fd);transition:height 0.05s ease}
+/* LISTENING — cyan, fast reactive pulse */
 #viz.listening .bar{background:linear-gradient(to top,#06b6d4,#a5f3fc)}
 #viz.listening .bar:nth-child(1){animation:l1 0.55s ease-in-out infinite}
 #viz.listening .bar:nth-child(2){animation:l2 0.48s ease-in-out infinite}
@@ -57,10 +68,10 @@ header{width:100%;max-width:680px;padding:1.5rem 0 0.75rem;display:flex;align-it
 #viz.listening .bar:nth-child(5){animation:l3 0.45s ease-in-out infinite}
 #viz.listening .bar:nth-child(6){animation:l2 0.50s ease-in-out infinite}
 #viz.listening .bar:nth-child(7){animation:l1 0.57s ease-in-out infinite}
-@keyframes l1{0%,100%{height:12px}50%{height:38px}}
-@keyframes l2{0%,100%{height:22px}50%{height:60px}}
-@keyframes l3{0%,100%{height:36px}50%{height:85px}}
-@keyframes l4{0%,100%{height:44px}50%{height:98px}}
+@keyframes l1{0%,100%{height:12px}50%{height:40px}}
+@keyframes l2{0%,100%{height:22px}50%{height:64px}}
+@keyframes l3{0%,100%{height:36px}50%{height:88px}}
+@keyframes l4{0%,100%{height:44px}50%{height:100px}}
 #qdisplay{width:100%;text-align:center;min-height:90px;display:flex;flex-direction:column;align-items:center;gap:6px}
 #slabel{font-size:10px;color:var(--acc2);text-transform:uppercase;letter-spacing:2px;font-weight:600;min-height:14px}
 #qtext{font-size:20px;font-weight:500;line-height:1.5;letter-spacing:-0.3px;max-width:540px;min-height:60px}
@@ -178,7 +189,7 @@ header{width:100%;max-width:680px;padding:1.5rem 0 0.75rem;display:flex;align-it
     </div>
 
     <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
-      <button id="mic-btn" onclick="toggleMic()">🎤</button>
+      <button id="mic-btn" onclick="toggleMic()"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="2" width="10" height="16" rx="5" fill="white"/><path d="M5 14a9 9 0 0 0 18 0" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/><line x1="14" y1="23" x2="14" y2="27" stroke="white" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="27" x2="18" y2="27" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg></button>
       <div id="mic-label">Tap to speak</div>
     </div>
 
@@ -193,8 +204,10 @@ header{width:100%;max-width:680px;padding:1.5rem 0 0.75rem;display:flex;align-it
     <div id="alts">
       <button class="abtn" onclick="toggleText()">⌨️ Type instead</button>
       <button class="abtn" onclick="openForm()">⬇️ Download form</button>
+      <button class="abtn" onclick="uploadForm()">⬆️ Upload form</button>
       <button class="abtn" onclick="skipQ()">Skip question</button>
     </div>
+    <input type="file" id="upload-input" accept=".txt,.pdf,.doc,.docx" style="display:none" onchange="handleUpload(this)"/>
   </div>
 </div>
 
@@ -299,6 +312,7 @@ function beginSession(){
   }
 
   document.getElementById('start-ov').style.display='none';
+  tryHideURLBar();
   setupVoice();
   buildPills();
   showSecIntro();
@@ -328,7 +342,7 @@ function updatePills(){
 function showSecIntro(){
   const sec=SECS[cs];
   setLabel('');
-  document.getElementById('slabel').textContent=sec.emoji+'  Section '+(cs+1)+' of '+SECS.length;
+  document.getElementById('slabel').textContent='Section '+(cs+1)+' of '+SECS.length;
   document.getElementById('qtext').textContent=sec.intro;
   document.getElementById('itext').textContent='';
   document.getElementById('itext').classList.remove('show');
@@ -342,7 +356,7 @@ function askQ(){
   if(cq>=sec.qs.length){completeSection();return;}
   const q=sec.qs[cq];
   const done=totalDone(),all=totalAll();
-  document.getElementById('slabel').textContent=SECS[cs].emoji+'  '+SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
+  document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.p;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
   if(q.ins){
@@ -607,26 +621,31 @@ function startAudioViz(audio){
     analyser.connect(ctx.destination);
     const bars=document.querySelectorAll('.bar');
     const data=new Uint8Array(analyser.frequencyBinCount);
-    const indices=[2,4,6,9,12,16,20];
+    // Use spread-out frequency indices for more visual interest
+    const indices=[2,4,7,10,13,17,21];
+    // Switch to 'live' mode — CSS animations paused, Web Audio drives heights
+    document.getElementById('viz').classList.add('live');
     function frame(){
       if(!analyser)return;
       analyser.getByteFrequencyData(data);
       bars.forEach(function(b,i){
         const val=data[indices[i]]||0;
-        const h=Math.max(8,Math.min(100,(val/255)*110));
+        // Scale: quiet audio still shows some movement (min 8px), loud hits 100px
+        const h=Math.max(8,Math.min(100,8+(val/255)*92));
         b.style.height=h+'px';
       });
       vizRaf=requestAnimationFrame(frame);
     }
     frame();
   }catch(e){
-    // AudioContext failed - viz still works via CSS animation
+    // AudioContext failed — CSS animation fallback already running
   }
 }
 
 function stopAudioViz(){
   if(vizRaf){cancelAnimationFrame(vizRaf);vizRaf=null;}
   analyser=null;
+  document.getElementById('viz').classList.remove('live');
   const bars=document.querySelectorAll('.bar');
   bars.forEach(function(b){b.style.height='';});
 }
@@ -800,7 +819,63 @@ function sendTextAndReturnToVoice(){
 
 function openForm(){window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');}
 
-// Voice handled by ElevenLabs TTS
+// Upload prefilled form — reads text file and pre-populates answers
+function uploadForm(){
+  document.getElementById('upload-input').click();
+}
+
+function handleUpload(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    // Parse Q: / A: format from downloaded form
+    const pairs=text.match(/Q:\s*(.+?)\nA:\s*([\s\S]+?)(?=\nQ:|$)/g);
+    if(pairs&&pairs.length>0){
+      let loaded=0;
+      pairs.forEach(function(pair){
+        const qm=pair.match(/Q:\s*(.+)/);
+        const am=pair.match(/A:\s*([\s\S]+)/);
+        if(qm&&am){
+          const qtext=qm[1].trim();
+          const atext=am[1].trim();
+          // Match against known question keys
+          SECS.forEach(function(sec){
+            sec.qs.forEach(function(q){
+              if(q.p.toLowerCase().includes(qtext.toLowerCase().substring(0,30))||qtext.toLowerCase().includes(q.k.toLowerCase().substring(0,20))){
+                if(atext&&atext!=='(no answer)'){answers[q.k]=atext;loaded++;}
+              }
+            });
+          });
+        }
+      });
+      if(loaded>0){
+        speakIt('Awesome — I have loaded '+loaded+' answers from your form. Let us pick up from where you left off.',function(){askQ();});
+      } else {
+        speakIt('I could not read that file format. Try downloading a fresh form, filling it in, and uploading the text file.',null);
+      }
+    } else {
+      speakIt('That file does not look like a StratIQ form. Download the form first, fill it in, then upload it here.',null);
+    }
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+// FIX 5: Hide browser URL bar for immersive full-screen feel
+// Triggered on session start and on scroll events
+function tryHideURLBar(){
+  if(window.scrollY===0){
+    window.scrollTo(0,1);
+    setTimeout(function(){window.scrollTo(0,0);},100);
+  }
+}
+window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);});
+// Also use Page Visibility API to re-trigger when user returns to tab
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden)setTimeout(tryHideURLBar,300);
+});
 </script>
 </body>
 </html>
