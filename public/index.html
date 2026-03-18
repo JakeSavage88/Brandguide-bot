@@ -89,7 +89,7 @@ header{
 /* Solid purple pill bars — no gradient, fully rounded, matching PDF */
 .bar{
   width:11px;
-  border-radius:6px;
+  border-radius:50px;
   background:#7c6aff;
   transition:height 0.05s ease;
   flex-shrink:0;
@@ -256,7 +256,7 @@ header{
   .logo{font-size:30px}
   .sec-item{font-size:11.5px;padding:3px 12px}
   #viz{height:100px;gap:10px}
-  .bar{width:16px}
+  .bar{width:16px;border-radius:50px}
   #qdisplay{margin-top:36px;gap:12px;padding:0 16px}
   #qtext{font-size:24px;max-width:600px;margin-top:10px}
   #slabel{font-size:11px}
@@ -272,7 +272,13 @@ header{
   .sec-item{font-size:9px;padding:2px 6px}
   #alts{gap:5px}
   .abtn{font-size:10px;padding:6px 9px}
-  .abtn svg{display:none} /* hide icons on very small screens */
+}
+/* Hide icons in portrait mobile, show in landscape and desktop */
+@media(max-width:600px) and (orientation:portrait){
+  .abtn svg{display:none}
+}
+@media(min-width:601px),(orientation:landscape){
+  .abtn svg{display:inline-block}
 }
 </style>
 </head>
@@ -832,15 +838,17 @@ function startAudioViz(){
   const bars=document.querySelectorAll('.bar');
   const data=new Uint8Array(analyser.frequencyBinCount);
 
-  // Bell-curve multipliers: bar 4 (centre, index 3) = 1.0, falls off each side.
-  // This guarantees centre always peaks visually regardless of which
-  // frequency bin is loudest — the energy is shaped onto the bars.
+  // Bell-curve shape: centre bar always peaks, falls off each side
   const bellCurve=[0.35, 0.62, 0.85, 1.0, 0.85, 0.62, 0.35];
 
-  // Sample a band of speech-energy bins (roughly 200Hz–3kHz range)
-  // fftSize=128 → 64 bins, bin width ≈ 344Hz at 44.1kHz
-  // bins 1–9 cover ~86Hz–775Hz (voice fundamentals + harmonics)
-  const speechBins=[1,2,3,4,5,6,7,8,9];
+  // Per-bar independent noise state — each bar has its own phase and speed
+  // so they animate at different rates relative to each other
+  const noisePhase=[0, 1.1, 2.3, 0.7, 1.8, 0.4, 2.9];
+  const noiseSpeed=[0.08, 0.11, 0.07, 0.13, 0.09, 0.12, 0.06];
+  const noiseAmp  =[0.18, 0.22, 0.15, 0.20, 0.17, 0.21, 0.16];
+
+  // Speech energy band: bins covering ~86Hz–690Hz (voice fundamentals)
+  const speechBins=[1,2,3,4,5,6,7,8];
 
   document.getElementById('viz').classList.add('live');
 
@@ -848,23 +856,22 @@ function startAudioViz(){
     if(!analyser){stopAudioViz();return;}
     analyser.getByteFrequencyData(data);
 
-    // Get the peak energy value across the speech band
-    let peak=0;
+    // Overall speech energy
+    let peak=0,sum=0;
     for(let i=0;i<speechBins.length;i++){
-      if(data[speechBins[i]]>peak) peak=data[speechBins[i]];
+      const v=data[speechBins[i]];
+      if(v>peak)peak=v;
+      sum+=v;
     }
-
-    // Also use a weighted average for smoother response
-    let sum=0;
-    for(let i=0;i<speechBins.length;i++) sum+=data[speechBins[i]];
-    const avg=sum/speechBins.length;
-
-    // Blend peak and avg — peak gives snap, avg gives body
-    const energy=(peak*0.6+avg*0.4);
+    const energy=(peak*0.65+sum/speechBins.length*0.35);
 
     bars.forEach(function(b,i){
-      // Apply bell-curve shape to the energy reading
-      const scaled=energy*bellCurve[i];
+      // Advance each bar's individual noise phase
+      noisePhase[i]+=noiseSpeed[i];
+      // Noise = sine wave per bar — each bar drifts independently
+      const noise=1.0+(Math.sin(noisePhase[i])*noiseAmp[i]);
+      // Bell-curve × energy × per-bar noise
+      const scaled=energy*bellCurve[i]*noise;
       const h=Math.max(6,Math.min(100,6+(scaled/255)*94));
       b.style.height=h+'px';
     });
@@ -984,7 +991,7 @@ async function processAnswer(text){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:120,
+        max_tokens:180,
         system:sys,
         messages:history.slice(-6)
       })
@@ -993,9 +1000,14 @@ async function processAnswer(text){
     clearTimeout(safetyTimer);
     const reply=(data.content&&data.content[0])?data.content[0].text:'';
     history.push({role:'assistant',content:reply});
-    const am=reply.match(/ANSWER:\s*(.+?)(?:\n|$)/);
+    const am=reply.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
     const ready=reply.includes('READY_NEXT');
-    let disp=reply.replace(/ANSWER:.*$/m,'').replace('READY_NEXT','').trim();
+    // Strip all protocol tokens and clean up trailing whitespace/punctuation artifacts
+    let disp=reply
+      .replace(/ANSWER:[\s\S]*$/m,'')
+      .replace(/READY_NEXT/g,'')
+      .replace(/\s+$/,'')
+      .trim();
     if(disp){
       speakIt(disp,function(){
         if(ready&&am){answers[q.k]=am[1].trim();cq++;setTimeout(askQ,500);}
@@ -1026,12 +1038,30 @@ function skipQ(){
 
 function toggleText(){
   textActive=!textActive;
-  document.getElementById('text-mode').style.display=textActive?'flex':'none';
-  document.getElementById('mic-btn').style.display='flex';
-  document.getElementById('mic-label').style.display='block';
+  const textMode=document.getElementById('text-mode');
   const btn=document.querySelector('.abtn[onclick="toggleText()"]');
-  if(btn)btn.textContent=textActive?'🎤 Back to voice':'⌨️ Type instead';
-  if(!textActive){document.getElementById('tinput').value='';}
+
+  if(textActive){
+    textMode.style.display='flex';
+    // Replace button content with mic icon (same as main mic button) at small scale
+    if(btn){
+      btn.innerHTML='<svg width="12" height="12" viewBox="0 0 28 28" fill="none"><rect x="9" y="2" width="10" height="16" rx="5" fill="currentColor" opacity="0.9"/><path d="M5 14a9 9 0 0 0 18 0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/><line x1="14" y1="23" x2="14" y2="27" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="10" y1="27" x2="18" y2="27" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Back to voice';
+    }
+    // Scroll text input into view above the keyboard on mobile
+    setTimeout(function(){
+      const inp=document.getElementById('tinput');
+      inp.focus();
+      // Scroll the input into view, accounting for the fixed dock
+      inp.scrollIntoView({behavior:'smooth',block:'center'});
+    },100);
+  } else {
+    textMode.style.display='none';
+    // Restore "Type instead" button with pencil icon
+    if(btn){
+      btn.innerHTML='<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>Type instead';
+    }
+    document.getElementById('tinput').value='';
+  }
 }
 
 function sendText(){
@@ -1043,7 +1073,9 @@ function sendText(){
     textActive=false;
     document.getElementById('text-mode').style.display='none';
     const btn=document.querySelector('.abtn[onclick="toggleText()"]');
-    if(btn)btn.textContent='⌨️ Type instead';
+    if(btn){
+      btn.innerHTML='<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>Type instead';
+    }
   }
   processAnswer(t);
 }
@@ -1111,7 +1143,6 @@ function handleUpload(input){
 }
 
 // FIX 5: Hide browser URL bar for immersive full-screen feel
-// Triggered on session start and on scroll events
 function tryHideURLBar(){
   if(window.scrollY===0){
     window.scrollTo(0,1);
@@ -1119,10 +1150,30 @@ function tryHideURLBar(){
   }
 }
 window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);});
-// Also use Page Visibility API to re-trigger when user returns to tab
 document.addEventListener('visibilitychange',function(){
   if(!document.hidden)setTimeout(tryHideURLBar,300);
 });
+
+// Mobile keyboard handling — when keyboard opens, adjust bottom dock
+// so text input stays visible above keyboard, not hidden behind it
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',function(){
+    const dock=document.getElementById('bottom-dock');
+    if(!dock)return;
+    const keyboardH=window.innerHeight-window.visualViewport.height;
+    if(keyboardH>100&&textActive){
+      // Keyboard is open and text mode is active — lift dock above keyboard
+      dock.style.bottom=keyboardH+'px';
+      // Scroll text input into view
+      setTimeout(function(){
+        var inp=document.getElementById('tinput');
+        if(inp)inp.scrollIntoView({behavior:'smooth',block:'nearest'});
+      },50);
+    } else {
+      dock.style.bottom='0px';
+    }
+  });
+}
 </script>
 </body>
 </html>
