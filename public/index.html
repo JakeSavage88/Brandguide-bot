@@ -176,8 +176,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   font-family:var(--font);
 }
 .action-flanker:hover{border-color:rgba(124,106,255,0.7);color:var(--text);}
-#btn-confirm{margin-left:18px;}
-#btn-retry{margin-right:18px;}
+#btn-confirm{margin-left:44px;}
+#btn-retry{margin-right:44px;}
 /* Pop-in animation */
 @keyframes flankerIn{
   0%{opacity:0;transform:scale(0.4);}
@@ -209,6 +209,9 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 .begbtn{padding:15px 44px;background:linear-gradient(135deg,#7c6aff,#5a4de6);border:none;border-radius:16px;color:white;font-size:16px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 0 40px rgba(124,106,255,0.4);transition:all 0.2s;letter-spacing:0.3px}
 .begbtn:hover{transform:translateY(-2px);box-shadow:0 0 55px rgba(124,106,255,0.55)}
 .begsub{font-size:11px;color:var(--muted)}
+.contbtn{padding:11px 36px;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.18);border-radius:14px;color:rgba(240,238,255,0.75);font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all 0.2s;display:none}
+.contbtn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+#cont-info{font-size:11px;color:var(--muted);display:none}
 #sec-ov{display:none;position:fixed;inset:0;z-index:50;background:rgba(8,8,15,0.9);backdrop-filter:blur(10px);align-items:center;justify-content:center}
 .sec-card{background:rgba(255,255,255,0.05);border:0.5px solid rgba(124,106,255,0.3);border-radius:24px;padding:3rem 2.5rem;text-align:center;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:1.25rem}
 .sec-card h3{font-size:22px;font-weight:700;letter-spacing:-0.5px}
@@ -312,6 +315,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
     <div class="feat">Full strategy report</div>
   </div>
   <button class="begbtn" onclick="beginSession()">Let's do this →</button>
+  <button class="contbtn" id="cont-btn" onclick="continueSession()">Continue where I left off →</button>
+  <p id="cont-info"></p>
   <p class="begsub">Best in Chrome or Edge · Microphone required for voice mode</p>
 </div>
 
@@ -399,8 +404,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 <div id="answer-actions">
   <button class="action-flanker" id="btn-retry" onclick="retryAnswer()" title="Re-record">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <path d="M2.5 8a5.5 5.5 0 1 1 1.1 3.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M2.5 11.5V8h3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M3 8h10M8 4l-5 4 5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="13" y1="5" x2="13" y2="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
     </svg>
   </button>
   <button class="action-flanker" id="btn-confirm" onclick="confirmAnswer()" title="Confirm answer">
@@ -583,17 +588,19 @@ function checkForSavedProgress(){
     const raw=localStorage.getItem(SAVE_KEY);
     if(!raw)return false;
     const p=JSON.parse(raw);
-    // Only offer resume if there's at least 1 answer
     const ansCount=Object.keys(p.answers||{}).length;
     if(ansCount<1)return false;
-    const banner=document.getElementById('resume-banner');
-    document.getElementById('resume-count').textContent=ansCount;
-    // Show how long ago
-    const mins=Math.round((Date.now()-p.ts)/60000);
-    const ago=mins<60?mins+'m ago':Math.round(mins/60)+'h ago';
-    document.getElementById('resume-msg').innerHTML=
-      'You have answered <strong>'+ansCount+' question'+(ansCount>1?'s':'')+'</strong> so far (saved '+ago+'). Want to pick up where you left off?';
-    banner.style.display='flex';
+    // Show "continue" button on the start screen
+    const contBtn=document.getElementById('cont-btn');
+    const contInfo=document.getElementById('cont-info');
+    if(contBtn)contBtn.style.display='block';
+    if(contInfo){
+      const mins=Math.round((Date.now()-p.ts)/60000);
+      const ago=mins<2?'just now':mins<60?mins+'m ago':Math.round(mins/60)+'h ago';
+      const secName=p.cs<7?['Brand Overview','Audience & Market','Competition','Brand Identity','Products & Pricing','Marketing & Channels','Final Details'][p.cs]:'';
+      contInfo.style.display='block';
+      contInfo.textContent=ansCount+' question'+(ansCount>1?'s':'')+' answered · '+secName+' · saved '+ago;
+    }
     return true;
   }catch(e){return false;}
 }
@@ -740,6 +747,52 @@ function retryAnswer(){
 }
 
 
+function continueSession(){
+  try{
+    const p=JSON.parse(localStorage.getItem(SAVE_KEY));
+    cs=p.cs||0; cq=p.cq||0; answers=p.answers||{};
+  }catch(e){cs=0;cq=0;answers={};}
+  document.getElementById('start-ov').style.display='none';
+  try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true})
+      .then(function(s){s.getTracks().forEach(function(t){t.stop();});})
+      .catch(function(){});
+  }
+  initAudioGraph(); setupVoice(); buildPills();
+  document.getElementById('save-btn').style.display='flex';
+  // Slide in dock + mic
+  setTimeout(function(){
+    const dock=document.getElementById('bottom-dock');
+    const micWrap=document.getElementById('mic-wrap');
+    dock.classList.add('visible'); micWrap.classList.add('visible');
+    setTimeout(positionMic,100);
+  },300);
+  // Brief spoken recap then continue
+  const ansCount=Object.keys(answers).length;
+  const secName=cs<7?['Brand Overview','Audience & Market','Competition','Brand Identity','Products & Pricing','Marketing & Channels','Final Details'][cs]:'';
+  const qName=SECS[cs]&&SECS[cs].qs[cq]?SECS[cs].qs[cq].k:'';
+  const recapText='Welcome back! You have already covered '+ansCount+' question'+(ansCount!==1?'s':'')+', and you are up to '+secName+(qName?' — '+qName:'')+'. Let us pick up right from here.';
+  speakIt(recapText,function(){askQ();});
+}
+
+// Dynamic filler phrases — avoids robotic repetition when advancing questions
+const ADVANCE_PHRASES=[
+  "Got it.",
+  "Noted, moving on.",
+  "Perfect, let us keep going.",
+  "Solid. Next one.",
+  "Good stuff.",
+  "Logged. Moving forward.",
+  "Yep, got that.",
+  "All good — next question.",
+  "Nice one.",
+  "Captured. Let us continue."
+];
+function advancePhrase(){
+  return ADVANCE_PHRASES[Math.floor(Math.random()*ADVANCE_PHRASES.length)];
+}
+
 function beginSession(){
   // Create AudioContext on user gesture - required on all mobile browsers
   try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
@@ -802,7 +855,7 @@ function askQ(){
   const q=sec.qs[cq];
   const done=totalDone(),all=totalAll();
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
-  document.getElementById('qtext').textContent=q.p;
+  document.getElementById('qtext').textContent=q.k;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
 
   // Reset itext state for each new question
@@ -1322,12 +1375,14 @@ async function processAnswer(text){
   document.getElementById('bot-resp').innerHTML='';
   positionMic();
 
-  // Safety timeout - if API takes too long, move on
+  // Safety timeout - if API takes too long, save answer and move on
   const safetyTimer=setTimeout(function(){
-    setLabel('Tap to speak');
+    setLabel('');
     setViz('idle');
-    setMicReady();
-  }, 15000);
+    answers[q.k]=text;
+    cq++;
+    speakIt(advancePhrase(),function(){askQ();});
+  }, 18000);
 
   const sys='You are a warm, patient, and genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. You have 20 years of combined expertise as a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist. Your only job is to make this feel like chatting with a brilliant, attentive friend who genuinely cares — never like a robot or form-filler.\n\nCORE BEHAVIOUR:\n- Use natural spoken English. Vary your rhythm — short punchy replies mixed with slightly longer ones.\n- Use light natural phrases like "Got it...", "Okay, cool...", "Hmm, interesting..." to simulate real thinking.\n- Always briefly acknowledge what they just said before moving on. Show you actually heard them.\n- Mirror the user tone lightly — match their energy whether they are enthusiastic, businesslike, or uncertain.\n- Never sound scripted. Never use AI cliches. Never mention being an AI.\n- Give gentle progress nudges occasionally: "You are about halfway through — going really well."\n\nINTERNAL LOGIC (do silently before every reply):\n1. Scan conversation history for context and current position in questionnaire.\n2. Understand the user intent, emotion, any confusion or hesitation.\n3. Decide the single best next action.\n4. If answer is vague or user seems stuck — plan a soft low-pressure re-engagement.\n5. Choose a response style that feels human and keeps momentum without rushing.\n\nBRAND KNOWLEDGE:\nIf someone does not understand a question (eg they do not know what a value proposition or brand archetype is), explain it simply with a real-world example, then ask again in plain language. Help them discover things about their brand they have never articulated. Make them feel capable, not confused.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. CAPTURE EVERYTHING — if user lists multiple items (services, competitors, channels), capture ALL of them.\n2. If answer is sufficient: acknowledge naturally (1 sentence), then output exactly:\nANSWER: [complete extracted answer with every detail mentioned]\nREADY_NEXT\n3. If vague, too short, or confused: explain the question simply with one example, ask one specific follow-up. Under 35 words.\n4. Never ask more than one follow-up before accepting whatever they give.\n5. Keep responses under 20 words maximum — this is voice, brevity is everything.\n6. Allow natural contractions in speech (I am, you are, let us) — sound human.\n7. Never reference being an AI or a bot.\n8. CRITICAL: Your response text must end cleanly. Never output ANSWER:, READY_NEXT, or any protocol tokens in the spoken portion of your reply. These must ONLY appear on their own line after the spoken response.';
 
@@ -1376,7 +1431,7 @@ async function processAnswer(text){
     setViz('idle');
     answers[q.k]=text;
     cq++;
-    setTimeout(askQ,400);
+    speakIt(advancePhrase(),function(){setTimeout(askQ,300);});
   }
 }
 
