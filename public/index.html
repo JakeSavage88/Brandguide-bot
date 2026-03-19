@@ -176,8 +176,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   font-family:var(--font);
 }
 .action-flanker:hover{border-color:rgba(124,106,255,0.7);color:var(--text);}
-#btn-confirm{margin-left:44px;}
-#btn-retry{margin-right:44px;}
+#btn-confirm{margin-left:80px;}
+#btn-retry{margin-right:80px;}
 /* Pop-in animation */
 @keyframes flankerIn{
   0%{opacity:0;transform:scale(0.4);}
@@ -403,9 +403,11 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 <!-- CONFIRM + RETRY flanker buttons -->
 <div id="answer-actions">
   <button class="action-flanker" id="btn-retry" onclick="retryAnswer()" title="Re-record">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-      <path d="M3 8h10M8 4l-5 4 5 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-      <line x1="13" y1="5" x2="13" y2="11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <svg width="11" height="11" viewBox="0 0 13 13" fill="none">
+      <g transform="scale(-1,1) translate(-13,0)">
+        <path d="M3.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M7.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
     </svg>
   </button>
   <button class="action-flanker" id="btn-confirm" onclick="confirmAnswer()" title="Confirm answer">
@@ -701,9 +703,17 @@ function showAnswerActions(answer){
   const aa=document.getElementById('answer-actions');
   const retry=document.getElementById('btn-retry');
   const confirm=document.getElementById('btn-confirm');
-  // Position alongside mic
+  // FIX 2: Align to CENTRE of mic button, not base of mic-wrap
+  // mic-wrap bottom = micWrap.style.bottom (from positionMic)
+  // mic button is 68px tall (74px desktop), label below adds ~24px
+  // Centre of mic btn = micWrap.bottom + label_height + gap + half_mic_height
   const micWrap=document.getElementById('mic-wrap');
-  aa.style.bottom=micWrap.style.bottom;
+  const micBtn=document.getElementById('mic-btn');
+  const micBtnH=micBtn?micBtn.offsetHeight:68;
+  const micLabelH=24; // label + gap below mic button
+  const micCentreBottom=parseFloat(micWrap.style.bottom||'120')+micLabelH+(micBtnH/2);
+  // answer-actions container is 34px tall — centre it on mic centre
+  aa.style.bottom=(micCentreBottom-17)+'px';
   aa.style.display='flex';
   // Reset and pop in
   retry.classList.remove('pop-out'); confirm.classList.remove('pop-out');
@@ -731,6 +741,9 @@ function confirmAnswer(){
   if(!pendingAnswer)return;
   const ans=pendingAnswer;
   pendingAnswer=null;
+  // FIX 4: Show thinking state immediately, don't wait for hideAnswerActions animation
+  setLabel('Thinking...');
+  setViz('speaking');
   hideAnswerActions(function(){processAnswer(ans);});
 }
 
@@ -748,10 +761,12 @@ function retryAnswer(){
 
 
 function continueSession(){
+  // Load saved state first
   try{
     const p=JSON.parse(localStorage.getItem(SAVE_KEY));
     cs=p.cs||0; cq=p.cq||0; answers=p.answers||{};
   }catch(e){cs=0;cq=0;answers={};}
+
   document.getElementById('start-ov').style.display='none';
   try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
   if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
@@ -761,6 +776,7 @@ function continueSession(){
   }
   initAudioGraph(); setupVoice(); buildPills();
   document.getElementById('save-btn').style.display='flex';
+
   // Slide in dock + mic
   setTimeout(function(){
     const dock=document.getElementById('bottom-dock');
@@ -768,30 +784,81 @@ function continueSession(){
     dock.classList.add('visible'); micWrap.classList.add('visible');
     setTimeout(positionMic,100);
   },300);
-  // Brief spoken recap then continue
+
   const ansCount=Object.keys(answers).length;
-  const secName=cs<7?['Brand Overview','Audience & Market','Competition','Brand Identity','Products & Pricing','Marketing & Channels','Final Details'][cs]:'';
+  const secNames=['Brand Overview','Audience & Market','Competition','Brand Identity','Products & Pricing','Marketing & Channels','Final Details'];
+  const secName=cs<7?secNames[cs]:'';
   const qName=SECS[cs]&&SECS[cs].qs[cq]?SECS[cs].qs[cq].k:'';
-  const recapText='Welcome back! You have already covered '+ansCount+' question'+(ansCount!==1?'s':'')+', and you are up to '+secName+(qName?' — '+qName:'')+'. Let us pick up right from here.';
-  speakIt(recapText,function(){askQ();});
+
+  // FIX 7: Spoken 3-option welcome menu
+  const welcomeText='Welcome back! You have covered '+ansCount+' question'+(ansCount!==1?'s':'')+
+    ' and you are up to '+secName+(qName?' — '+qName:'')+
+    '. What would you like to do? Say "start over" to begin fresh, "review" to hear a summary of your answers so far, or "continue" to pick up where you left off.';
+
+  speakIt(welcomeText, function(){
+    // After welcome, listen for user choice
+    setLabel('Start over · Review · Continue');
+    setMicReady();
+    // Override the normal processAnswer flow temporarily to catch the choice
+    window._resumeChoiceMode=true;
+  });
 }
 
-// Dynamic filler phrases — avoids robotic repetition when advancing questions
-const ADVANCE_PHRASES=[
-  "Got it.",
-  "Noted, moving on.",
-  "Perfect, let us keep going.",
-  "Solid. Next one.",
-  "Good stuff.",
-  "Logged. Moving forward.",
-  "Yep, got that.",
-  "All good — next question.",
-  "Nice one.",
-  "Captured. Let us continue."
-];
-function advancePhrase(){
-  return ADVANCE_PHRASES[Math.floor(Math.random()*ADVANCE_PHRASES.length)];
+function _handleResumeChoice(text){
+  // Called from processAnswer when _resumeChoiceMode is true
+  window._resumeChoiceMode=false;
+  const t=text.toLowerCase();
+  if(t.includes('start')||t.includes('fresh')||t.includes('over')||t.includes('begin')||t.includes('reset')){
+    startFresh();
+  } else if(t.includes('review')||t.includes('overview')||t.includes('summary')||t.includes('answers')||t.includes('back')){
+    reviewAnswers();
+  } else {
+    // Default + "continue" + anything else → just continue
+    const qName=SECS[cs]&&SECS[cs].qs[cq]?SECS[cs].qs[cq].k:'';
+    speakIt('Perfect — picking up right from '+qName+'.', function(){askQ();});
+  }
 }
+
+function startFresh(){
+  // FIX 6: Wipe saved state and restart from question 1
+  localStorage.removeItem(SAVE_KEY);
+  cs=0; cq=0; answers={};
+  speakIt('Starting fresh. Let us kick things off from the top.', function(){
+    showSecIntro();
+  });
+}
+
+function reviewAnswers(){
+  // Build a spoken summary of all answers given so far
+  var lines=[];
+  SECS.forEach(function(sec){
+    sec.qs.forEach(function(q){
+      if(answers[q.k]){
+        lines.push(q.k+': '+answers[q.k].substring(0,80)+(answers[q.k].length>80?'...':''));
+      }
+    });
+  });
+  if(lines.length===0){
+    speakIt('You have not answered any questions yet. Let us get started!', function(){askQ();});
+    return;
+  }
+  var reviewText='Here is a quick overview of what you have covered so far. '+lines.join('. ')+
+    '. That is everything logged so far. Ready to continue from where you left off?';
+  // Show skip button during review
+  var skipped=false;
+  var skipEl=document.createElement('button');
+  skipEl.textContent='Skip to next question →';
+  skipEl.style.cssText='position:fixed;top:20px;right:70px;z-index:200;background:rgba(124,106,255,0.8);border:none;border-radius:12px;color:white;padding:8px 16px;font-size:12px;cursor:pointer;font-family:inherit';
+  skipEl.onclick=function(){skipped=true;sharedAudio.pause();skipEl.remove();setTimeout(function(){askQ();},300);};
+  document.body.appendChild(skipEl);
+  speakIt(reviewText, function(){
+    skipEl.remove();
+    if(!skipped){
+      speakIt('Alright — continuing from where we left off.', function(){askQ();});
+    }
+  });
+}
+
 
 function beginSession(){
   // Create AudioContext on user gesture - required on all mobile browsers
@@ -854,6 +921,9 @@ function askQ(){
   if(cq>=sec.qs.length){completeSection();return;}
   const q=sec.qs[cq];
   const done=totalDone(),all=totalAll();
+  // FIX 1: Clear previous answer subtitles before showing next question
+  document.getElementById('transcript').textContent='';
+  document.getElementById('bot-resp').innerHTML='';
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.k;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
@@ -1365,6 +1435,8 @@ function speakIt(text,cb){
 async function processAnswer(text){
   clearIdleTimer();
   if(!text||text.trim()==='')return;
+  // FIX 7: Intercept answer if we are in resume choice mode
+  if(window._resumeChoiceMode){_handleResumeChoice(text);return;}
   const sec=SECS[cs];
   if(cq>=sec.qs.length)return;
   const q=sec.qs[cq];
@@ -1471,6 +1543,7 @@ function sendText(){
   const t=inp.value.trim();
   if(!t)return;
   inp.value='';
+  // Close text mode UI
   if(textActive){
     textActive=false;
     document.getElementById('text-mode').style.display='none';
@@ -1479,7 +1552,9 @@ function sendText(){
       btn.innerHTML='<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>Type instead';
     }
   }
-  processAnswer(t);
+  // FIX 5: Show typed answer in transcript, then pop confirm/retry like voice input
+  document.getElementById('transcript').textContent=t;
+  showAnswerActions(t);
 }
 
 function sendTextAndReturnToVoice(){
