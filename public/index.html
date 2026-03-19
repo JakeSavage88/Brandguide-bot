@@ -297,6 +297,136 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   .abtn svg{display:inline-block}
   #skip-btn svg{display:inline-block}
 }
+/* ── REVIEW WHEEL OVERLAY ─────────────────────────── */
+#review-ov{
+  position:fixed;inset:0;z-index:120;
+  background:var(--bg);
+  display:none;flex-direction:column;align-items:center;
+  padding:0;overflow:hidden;
+}
+#review-ov.open{display:flex;}
+
+/* Header */
+#review-header{
+  width:100%;max-width:680px;
+  padding:1.4rem 1.5rem 0.8rem;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  flex-shrink:0;
+}
+#review-header h2{
+  font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.3px;
+}
+#review-header p{
+  font-size:12px;color:var(--muted);text-align:center;line-height:1.5;max-width:340px;
+}
+
+/* Wheel container */
+#review-wheel{
+  flex:1;width:100%;max-width:680px;
+  position:relative;
+  overflow:hidden;
+  cursor:grab;
+}
+#review-wheel:active{cursor:grabbing;}
+
+/* Top and bottom gradient fade */
+#review-wheel::before,#review-wheel::after{
+  content:'';
+  position:absolute;left:0;right:0;
+  height:38%;z-index:3;pointer-events:none;
+}
+#review-wheel::before{
+  top:0;
+  background:linear-gradient(to bottom,var(--bg) 0%,transparent 100%);
+}
+#review-wheel::after{
+  bottom:0;
+  background:linear-gradient(to top,var(--bg) 0%,transparent 100%);
+}
+
+/* Centre focus line indicator */
+#review-wheel-inner{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;
+  will-change:transform;
+  transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  padding:0 1.25rem;
+}
+
+/* Each card */
+.rw-card{
+  width:100%;max-width:620px;
+  flex-shrink:0;
+  display:flex;align-items:flex-start;gap:14px;
+  padding:18px 0;
+  border-bottom:0.5px solid rgba(255,255,255,0.06);
+  transition:transform 0.35s ease,opacity 0.35s ease;
+  transform-origin:center;
+}
+.rw-card-text{flex:1;}
+.rw-q{
+  font-size:11px;font-weight:600;color:var(--acc2);
+  text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;
+}
+.rw-q-num{
+  font-size:11px;color:var(--muted);font-weight:400;margin-right:8px;
+}
+.rw-a{
+  font-size:16px;font-weight:500;color:var(--text);
+  line-height:1.55;
+}
+/* Active (centre) card */
+.rw-card.rw-active .rw-a{font-size:18px;}
+.rw-card.rw-active .rw-q{color:var(--acc);}
+
+/* Tick button */
+.rw-tick{
+  flex-shrink:0;
+  width:32px;height:32px;
+  border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.2);
+  background:none;
+  color:rgba(255,255,255,0.3);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;
+  margin-top:4px;
+}
+.rw-tick:hover{border-color:rgba(124,106,255,0.6);}
+.rw-tick.checked{
+  background:var(--acc);
+  border-color:var(--acc);
+  color:white;
+}
+
+/* Done button */
+#review-done-wrap{
+  flex-shrink:0;
+  width:100%;max-width:680px;
+  padding:16px 1.5rem 32px;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  background:linear-gradient(to top, var(--bg) 60%, transparent);
+}
+#review-done-btn{
+  padding:14px 40px;
+  background:var(--acc);
+  border:none;border-radius:16px;
+  color:white;font-size:15px;font-weight:700;
+  cursor:pointer;font-family:var(--font);
+  box-shadow:0 0 28px rgba(124,106,255,0.35);
+  transition:all 0.2s;
+  letter-spacing:0.2px;
+}
+#review-done-btn:hover{transform:translateY(-1px);box-shadow:0 0 40px rgba(124,106,255,0.5);}
+#review-stats{font-size:12px;color:var(--muted);text-align:center;}
+
+@media(min-width:768px){
+  #review-header h2{font-size:24px;}
+  .rw-a{font-size:17px;}
+  .rw-card.rw-active .rw-a{font-size:20px;}
+}
+
 </style>
 </head>
 <body>
@@ -819,6 +949,15 @@ function _handleResumeChoice(text){
   }
 }
 
+function advanceWithReaskQueue(){
+  // If there's a re-ask queue, jump to next item in it
+  if(window._reaskQueue&&window._reaskQueue.length>0){
+    var next=window._reaskQueue.shift();
+    cs=next.sIdx; cq=next.qIdx;
+  }
+  setTimeout(askQ,400);
+}
+
 function startFresh(){
   // FIX 6: Wipe saved state and restart from question 1
   localStorage.removeItem(SAVE_KEY);
@@ -829,33 +968,242 @@ function startFresh(){
 }
 
 function reviewAnswers(){
-  // Build a spoken summary of all answers given so far
-  var lines=[];
-  SECS.forEach(function(sec){
-    sec.qs.forEach(function(q){
+  showReviewWheel();
+}
+
+function showReviewWheel(){
+  // Build list of answered questions with their answers
+  var items=[]; // {k, p, answer, sIdx, qIdx}
+  SECS.forEach(function(sec,si){
+    sec.qs.forEach(function(q,qi){
       if(answers[q.k]){
-        lines.push(q.k+': '+answers[q.k].substring(0,80)+(answers[q.k].length>80?'...':''));
+        items.push({k:q.k, p:q.p, answer:answers[q.k], sIdx:si, qIdx:qi});
       }
     });
   });
-  if(lines.length===0){
+
+  if(items.length===0){
     speakIt('You have not answered any questions yet. Let us get started!', function(){askQ();});
     return;
   }
-  var reviewText='Here is a quick overview of what you have covered so far. '+lines.join('. ')+
-    '. That is everything logged so far. Ready to continue from where you left off?';
-  // Show skip button during review
-  var skipped=false;
-  var skipEl=document.createElement('button');
-  skipEl.textContent='Skip to next question →';
-  skipEl.style.cssText='position:fixed;top:20px;right:70px;z-index:200;background:rgba(124,106,255,0.8);border:none;border-radius:12px;color:white;padding:8px 16px;font-size:12px;cursor:pointer;font-family:inherit';
-  skipEl.onclick=function(){skipped=true;sharedAudio.pause();skipEl.remove();setTimeout(function(){askQ();},300);};
-  document.body.appendChild(skipEl);
-  speakIt(reviewText, function(){
-    skipEl.remove();
-    if(!skipped){
-      speakIt('Alright — continuing from where we left off.', function(){askQ();});
+
+  // Render cards into wheel
+  var inner=document.getElementById('review-wheel-inner');
+  inner.innerHTML='';
+  // Track which items are approved (checked)
+  window._rwItems=items;
+  window._rwChecked=new Set(); // indices of approved answers
+  // Start with all checked (user unticks ones they want to redo)
+  items.forEach(function(item,i){window._rwChecked.add(i);});
+
+  // Add spacer at top so first card can reach centre
+  var spacer=document.createElement('div');
+  spacer.className='rw-spacer-top';
+  inner.appendChild(spacer);
+
+  items.forEach(function(item,i){
+    var card=document.createElement('div');
+    card.className='rw-card';
+    card.id='rw-card-'+i;
+    card.innerHTML=
+      '<div class="rw-card-text">'+
+        '<div class="rw-q"><span class="rw-q-num">'+(i+1)+'</span>'+escHtml(item.k)+'</div>'+
+        '<div class="rw-a">'+escHtml(item.answer)+'</div>'+
+      '</div>'+
+      '<button class="rw-tick checked" id="rw-tick-'+i+'" onclick="rwToggle('+i+')">'+
+        '<svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7.5l3.5 3.5 6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+      '</button>';
+    inner.appendChild(card);
+  });
+
+  // Add spacer at bottom so last card can reach centre
+  var spacerB=document.createElement('div');
+  spacerB.className='rw-spacer-bot';
+  inner.appendChild(spacerB);
+
+  // Show overlay
+  var ov=document.getElementById('review-ov');
+  ov.classList.add('open');
+
+  // Init wheel scroll state
+  window._rwActive=0;
+  window._rwDragStartY=0;
+  window._rwOffset=0;
+  window._rwTargetOffset=0;
+
+  // Size spacers and update after brief render delay
+  setTimeout(function(){
+    rwSizeSpacers();
+    rwScrollTo(0, false);
+    rwUpdateStats();
+  }, 60);
+
+  // Wire up drag/touch scroll
+  rwBindScroll();
+}
+
+function escHtml(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function rwSizeSpacers(){
+  var wheel=document.getElementById('review-wheel');
+  var wheelH=wheel.offsetHeight;
+  var firstCard=document.querySelector('.rw-card');
+  var cardH=firstCard?firstCard.offsetHeight:80;
+  var spacerH=Math.floor(wheelH/2 - cardH/2);
+  document.querySelector('.rw-spacer-top').style.height=spacerH+'px';
+  document.querySelector('.rw-spacer-bot').style.height=spacerH+'px';
+}
+
+function rwScrollTo(idx, animate){
+  var items=window._rwItems||[];
+  if(idx<0)idx=0;
+  if(idx>=items.length)idx=items.length-1;
+  window._rwActive=idx;
+
+  // Measure cumulative offset to target card
+  var inner=document.getElementById('review-wheel-inner');
+  var cards=inner.querySelectorAll('.rw-card');
+  var target=cards[idx];
+  if(!target)return;
+
+  var wheel=document.getElementById('review-wheel');
+  var wheelCentre=wheel.offsetHeight/2;
+  // offsetTop within inner gives position relative to inner
+  var cardTop=target.offsetTop;
+  var cardH=target.offsetHeight;
+  var offset=-(cardTop - wheelCentre + cardH/2);
+
+  inner.style.transition=animate===false?'none':'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+  inner.style.transform='translateY('+offset+'px)';
+  window._rwOffset=offset;
+  window._rwTargetOffset=offset;
+
+  // Update visual states
+  cards.forEach(function(card,i){
+    card.classList.toggle('rw-active', i===idx);
+    var dist=Math.abs(i-idx);
+    card.style.opacity=dist===0?'1':dist===1?'0.45':'0.18';
+    card.style.transform=dist===0?'scale(1)':'scale(0.95)';
+  });
+}
+
+function rwToggle(i){
+  var tick=document.getElementById('rw-tick-'+i);
+  if(window._rwChecked.has(i)){
+    window._rwChecked.delete(i);
+    tick.classList.remove('checked');
+  } else {
+    window._rwChecked.add(i);
+    tick.classList.add('checked');
+  }
+  rwUpdateStats();
+}
+
+function rwUpdateStats(){
+  var items=window._rwItems||[];
+  var checked=window._rwChecked?window._rwChecked.size:0;
+  var unchecked=items.length-checked;
+  var el=document.getElementById('review-stats');
+  if(el){
+    if(unchecked===0){
+      el.textContent=checked+' answer'+(checked!==1?'s':'')+' approved — all good to go!';
+    } else {
+      el.textContent=checked+' approved · '+unchecked+' will be re-asked';
     }
+  }
+}
+
+function rwBindScroll(){
+  var wheel=document.getElementById('review-wheel');
+  var startY=0, lastY=0, vel=0, rafId=null;
+
+  function getActive(offset){
+    var inner=document.getElementById('review-wheel-inner');
+    var cards=inner.querySelectorAll('.rw-card');
+    var wheelCentre=wheel.offsetHeight/2;
+    var bestIdx=0, bestDist=Infinity;
+    cards.forEach(function(card,i){
+      var cardMid=card.offsetTop+card.offsetHeight/2+offset;
+      var dist=Math.abs(cardMid-wheelCentre);
+      if(dist<bestDist){bestDist=dist;bestIdx=i;}
+    });
+    return bestIdx;
+  }
+
+  function onStart(y){
+    startY=y; lastY=y; vel=0;
+    if(rafId){cancelAnimationFrame(rafId);rafId=null;}
+  }
+  function onMove(y){
+    var dy=y-lastY; lastY=y; vel=dy;
+    var inner=document.getElementById('review-wheel-inner');
+    var newOffset=(parseFloat(inner.style.transform.replace('translateY(',''))||0)+dy;
+    inner.style.transition='none';
+    inner.style.transform='translateY('+newOffset+'px)';
+    window._rwOffset=newOffset;
+    // Live update active
+    var idx=getActive(newOffset);
+    if(idx!==window._rwActive) rwScrollTo(idx, false);
+  }
+  function onEnd(){
+    // Snap to nearest card
+    rwScrollTo(window._rwActive, true);
+  }
+
+  wheel.addEventListener('touchstart',function(e){onStart(e.touches[0].clientY);},{passive:true});
+  wheel.addEventListener('touchmove',function(e){onMove(e.touches[0].clientY);e.preventDefault();},{passive:false});
+  wheel.addEventListener('touchend',function(){onEnd();},{passive:true});
+
+  wheel.addEventListener('mousedown',function(e){onStart(e.clientY);
+    function mm(e2){onMove(e2.clientY);}
+    function mu(){onEnd();document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);}
+    document.addEventListener('mousemove',mm);
+    document.addEventListener('mouseup',mu);
+  });
+
+  // Mouse wheel / trackpad
+  wheel.addEventListener('wheel',function(e){
+    e.preventDefault();
+    var idx=window._rwActive+(e.deltaY>0?1:-1);
+    rwScrollTo(idx, true);
+  },{passive:false});
+}
+
+function finishReview(){
+  var items=window._rwItems||[];
+  var checked=window._rwChecked||new Set();
+
+  // Remove unchecked answers from the answers object so they get re-asked
+  var toReask=[];
+  items.forEach(function(item,i){
+    if(!checked.has(i)){
+      delete answers[item.k];
+      toReask.push({sIdx:item.sIdx, qIdx:item.qIdx});
+    }
+  });
+
+  // Close overlay
+  document.getElementById('review-ov').classList.remove('open');
+
+  if(toReask.length===0){
+    speakIt('All answers approved — picking up where we left off.', function(){askQ();});
+    return;
+  }
+
+  // Re-ask unchecked ones: jump to the earliest section/question that needs re-asking
+  // Sort by natural order
+  toReask.sort(function(a,b){return a.sIdx!==b.sIdx?a.sIdx-b.sIdx:a.qIdx-b.qIdx;});
+  var first=toReask[0];
+  cs=first.sIdx; cq=first.qIdx;
+
+  // Store remaining re-ask queue (after first)
+  window._reaskQueue=toReask.slice(1);
+
+  var count=toReask.length;
+  speakIt('Got it — re-asking '+count+' question'+(count!==1?'s':'')+'. Let us go.', function(){
+    askQ();
   });
 }
 
@@ -1453,7 +1801,7 @@ async function processAnswer(text){
     setViz('idle');
     answers[q.k]=text;
     cq++;
-    speakIt(advancePhrase(),function(){askQ();});
+    speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
   }, 18000);
 
   const sys='You are a warm, patient, and genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. You have 20 years of combined expertise as a Creative Director, Brand Strategist, Marketing Strategist, Consumer Insights Analyst, Competitive Analyst, Brand Narrative Architect, and Rollout Strategist. Your only job is to make this feel like chatting with a brilliant, attentive friend who genuinely cares — never like a robot or form-filler.\n\nCORE BEHAVIOUR:\n- Use natural spoken English. Vary your rhythm — short punchy replies mixed with slightly longer ones.\n- Use light natural phrases like "Got it...", "Okay, cool...", "Hmm, interesting..." to simulate real thinking.\n- Always briefly acknowledge what they just said before moving on. Show you actually heard them.\n- Mirror the user tone lightly — match their energy whether they are enthusiastic, businesslike, or uncertain.\n- Never sound scripted. Never use AI cliches. Never mention being an AI.\n- Give gentle progress nudges occasionally: "You are about halfway through — going really well."\n\nINTERNAL LOGIC (do silently before every reply):\n1. Scan conversation history for context and current position in questionnaire.\n2. Understand the user intent, emotion, any confusion or hesitation.\n3. Decide the single best next action.\n4. If answer is vague or user seems stuck — plan a soft low-pressure re-engagement.\n5. Choose a response style that feels human and keeps momentum without rushing.\n\nBRAND KNOWLEDGE:\nIf someone does not understand a question (eg they do not know what a value proposition or brand archetype is), explain it simply with a real-world example, then ask again in plain language. Help them discover things about their brand they have never articulated. Make them feel capable, not confused.\n\nCurrent question: "'+q.p+'"\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. CAPTURE EVERYTHING — if user lists multiple items (services, competitors, channels), capture ALL of them.\n2. If answer is sufficient: acknowledge naturally (1 sentence), then output exactly:\nANSWER: [complete extracted answer with every detail mentioned]\nREADY_NEXT\n3. If vague, too short, or confused: explain the question simply with one example, ask one specific follow-up. Under 35 words.\n4. Never ask more than one follow-up before accepting whatever they give.\n5. Keep responses under 20 words maximum — this is voice, brevity is everything.\n6. Allow natural contractions in speech (I am, you are, let us) — sound human.\n7. Never reference being an AI or a bot.\n8. CRITICAL: Your response text must end cleanly. Never output ANSWER:, READY_NEXT, or any protocol tokens in the spoken portion of your reply. These must ONLY appear on their own line after the spoken response.';
@@ -1489,11 +1837,11 @@ async function processAnswer(text){
     }).trim();
     if(disp){
       speakIt(disp,function(){
-        if(ready&&am){answers[q.k]=am[1].trim();cq++;setTimeout(askQ,500);}
+        if(ready&&am){answers[q.k]=am[1].trim();cq++;advanceWithReaskQueue();}
         else{setMicReady();}
       });
     } else if(ready&&am){
-      answers[q.k]=am[1].trim();cq++;setTimeout(askQ,400);
+      answers[q.k]=am[1].trim();cq++;advanceWithReaskQueue();
     } else {
       setMicReady();
     }
@@ -1503,7 +1851,7 @@ async function processAnswer(text){
     setViz('idle');
     answers[q.k]=text;
     cq++;
-    speakIt(advancePhrase(),function(){setTimeout(askQ,300);});
+    speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
   }
 }
 
@@ -1700,5 +2048,20 @@ if(window.visualViewport){
   });
 }
 </script>
+<!-- REVIEW WHEEL OVERLAY -->
+<div id="review-ov">
+  <div id="review-header">
+    <h2>Review your answers</h2>
+    <p>Scroll through — tick the ones you're happy with. Unticked answers will be re-asked.</p>
+  </div>
+  <div id="review-wheel">
+    <div id="review-wheel-inner"></div>
+  </div>
+  <div id="review-done-wrap">
+    <div id="review-stats"></div>
+    <button id="review-done-btn" onclick="finishReview()">Done, let's dive back in →</button>
+  </div>
+</div>
+
 </body>
 </html>
