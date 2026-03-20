@@ -315,7 +315,6 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 
 /* ── TRANSCRIPT SCROLL FADE ── */
 #transcript-area{position:relative;}
-#transcript-area::before{content:'';position:absolute;top:0;left:0;right:0;height:32px;background:linear-gradient(to bottom,var(--bg),transparent);z-index:2;pointer-events:none;}
 #transcript-area-inner{
   max-height:none;
   overflow-y:auto;
@@ -1059,6 +1058,9 @@ function speakIt(text,cb){
     .replace(/ANSWER:[\s\S]*$/m,'')
     .replace(/READY_NEXT/g,'')
     .replace(/[\u200b-\u200d\ufeff]/g,'')
+    .replace(/[\u2014\u2013]/g,' — ')  // normalise em/en dashes
+    .replace(/\.{2,}/g,'.')             // collapse ellipses to single period
+    .replace(/[*#`~^]/g,'')             // strip markdown artifacts
     .replace(/\s+/g,' ')
     .trim();
 
@@ -1748,10 +1750,11 @@ function txScrollToBottom() {
 }
 
 function txUpdateFade(inner) {
-  // Only show top fade when there is hidden content above (user has scrolled down)
-  // AND the content actually overflows (needs scroll)
-  var overflows = (inner.scrollHeight > inner.clientHeight + 4);
-  var scrolledDown = (inner.scrollTop > 10);
+  // Only fade when content is meaningfully overflowing (more than 1 line hidden above)
+  // and the user has scrolled down past the top
+  var lineHeight = 24; // approximate line height in px
+  var overflows = (inner.scrollHeight > inner.clientHeight + lineHeight);
+  var scrolledDown = (inner.scrollTop > lineHeight);
   if (overflows && scrolledDown) {
     inner.classList.add('tx-fading');
   } else {
