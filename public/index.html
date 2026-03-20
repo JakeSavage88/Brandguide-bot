@@ -751,9 +751,10 @@ function setupVoice(){
   const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   recog=new SR();
-  recog.continuous=!isMobile; // continuous on desktop, one-shot on mobile
-  recog.interimResults=true; // always show interim for responsiveness
+  recog.continuous=false;
+  recog.interimResults=true;
   recog.lang='en-AU';
+
   var pauseTimer=null;
   recog.onresult=function(e){
     let final='';let interim='';
@@ -780,7 +781,9 @@ function setupVoice(){
       const text=accumulatedFinal.trim();accumulatedFinal='';
       stopListen();showAnswerActions(text);
     } else if(listening&&!accumulatedFinal.trim()){
-      setTimeout(function(){if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');}}},200);
+      setTimeout(function(){
+        if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');}}
+      },200);
     }
   };
   recog.onerror=function(e){
