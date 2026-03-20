@@ -232,7 +232,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1);
   bottom:120px;
 }
-#answer-actions.visible{pointer-events:all;}
+#answer-actions.visible{pointer-events:all;transform:translateX(-50%) translateY(0);}
 .action-flanker-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .flanker-label{font-size:9px;font-weight:500;letter-spacing:0.6px;text-transform:uppercase;color:rgba(240,238,255,0.35);pointer-events:none;white-space:nowrap;}
 .action-flanker{
@@ -275,9 +275,11 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #review-header p{font-size:12px;color:var(--muted);text-align:center;line-height:1.5;max-width:340px;}
 #review-wheel{flex:1;width:100%;max-width:680px;position:relative;overflow:hidden;cursor:grab;}
 #review-wheel:active{cursor:grabbing;}
-#review-wheel::before,#review-wheel::after{content:'';position:absolute;left:0;right:0;height:38%;z-index:3;pointer-events:none;}
-#review-wheel::before{top:0;background:linear-gradient(to bottom,var(--bg) 0%,transparent 100%);}
-#review-wheel::after{bottom:0;background:linear-gradient(to top,var(--bg) 0%,transparent 100%);}
+/* Wheel fade: mask both top and bottom — colour-agnostic, works on any background */
+#review-wheel{
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
+  mask-image:linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
+}
 #review-wheel-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;will-change:transform;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);padding:0 1.25rem;}
 .rw-card{width:100%;max-width:620px;flex-shrink:0;display:flex;align-items:flex-start;gap:14px;padding:18px 0;border-bottom:0.5px solid rgba(255,255,255,0.06);transition:transform 0.35s ease,opacity 0.35s ease;transform-origin:center;}
 .rw-card-text{flex:1;}
@@ -315,9 +317,23 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 
 /* ── TRANSCRIPT SCROLL FADE ── */
 #transcript-area{position:relative;}
-#transcript-area::before{content:'';position:absolute;top:0;left:0;right:0;height:32px;background:linear-gradient(to bottom,var(--bg),transparent);z-index:2;pointer-events:none;}
-#transcript-area-inner{max-height:120px;overflow-y:auto;scrollbar-width:none;}
+#transcript-area-inner{}
 #transcript-area-inner::-webkit-scrollbar{display:none;}
+/* Transcript scroll fade — only visible when scrolled past top content.
+   Default: no mask. JS adds .scrolled class when user has scrolled up. */
+#transcript-area-inner{
+  max-height:none; /* JS sets this dynamically based on available space */
+  overflow-y:auto;
+  scrollbar-width:none;
+  scroll-behavior:smooth;
+  -webkit-mask-image:none;
+  mask-image:none;
+  transition:-webkit-mask-image 0.3s ease, mask-image 0.3s ease;
+}
+#transcript-area-inner.scrolled{
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 25%);
+  mask-image:linear-gradient(to bottom, transparent 0%, black 25%);
+}
 
 /* ── DOCK AUTO-HIDE ── */
 #bottom-dock{transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
@@ -551,7 +567,6 @@ const API='/api/claude';
 
 let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaking=false,textActive=false;
 let pendingAnswer=null;
-let wordTimings=null;
 let accumulatedFinal='';
 const synth=window.speechSynthesis;
 
@@ -573,13 +588,12 @@ function beginSession(){
 
   document.getElementById('start-ov').style.display='none';
   document.getElementById('save-btn').style.display='flex';
-  sharedAudio.load();
-  var actxInit=getAudioCtx();if(actxInit&&actxInit.state==='suspended'){actxInit.resume().catch(function(){});}
   // Dock is always in DOM but off-screen — slides in when first question fires
   tryHideURLBar();
   initAudioGraph();
   setupVoice();
   buildPills();
+  txInit();
   showSecIntro();
 }
 
@@ -623,6 +637,7 @@ function askQ(){
   // Clear previous answer from screen
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').innerHTML='';
+
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.k;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
@@ -663,7 +678,8 @@ function askQ(){
   speakIt(q.p,function(){
     setLabel('Tap to answer');
     setMicReady();
-    positionMic(); // dynamically centre mic between content and buttons
+    positionMic();
+    txSetMaxHeight(); // recalc transcript area after mic is positioned
   });
   positionMic(); // also call immediately for layout
 }
@@ -671,7 +687,7 @@ function askQ(){
 function totalDone(){let n=0;for(let i=0;i<cs;i++)n+=SECS[i].qs.length;return n+cq;}
 function totalAll(){return SECS.reduce(function(a,s){return a+s.qs.length;},0);}
 
-const SEC_ICONS=["<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><line x1=\"8\" y1=\"13\" x2=\"22\" y2=\"13\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"8\" y1=\"20\" x2=\"22\" y2=\"20\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"8\" y1=\"27\" x2=\"16\" y2=\"27\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"32\" cy=\"29\" r=\"7\" stroke=\"#7c6aff\" stroke-width=\"2\"/><line x1=\"37\" y1=\"34\" x2=\"42\" y2=\"39\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><circle cx=\"22\" cy=\"26\" r=\"14\" stroke=\"#7c6aff\" stroke-width=\"2\"/><circle cx=\"22\" cy=\"26\" r=\"8\" stroke=\"#7c6aff\" stroke-width=\"2\"/><circle cx=\"22\" cy=\"26\" r=\"2.5\" stroke=\"#7c6aff\" stroke-width=\"2\"/><path d=\"M32 10l-4 4 2 2-6 6\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M30 10h4v4\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><path d=\"M27 8L14 26h13l-6 14L34 22H21L27 8z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><path d=\"M18 36c0-3.3 2.7-6 6-6s6 2.7 6 6\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M13 31a13 13 0 0 1 0-14\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M35 31a13 13 0 0 0 0-14\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M18 24a6 6 0 0 1 12 0c0 2.5-.8 5-1.5 7\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M24 18v2\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><path d=\"M10 22v16a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2V22\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8 16h32l-3 6H11L8 16z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M24 8l1.5 3h3l-2.5 2 1 3-3-2-3 2 1-3-2.5-2h3L24 8z\" stroke=\"#7c6aff\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><path d=\"M24 10a10 10 0 0 1 10 10v8l3 4H11l3-4v-8a10 10 0 0 1 10-10z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M21 32a3 3 0 0 0 6 0\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"36\" y1=\"10\" x2=\"38\" y2=\"8\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"38\" y1=\"16\" x2=\"41\" y2=\"15\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><circle cx=\"24\" cy=\"24\" r=\"16\" stroke=\"#7c6aff\" stroke-width=\"2\"/><line x1=\"24\" y1=\"22\" x2=\"24\" y2=\"33\" stroke=\"#7c6aff\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><circle cx=\"24\" cy=\"17\" r=\"1.5\" fill=\"#7c6aff\"/></svg>"];
+const SEC_ICONS=["<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <line x1=\"8\" y1=\"13\" x2=\"22\" y2=\"13\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <line x1=\"8\" y1=\"20\" x2=\"22\" y2=\"20\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <line x1=\"8\" y1=\"27\" x2=\"16\" y2=\"27\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <circle cx=\"32\" cy=\"29\" r=\"7\" stroke=\"#7c6aff\" stroke-width=\"2\"/>\n      <line x1=\"37\" y1=\"34\" x2=\"42\" y2=\"39\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n    </svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"22\" cy=\"26\" r=\"14\" stroke=\"#7c6aff\" stroke-width=\"2\"/>\n      <circle cx=\"22\" cy=\"26\" r=\"8\" stroke=\"#7c6aff\" stroke-width=\"2\"/>\n      <circle cx=\"22\" cy=\"26\" r=\"2.5\" stroke=\"#7c6aff\" stroke-width=\"2\"/>\n      <path d=\"M32 10l-4 4 2 2-6 6\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n      <path d=\"M30 10h4v4\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n    </svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path d=\"M27 8L14 26h13l-6 14L34 22H21L27 8z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n    </svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path d=\"M18 36c0-3.3 2.7-6 6-6s6 2.7 6 6\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <path d=\"M13 31a13 13 0 0 1 0-14\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <path d=\"M35 31a13 13 0 0 0 0-14\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <path d=\"M18 24a6 6 0 0 1 12 0c0 2.5-.8 5-1.5 7\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <path d=\"M24 18v2\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <path d=\"M20 38h2\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n    </svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path d=\"M10 22v16a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2V22\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n      <path d=\"M8 16h32l-3 6H11L8 16z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n      <path d=\"M24 8l1.5 3h3l-2.5 2 1 3-3-2-3 2 1-3-2.5-2h3L24 8z\" stroke=\"#7c6aff\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n    </svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <path d=\"M24 10a10 10 0 0 1 10 10v8l3 4H11l3-4v-8a10 10 0 0 1 10-10z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>\n      <path d=\"M21 32a3 3 0 0 0 6 0\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <line x1=\"36\" y1=\"10\" x2=\"38\" y2=\"8\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <line x1=\"38\" y1=\"16\" x2=\"41\" y2=\"15\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n      <line x1=\"36\" y1=\"22\" x2=\"39\" y2=\"24\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/>\n    </svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n      <circle cx=\"24\" cy=\"24\" r=\"16\" stroke=\"#7c6aff\" stroke-width=\"2\"/>\n      <line x1=\"24\" y1=\"22\" x2=\"24\" y2=\"33\" stroke=\"#7c6aff\" stroke-width=\"2.2\" stroke-linecap=\"round\"/>\n      <circle cx=\"24\" cy=\"17\" r=\"1.5\" fill=\"#7c6aff\"/>\n    </svg>"];
 
 function completeSection(){
   const msg=COMPLETE_MSGS[cs];
@@ -751,38 +767,60 @@ function setupVoice(){
   const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   recog=new SR();
-  recog.continuous=!isMobile; // continuous on desktop, one-shot on mobile
-  recog.interimResults=true; // always show interim for responsiveness
+  recog.continuous=false; // one-shot on both platforms — more reliable
+  recog.interimResults=true;
   recog.lang='en-AU';
-  var pauseTimer=null;
+
+  var pauseTimer=null; // debounce: wait for pause before submitting
+
   recog.onresult=function(e){
-    let final='';let interim='';
+    let final='';
+    let interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal){final+=e.results[i][0].transcript+' ';}
-      else{interim+=e.results[i][0].transcript;}
+      if(e.results[i].isFinal){
+        final+=e.results[i][0].transcript+' ';
+      } else {
+        interim+=e.results[i][0].transcript;
+      }
     }
-    if(interim){document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();}
+    if(interim){
+      document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();
+    }
     if(final.trim()){
       accumulatedFinal+=final;
       document.getElementById('transcript').textContent=accumulatedFinal.trim();
+      // Clear any pending pause timer — keep accumulating
       if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
+      // After 1.2s of silence following a final result, submit
       pauseTimer=setTimeout(function(){
         if(accumulatedFinal.trim()&&listening){
-          const text=accumulatedFinal.trim();accumulatedFinal='';
-          stopListen();showAnswerActions(text);
+          const text=accumulatedFinal.trim();
+          accumulatedFinal='';
+          stopListen();
+          showAnswerActions(text);
         }
       },1200);
     }
   };
+
   recog.onend=function(){
     if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
-    if(listening&&accumulatedFinal.trim()){
-      const text=accumulatedFinal.trim();accumulatedFinal='';
-      stopListen();showAnswerActions(text);
-    } else if(listening&&!accumulatedFinal.trim()){
-      setTimeout(function(){if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');}}},200);
+    if(listening && accumulatedFinal.trim()){
+      // Recognition ended with accumulated text — submit it
+      const text=accumulatedFinal.trim();
+      accumulatedFinal='';
+      stopListen();
+      showAnswerActions(text);
+    } else if(listening && !accumulatedFinal.trim()){
+      // No speech detected — restart quietly
+      setTimeout(function(){
+        if(listening){
+          try{recog.start();}catch(err){listening=false;setViz('idle');}
+        }
+      },200);
     }
   };
+
   recog.onerror=function(e){
     accumulatedFinal='';
     if(e.error==='not-allowed'||e.error==='permission-denied'){
@@ -882,6 +920,7 @@ function setMicReady(){
   clearIdleTimer();
   idleCount=0;
   // Start idle detection - prompt after 10s, again at 25s
+  // Do NOT fire if user has a pendingAnswer waiting for Approve/Redo
   idleTimer=setTimeout(function(){
     if(!listening&&!busy&&!speaking&&!pendingAnswer){
       const prompt=IDLE_PROMPTS[Math.min(idleCount,IDLE_PROMPTS.length-1)];
@@ -1030,6 +1069,7 @@ function positionMic(){
   micWrap.style.bottom=targetBottom+'px';
 }
 
+let wordTimings=null;
 function speakIt(text,cb){
   speaking=true;
   setViz('speaking');
@@ -1053,8 +1093,7 @@ function speakIt(text,cb){
     botEl.appendChild(span);
   });
   // Auto-scroll transcript area
-  const inner=document.getElementById('transcript-area-inner');
-  if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},50);
+  txInit(); txScrollToBottom(); // ensure auto-scroll active for new speech
 
   sharedAudio.pause();
   sharedAudio.onended=null;sharedAudio.onerror=null;
@@ -1097,12 +1136,9 @@ function speakIt(text,cb){
     sharedAudio.onended=function(){if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}done();};
     sharedAudio.onerror=function(){if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}done();};
     initAudioGraph();try{startAudioViz();}catch(e){}
-    var actx=getAudioCtx();
-    var playP=(actx&&actx.state==='suspended')?actx.resume().then(function(){return sharedAudio.play();}):Promise.resolve(sharedAudio.play());
-    playP.then(function(){setTimeout(done,estimatedMs+6000);}).catch(function(err){
-      botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
-      setTimeout(done,400);
-    });
+    const p=sharedAudio.play();
+    if(p!==undefined){p.catch(function(){botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});setTimeout(done,400);});setTimeout(done,estimatedMs+6000);}
+    else{setTimeout(done,estimatedMs+2000);}
   })
   .catch(function(){botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});setTimeout(done,300);});
 }
@@ -1112,8 +1148,9 @@ async function processAnswer(text){
   clearIdleTimer();
   if(!text||text.trim()==='')return;
   if(window._resumeChoiceMode){_handleResumeChoice(text);return;}
-  if(busy)return;
+  if(busy)return; // prevent re-entry
   busy=true;
+  // Reset any lingering speech state from the question being read out
   speaking=false;
   sharedAudio.pause();
   stopAudioViz();
@@ -1129,7 +1166,7 @@ async function processAnswer(text){
 
   // Safety timeout - if API takes too long, move on
   const safetyTimer=setTimeout(function(){
-    answers[q.k]=text;cq++;speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
+    busy=false;answers[q.k]=text;cq++;speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
   }, 18000);
 
   const sys='You are a warm, patient, genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. 20 years of expertise across Creative Direction, Brand Strategy, Marketing, Consumer Insights, and Competitive Analysis.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n- Progress nudges occasionally.\n\nFOR EACH QUESTION:\n1. Review the FULL conversation history for anything relevant to this field.\n2. If a prior answer partially covers this question, say: You mentioned X earlier — does that apply here? and offer to incorporate it.\n3. Acknowledge their answer warmly in 1 sentence.\n4. If answer is sufficient: output ANSWER: then READY_NEXT on the next line.\n5. If incomplete or vague: ask ONE specific follow-up under 25 words. Do NOT auto-advance. Wait for response.\n6. After up to 3 follow-ups: synthesise all parts into a complete answer, present it starting with So your answer is: and ask if they are happy with it. If yes — output ANSWER and READY_NEXT. If no — ask what to change.\n7. ALWAYS synthesise partial answers across the full conversation for this field before outputting ANSWER.\n\nCurrent question: \''+q.p+'\'\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. Spoken response MAX 25 words. Brevity is everything — this is voice.\n2. Use natural contractions. Sound human.\n3. Never mention being an AI or bot.\n4. CRITICAL: Spoken text ends cleanly. ANSWER: and READY_NEXT appear ONLY on their own lines after spoken text, never mid-sentence.'
@@ -1158,17 +1195,21 @@ async function processAnswer(text){
       .replace(/\s+$/,'')
       .trim();
     if(disp){
+      busy=false;
       speakIt(disp,function(){
         if(ready&&am){answers[q.k]=am[1].trim();cq++;advanceWithReaskQueue();}
         else{setMicReady();}
       });
     } else if(ready&&am){
+      busy=false;
       answers[q.k]=am[1].trim();cq++;advanceWithReaskQueue();
     } else {
+      busy=false;
       setMicReady();
     }
   }catch(e){
     clearTimeout(safetyTimer);
+    busy=false;
     setLabel('');
     setViz('idle');
     answers[q.k]=text;
@@ -1205,12 +1246,23 @@ function toggleText(){
       btn.innerHTML='<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>Type instead';
     }
     document.getElementById('tinput').value='';
-    var mwt=document.getElementById('mic-wrap');if(mwt)mwt.classList.add('visible');
-    dockShow();positionMic();if(!speaking&&!busy)setMicReady();
+    // Re-enable mic and reset idle timer when returning to voice
+    var mwt=document.getElementById('mic-wrap');
+    if(mwt)mwt.classList.add('visible');
+    dockShow();
+    positionMic();
+    if(!speaking&&!busy)setMicReady();
   }
 }
 
-const APPROVE_PROMPTS=["Got it. Tap approve if you are happy with that.","Noted. Hit the tick if that looks good to you.","Nice one. Approve it below if you are happy to move on.","Got that down. Tap approve when you are ready.","Okay. If that answer looks right, go ahead and approve it.","Good stuff. Tick it off below when you are ready to continue."];
+const APPROVE_PROMPTS=[
+  "Got it. Tap approve if you are happy with that.",
+  "Noted. Hit the tick if that looks good to you.",
+  "Nice one. Approve it below if you are happy to move on.",
+  "Got that down. Tap approve when you are ready.",
+  "Okay. If that answer looks right, go ahead and approve it.",
+  "Good stuff. Tick it off below when you are ready to continue."
+];
 function approvePrompt(){return APPROVE_PROMPTS[Math.floor(Math.random()*APPROVE_PROMPTS.length)];}
 
 function sendText(){
@@ -1228,9 +1280,8 @@ function sendText(){
   }
   document.getElementById('transcript').textContent=t;
   showAnswerActions(t);
+  speakIt(approvePrompt(),null);
 }
-
-
 
 function openForm(){window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');}
 
@@ -1285,12 +1336,6 @@ function tryHideURLBar(){
     setTimeout(function(){window.scrollTo(0,0);},100);
   }
 }
-window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);});
-document.addEventListener('visibilitychange',function(){
-  if(!document.hidden)setTimeout(tryHideURLBar,300);
-});
-window.addEventListener('resize',function(){positionMic();});
-
 // Swipe gesture handler for header show/hide
 // IMPORTANT: passive:false on touchstart so we can call preventDefault()
 // to block the browser's native pull-to-refresh gesture
@@ -1431,24 +1476,39 @@ function advanceWithReaskQueue(){
 // ── CONFIRM / RETRY ──────────────────────────────────────────────
 function showAnswerActions(answer){
   pendingAnswer=answer;
+
+  // Make dock + mic visible — remove autohide and ensure .visible class
+  dockShow();
+  var mw=document.getElementById('mic-wrap');
+  if(mw&&!mw.classList.contains('visible'))mw.classList.add('visible');
+
   const aa=document.getElementById('answer-actions');
   const retry=document.getElementById('btn-retry');
   const confirm=document.getElementById('btn-confirm');
-  const micWrap=document.getElementById('mic-wrap');
-  const micBtn=document.getElementById('mic-btn');
-  const micBtnH=micBtn?micBtn.offsetHeight:68;
-  const micLabelH=24;
-  const micCentreBottom=parseFloat(micWrap.style.bottom||'120')+micLabelH+(micBtnH/2);
-  aa.style.bottom=(micCentreBottom-17)+'px';
+
+  // Show buttons immediately — position AFTER transition settles (100ms)
   aa.style.display='flex';
   retry.classList.remove('pop-out');confirm.classList.remove('pop-out');
   retry.style.opacity='';confirm.style.opacity='';
-  void retry.offsetWidth;
-  retry.classList.add('pop-in');confirm.classList.add('pop-in');
-  aa.classList.add('visible');
-  // Auto-scroll transcript to show the answer
-  const inner=document.getElementById('transcript-area-inner');
-  if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},100);
+
+  // Position and animate after a short delay so autohide transition clears
+  setTimeout(function(){
+    var micWrap=document.getElementById('mic-wrap');
+    var micBtn=document.getElementById('mic-btn');
+    if(!micWrap.style.bottom||micWrap.style.bottom==='')positionMic();
+    var micBtnH=micBtn?micBtn.offsetHeight:68;
+    var micLabelH=24;
+    var rawBottom=parseFloat(micWrap.style.bottom);
+    var micBottom=isNaN(rawBottom)?120:rawBottom;
+    var micCentreBottom=micBottom+micLabelH+(micBtnH/2);
+    aa.style.bottom=(micCentreBottom-17)+'px';
+    void retry.offsetWidth;
+    retry.classList.add('pop-in');confirm.classList.add('pop-in');
+    aa.classList.add('visible');
+  }, 120); // wait for autohide opacity transition (0.4s) to clear enough
+
+  // Auto-scroll to latest content
+  txScrollToBottom();
 }
 function hideAnswerActions(cb){
   const aa=document.getElementById('answer-actions');
@@ -1475,6 +1535,7 @@ function retryAnswer(){
 
 // ── DOCK AUTO-HIDE (while AI is speaking) ────────────────────────
 function dockHide(){
+  // Never hide dock/mic while user has a pending answer awaiting Approve/Redo
   if(pendingAnswer)return;
   const dock=document.getElementById('bottom-dock');
   const mic=document.getElementById('mic-wrap');
@@ -1638,20 +1699,86 @@ function positionMic(){
 })();
 
 // ── MOBILE KEYBOARD HANDLER ───────────────────────────────────────
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize',function(){
-    const keyboardH=window.innerHeight-window.visualViewport.height;
-    if(keyboardH>80&&textActive){document.getElementById('app').style.paddingBottom=(keyboardH+20)+'px';setTimeout(function(){var inp=document.getElementById('tinput');if(inp)inp.scrollIntoView({behavior:'smooth',block:'center'});},80);}
-    else{document.getElementById('app').style.paddingBottom='';}
-    positionMic();
-  });
-}
-
 // ── URL BAR HIDE ──────────────────────────────────────────────────
 function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(function(){window.scrollTo(0,0);},100);}}
 window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);setTimeout(function(){checkForSavedProgress();},200);});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(tryHideURLBar,300);});
-window.addEventListener('resize',function(){positionMic();});
+window.addEventListener('resize',function(){positionMic();txSetMaxHeight();});
+
+// ── TRANSCRIPT SCROLL MANAGEMENT ─────────────────────────────────
+var _txAutoScroll=true; // auto-scroll enabled by default
+
+
+function txSetMaxHeight(){
+  var inner=document.getElementById('transcript-area-inner');
+  var area=document.getElementById('transcript-area');
+  var micWrap=document.getElementById('mic-wrap');
+  if(!inner||!area||!micWrap)return;
+
+  var areaTop=area.getBoundingClientRect().top;
+  var micTop=micWrap.getBoundingClientRect().top;
+  var available=micTop-areaTop;
+
+  // Leave a comfortable buffer above the mic (60px)
+  var buffer=60;
+  var maxH=Math.max(80, available-buffer);
+
+  // On desktop (wide screens) be more generous — only cap when truly needed
+  // Use a minimum of 220px on desktop so short answers aren't constrained
+  if(window.innerWidth>=768){
+    maxH=Math.max(220, maxH);
+  }
+
+  inner.style.maxHeight=maxH+'px';
+  txUpdateMask(inner);
+}
+
+function txScrollToBottom(){
+  var inner=document.getElementById('transcript-area-inner');
+  if(!inner)return;
+  _txAutoScroll=true;
+  txSetMaxHeight(); // recalc available space before scrolling
+  inner.scrollTop=inner.scrollHeight;
+  txUpdateMask(inner);
+}
+
+function txUpdateMask(inner){
+  // Only show fade when content overflows AND user has scrolled up past top
+  var overflows=(inner.scrollHeight>inner.clientHeight+4);
+  var scrolledUp=(inner.scrollTop>8);
+  if(overflows&&scrolledUp){
+    inner.classList.add('scrolled');
+  } else {
+    inner.classList.remove('scrolled');
+  }
+}
+
+function txInit(){
+  var inner=document.getElementById('transcript-area-inner');
+  if(!inner||inner._txBound)return;
+  inner._txBound=true;
+
+  // When user manually scrolls up — pause auto-scroll, show fade
+  inner.addEventListener('scroll',function(){
+    txUpdateMask(inner);
+    // If user has scrolled to within 10px of bottom, re-enable auto-scroll
+    var atBottom=(inner.scrollHeight-inner.scrollTop-inner.clientHeight)<10;
+    _txAutoScroll=atBottom;
+  },{passive:true});
+
+  // Watch for content height changes (new words appearing)
+  if(window.ResizeObserver){
+    var ro=new ResizeObserver(function(){
+      txSetMaxHeight();
+      if(_txAutoScroll) txScrollToBottom();
+    });
+    // Observe both transcript and bot-resp divs
+    var t=document.getElementById('transcript');
+    var b=document.getElementById('bot-resp');
+    if(t)ro.observe(t);
+    if(b)ro.observe(b);
+  }
+}
 
 </script>
 <!-- SWIPE TARGET -->
