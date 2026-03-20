@@ -232,7 +232,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1);
   bottom:120px;
 }
-#answer-actions.visible{pointer-events:all;}
+#answer-actions.visible{pointer-events:all;transform:translateX(-50%) translateY(0);}
 .action-flanker-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .flanker-label{font-size:9px;font-weight:500;letter-spacing:0.6px;text-transform:uppercase;color:rgba(240,238,255,0.35);pointer-events:none;white-space:nowrap;}
 .action-flanker{
@@ -1444,22 +1444,35 @@ function advanceWithReaskQueue(){
 // ── CONFIRM / RETRY ──────────────────────────────────────────────
 function showAnswerActions(answer){
   pendingAnswer=answer;
+  // Ensure dock + mic are visible before measuring/showing buttons
+  dockShow();
+  const mw=document.getElementById('mic-wrap');
+  if(mw&&!mw.classList.contains('visible'))mw.classList.add('visible');
+
   const aa=document.getElementById('answer-actions');
   const retry=document.getElementById('btn-retry');
   const confirm=document.getElementById('btn-confirm');
-  const micWrap=document.getElementById('mic-wrap');
-  const micBtn=document.getElementById('mic-btn');
-  const micBtnH=micBtn?micBtn.offsetHeight:68;
-  const micLabelH=24;
-  const micCentreBottom=parseFloat(micWrap.style.bottom||'120')+micLabelH+(micBtnH/2);
-  aa.style.bottom=(micCentreBottom-17)+'px';
+
+  // Show container immediately so it's in the layout
   aa.style.display='flex';
   retry.classList.remove('pop-out');confirm.classList.remove('pop-out');
   retry.style.opacity='';confirm.style.opacity='';
-  void retry.offsetWidth;
-  retry.classList.add('pop-in');confirm.classList.add('pop-in');
-  aa.classList.add('visible');
-  // Auto-scroll transcript to show the answer
+
+  // Position + animate after 120ms — lets autohide transition clear so measurements are accurate
+  setTimeout(function(){
+    const micWrap=document.getElementById('mic-wrap');
+    const micBtn=document.getElementById('mic-btn');
+    if(!micWrap.style.bottom||micWrap.style.bottom==='')positionMic();
+    const micBtnH=micBtn?micBtn.offsetHeight:68;
+    const raw=parseFloat(micWrap.style.bottom);
+    const micBottom=isNaN(raw)?120:raw;
+    aa.style.bottom=(micBottom+24+(micBtnH/2)-17)+'px';
+    void retry.offsetWidth;
+    retry.classList.add('pop-in');confirm.classList.add('pop-in');
+    aa.classList.add('visible');
+  },120);
+
+  // Auto-scroll transcript
   const inner=document.getElementById('transcript-area-inner');
   if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},100);
 }
