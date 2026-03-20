@@ -1147,7 +1147,7 @@ async function processAnswer(text){
 
   // Safety timeout - if API takes too long, move on
   const safetyTimer=setTimeout(function(){
-    answers[q.k]=text;cq++;speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
+    busy=false;answers[q.k]=text;cq++;speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
   }, 18000);
 
   const sys='You are a warm, patient, genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. 20 years of expertise across Creative Direction, Brand Strategy, Marketing, Consumer Insights, and Competitive Analysis.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n- Progress nudges occasionally.\n\nFOR EACH QUESTION:\n1. Review the FULL conversation history for anything relevant to this field.\n2. If a prior answer partially covers this question, say: You mentioned X earlier — does that apply here? and offer to incorporate it.\n3. Acknowledge their answer warmly in 1 sentence.\n4. If answer is sufficient: output ANSWER: then READY_NEXT on the next line.\n5. If incomplete or vague: ask ONE specific follow-up under 25 words. Do NOT auto-advance. Wait for response.\n6. After up to 3 follow-ups: synthesise all parts into a complete answer, present it starting with So your answer is: and ask if they are happy with it. If yes — output ANSWER and READY_NEXT. If no — ask what to change.\n7. ALWAYS synthesise partial answers across the full conversation for this field before outputting ANSWER.\n\nCurrent question: \''+q.p+'\'\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. Spoken response MAX 25 words. Brevity is everything — this is voice.\n2. Use natural contractions. Sound human.\n3. Never mention being an AI or bot.\n4. CRITICAL: Spoken text ends cleanly. ANSWER: and READY_NEXT appear ONLY on their own lines after spoken text, never mid-sentence.'
@@ -1176,21 +1176,23 @@ async function processAnswer(text){
       .replace(/\s+$/,'')
       .trim();
     if(disp){
+      busy=false;
       speakIt(disp,function(){
         if(ready&&am){answers[q.k]=am[1].trim();cq++;advanceWithReaskQueue();}
         else{setMicReady();}
       });
     } else if(ready&&am){
+      busy=false;
       answers[q.k]=am[1].trim();cq++;advanceWithReaskQueue();
     } else {
+      busy=false;
       setMicReady();
     }
   }catch(e){
     clearTimeout(safetyTimer);
-    setLabel('');
-    setViz('idle');
-    answers[q.k]=text;
-    cq++;
+    busy=false;
+    setLabel('');setViz('idle');
+    answers[q.k]=text;cq++;
     speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
   }
 }
