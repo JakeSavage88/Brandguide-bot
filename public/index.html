@@ -766,9 +766,12 @@ function setupVoice(){
   const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   recog=new SR();
-  recog.continuous=!isMobile; // continuous on desktop, one-shot on mobile
-  recog.interimResults=true; // always show interim for responsiveness
+  recog.continuous=false; // one-shot on both platforms — more reliable
+  recog.interimResults=true;
   recog.lang='en-AU';
+
+  var pauseTimer=null; // debounce: wait for pause before submitting
+
   recog.onresult=function(e){
     let final='';
     let interim='';
@@ -785,33 +788,30 @@ function setupVoice(){
     if(final.trim()){
       accumulatedFinal+=final;
       document.getElementById('transcript').textContent=accumulatedFinal.trim();
-      // On mobile with continuous:false, process immediately on final result
-      // Don't wait for onend which fires too fast
-      if(isMobile){
-        const text=accumulatedFinal.trim();
-        accumulatedFinal='';
-        stopListen();
-        showAnswerActions(text);
-      }
+      // Clear any pending pause timer — keep accumulating
+      if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
+      // After 1.2s of silence following a final result, submit
+      pauseTimer=setTimeout(function(){
+        if(accumulatedFinal.trim()&&listening){
+          const text=accumulatedFinal.trim();
+          accumulatedFinal='';
+          stopListen();
+          showAnswerActions(text);
+        }
+      },1200);
     }
   };
 
   recog.onend=function(){
-    // Desktop: process accumulated text when recognition ends
-    if(!isMobile && listening && accumulatedFinal.trim()){
+    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
+    if(listening && accumulatedFinal.trim()){
+      // Recognition ended with accumulated text — submit it
       const text=accumulatedFinal.trim();
       accumulatedFinal='';
       stopListen();
       showAnswerActions(text);
-    } else if(!isMobile && listening){
-      // No speech - restart for desktop continuous-style behaviour
-      setTimeout(function(){
-        if(listening){
-          try{recog.start();}catch(err){listening=false;setViz('idle');}
-        }
-      },200);
-    } else if(isMobile && listening && !accumulatedFinal.trim()){
-      // Mobile: no speech detected, restart
+    } else if(listening && !accumulatedFinal.trim()){
+      // No speech detected — restart quietly
       setTimeout(function(){
         if(listening){
           try{recog.start();}catch(err){listening=false;setViz('idle');}
