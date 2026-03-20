@@ -232,7 +232,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1);
   bottom:120px;
 }
-#answer-actions.visible{pointer-events:all;}
+#answer-actions.visible{pointer-events:all;transform:translateX(-50%) translateY(0);}
 .action-flanker-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .flanker-label{font-size:9px;font-weight:500;letter-spacing:0.6px;text-transform:uppercase;color:rgba(240,238,255,0.35);pointer-events:none;white-space:nowrap;}
 .action-flanker{
@@ -275,9 +275,11 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #review-header p{font-size:12px;color:var(--muted);text-align:center;line-height:1.5;max-width:340px;}
 #review-wheel{flex:1;width:100%;max-width:680px;position:relative;overflow:hidden;cursor:grab;}
 #review-wheel:active{cursor:grabbing;}
-#review-wheel::before,#review-wheel::after{content:'';position:absolute;left:0;right:0;height:38%;z-index:3;pointer-events:none;}
-#review-wheel::before{top:0;background:linear-gradient(to bottom,var(--bg) 0%,transparent 100%);}
-#review-wheel::after{bottom:0;background:linear-gradient(to top,var(--bg) 0%,transparent 100%);}
+/* Wheel fade: mask both top and bottom — colour-agnostic, works on any background */
+#review-wheel{
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
+  mask-image:linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%);
+}
 #review-wheel-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;will-change:transform;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);padding:0 1.25rem;}
 .rw-card{width:100%;max-width:620px;flex-shrink:0;display:flex;align-items:flex-start;gap:14px;padding:18px 0;border-bottom:0.5px solid rgba(255,255,255,0.06);transition:transform 0.35s ease,opacity 0.35s ease;transform-origin:center;}
 .rw-card-text{flex:1;}
@@ -315,9 +317,23 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 
 /* ── TRANSCRIPT SCROLL FADE ── */
 #transcript-area{position:relative;}
-#transcript-area::before{content:'';position:absolute;top:0;left:0;right:0;height:32px;background:linear-gradient(to bottom,var(--bg),transparent);z-index:2;pointer-events:none;}
-#transcript-area-inner{max-height:120px;overflow-y:auto;scrollbar-width:none;}
+#transcript-area-inner{}
 #transcript-area-inner::-webkit-scrollbar{display:none;}
+/* Transcript scroll fade — only visible when scrolled past top content.
+   Default: no mask. JS adds .scrolled class when user has scrolled up. */
+#transcript-area-inner{
+  max-height:140px;
+  overflow-y:auto;
+  scrollbar-width:none;
+  scroll-behavior:smooth;
+  -webkit-mask-image:none;
+  mask-image:none;
+  transition:-webkit-mask-image 0.3s ease, mask-image 0.3s ease;
+}
+#transcript-area-inner.scrolled{
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 25%);
+  mask-image:linear-gradient(to bottom, transparent 0%, black 25%);
+}
 
 /* ── DOCK AUTO-HIDE ── */
 #bottom-dock{transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
@@ -577,6 +593,7 @@ function beginSession(){
   initAudioGraph();
   setupVoice();
   buildPills();
+  txInit();
   showSecIntro();
 }
 
@@ -620,6 +637,7 @@ function askQ(){
   // Clear previous answer from screen
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').innerHTML='';
+
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.k;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
@@ -1073,8 +1091,7 @@ function speakIt(text,cb){
     botEl.appendChild(span);
   });
   // Auto-scroll transcript area
-  const inner=document.getElementById('transcript-area-inner');
-  if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},50);
+  txInit(); txScrollToBottom(); // ensure auto-scroll active for new speech
 
   sharedAudio.pause();
   sharedAudio.onended=null;sharedAudio.onerror=null;
@@ -1476,9 +1493,8 @@ function showAnswerActions(answer){
   void retry.offsetWidth;
   retry.classList.add('pop-in');confirm.classList.add('pop-in');
   aa.classList.add('visible');
-  // Auto-scroll transcript
-  const inner=document.getElementById('transcript-area-inner');
-  if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},100);
+  // Auto-scroll to latest content
+  txScrollToBottom();
 }
 function hideAnswerActions(cb){
   const aa=document.getElementById('answer-actions');
@@ -1681,6 +1697,52 @@ function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(
 window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);setTimeout(function(){checkForSavedProgress();},200);});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(tryHideURLBar,300);});
 window.addEventListener('resize',function(){positionMic();});
+
+// ── TRANSCRIPT SCROLL MANAGEMENT ─────────────────────────────────
+var _txAutoScroll=true; // auto-scroll enabled by default
+
+function txScrollToBottom(){
+  var inner=document.getElementById('transcript-area-inner');
+  if(!inner)return;
+  _txAutoScroll=true;
+  inner.scrollTop=inner.scrollHeight;
+  txUpdateMask(inner);
+}
+
+function txUpdateMask(inner){
+  // Show top fade only when there's hidden content above (i.e. scrolled down)
+  if(inner.scrollTop>8){
+    inner.classList.add('scrolled');
+  } else {
+    inner.classList.remove('scrolled');
+  }
+}
+
+function txInit(){
+  var inner=document.getElementById('transcript-area-inner');
+  if(!inner||inner._txBound)return;
+  inner._txBound=true;
+
+  // When user manually scrolls up — pause auto-scroll, show fade
+  inner.addEventListener('scroll',function(){
+    txUpdateMask(inner);
+    // If user has scrolled to within 10px of bottom, re-enable auto-scroll
+    var atBottom=(inner.scrollHeight-inner.scrollTop-inner.clientHeight)<10;
+    _txAutoScroll=atBottom;
+  },{passive:true});
+
+  // Watch for content height changes (new words appearing)
+  if(window.ResizeObserver){
+    var ro=new ResizeObserver(function(){
+      if(_txAutoScroll) txScrollToBottom();
+    });
+    // Observe both transcript and bot-resp divs
+    var t=document.getElementById('transcript');
+    var b=document.getElementById('bot-resp');
+    if(t)ro.observe(t);
+    if(b)ro.observe(b);
+  }
+}
 
 </script>
 <!-- SWIPE TARGET -->
