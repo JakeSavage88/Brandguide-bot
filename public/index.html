@@ -316,9 +316,19 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* ── TRANSCRIPT SCROLL FADE ── */
 #transcript-area{position:relative;}
 #transcript-area::before{content:'';position:absolute;top:0;left:0;right:0;height:32px;background:linear-gradient(to bottom,var(--bg),transparent);z-index:2;pointer-events:none;}
-#transcript-area-inner{max-height:120px;overflow-y:auto;scrollbar-width:none;scroll-behavior:smooth;}
+#transcript-area-inner{
+  max-height:none;
+  overflow-y:auto;
+  scrollbar-width:none;
+  scroll-behavior:smooth;
+  -webkit-mask-image:none;
+  mask-image:none;
+}
 #transcript-area-inner::-webkit-scrollbar{display:none;}
-#transcript-area-inner.scrolled{-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 28%);mask-image:linear-gradient(to bottom,transparent 0%,black 28%);}
+#transcript-area-inner.tx-fading{
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 22%);
+  mask-image:linear-gradient(to bottom, transparent 0%, black 22%);
+}
 
 /* ── DOCK AUTO-HIDE ── */
 #bottom-dock{transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
@@ -625,6 +635,7 @@ function askQ(){
   // Clear previous answer from screen
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').innerHTML='';
+  txClear();
   var _ta=document.getElementById('transcript-area-inner');if(_ta)_ta.classList.remove('scrolled');
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.k;
@@ -1310,7 +1321,7 @@ window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);});
 document.addEventListener('visibilitychange',function(){
   if(!document.hidden)setTimeout(tryHideURLBar,300);
 });
-window.addEventListener('resize',function(){positionMic();});
+window.addEventListener('resize',function(){positionMic();txSetMaxHeight();});
 
 // Swipe gesture handler for header show/hide
 // IMPORTANT: passive:false on touchstart so we can call preventDefault()
@@ -1685,38 +1696,104 @@ if(window.visualViewport){
 function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(function(){window.scrollTo(0,0);},100);}}
 window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);setTimeout(function(){checkForSavedProgress();},200);});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(tryHideURLBar,300);});
-window.addEventListener('resize',function(){positionMic();});
+window.addEventListener('resize',function(){positionMic();txSetMaxHeight();});
 
 // ── TRANSCRIPT SCROLL FADE ─────────────────────────────────────
-var _txAutoScroll=true;
-function txScrollToBottom(){
-  var inner=document.getElementById('transcript-area-inner');
-  if(!inner)return;
-  _txAutoScroll=true;
-  inner.scrollTop=inner.scrollHeight;
-  txUpdateMask(inner);
+var _txAutoScroll = true;
+
+function txGetMaxHeight() {
+  // Calculate available space between transcript area top and mic button
+  var area = document.getElementById('transcript-area');
+  var micWrap = document.getElementById('mic-wrap');
+  if (!area || !micWrap) return null;
+  if (!micWrap.classList.contains('visible')) return null;
+
+  var areaRect = area.getBoundingClientRect();
+  var micRect = micWrap.getBoundingClientRect();
+
+  // Mic must be below area and on screen
+  if (micRect.top <= areaRect.top || micRect.top > window.innerHeight) return null;
+
+  var available = micRect.top - areaRect.top;
+  var buffer = 80; // comfortable gap above mic
+  var maxH = Math.max(60, available - buffer);
+
+  // Desktop: only start capping at a generous minimum (300px)
+  // so short/medium answers are never constrained
+  if (window.innerWidth >= 768) {
+    maxH = Math.max(300, maxH);
+  }
+  return maxH;
 }
-function txUpdateMask(inner){
-  var overflows=(inner.scrollHeight>inner.clientHeight+4);
-  var scrolledUp=(inner.scrollTop>8);
-  if(overflows&&scrolledUp){inner.classList.add('scrolled');}
-  else{inner.classList.remove('scrolled');}
-}
-function txInit(){
-  var inner=document.getElementById('transcript-area-inner');
-  if(!inner||inner._txBound)return;
-  inner._txBound=true;
-  inner.addEventListener('scroll',function(){
-    txUpdateMask(inner);
-    _txAutoScroll=(inner.scrollHeight-inner.scrollTop-inner.clientHeight)<10;
-  },{passive:true});
-  if(window.ResizeObserver){
-    var ro=new ResizeObserver(function(){if(_txAutoScroll)txScrollToBottom();});
-    var t=document.getElementById('transcript');
-    var b=document.getElementById('bot-resp');
-    if(t)ro.observe(t);if(b)ro.observe(b);
+
+function txSetMaxHeight() {
+  var inner = document.getElementById('transcript-area-inner');
+  if (!inner) return;
+  var maxH = txGetMaxHeight();
+  if (maxH === null) {
+    // Mic not visible yet — no constraint
+    inner.style.maxHeight = 'none';
+  } else {
+    inner.style.maxHeight = maxH + 'px';
   }
 }
+
+function txScrollToBottom() {
+  var inner = document.getElementById('transcript-area-inner');
+  if (!inner) return;
+  _txAutoScroll = true;
+  txSetMaxHeight();
+  inner.scrollTop = inner.scrollHeight;
+  txUpdateFade(inner);
+}
+
+function txUpdateFade(inner) {
+  // Only show top fade when there is hidden content above (user has scrolled down)
+  // AND the content actually overflows (needs scroll)
+  var overflows = (inner.scrollHeight > inner.clientHeight + 4);
+  var scrolledDown = (inner.scrollTop > 10);
+  if (overflows && scrolledDown) {
+    inner.classList.add('tx-fading');
+  } else {
+    inner.classList.remove('tx-fading');
+  }
+}
+
+function txClear() {
+  // Called when moving to next question — reset scroll and fade
+  var inner = document.getElementById('transcript-area-inner');
+  if (!inner) return;
+  inner.classList.remove('tx-fading');
+  inner.style.maxHeight = 'none';
+  _txAutoScroll = true;
+}
+
+function txInit() {
+  var inner = document.getElementById('transcript-area-inner');
+  if (!inner || inner._txBound) return;
+  inner._txBound = true;
+
+  inner.addEventListener('scroll', function() {
+    txUpdateFade(inner);
+    // Re-enable auto-scroll if user scrolls to bottom
+    var atBottom = (inner.scrollHeight - inner.scrollTop - inner.clientHeight) < 10;
+    _txAutoScroll = atBottom;
+  }, {passive: true});
+
+  // Watch for content height changes — auto-scroll if enabled
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(function() {
+      txSetMaxHeight();
+      if (_txAutoScroll) txScrollToBottom();
+    });
+    var t = document.getElementById('transcript');
+    var b = document.getElementById('bot-resp');
+    if (t) ro.observe(t);
+    if (b) ro.observe(b);
+  }
+}
+
+
 
 </script>
 <!-- SWIPE TARGET -->
