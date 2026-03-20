@@ -316,8 +316,9 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* ── TRANSCRIPT SCROLL FADE ── */
 #transcript-area{position:relative;}
 #transcript-area::before{content:'';position:absolute;top:0;left:0;right:0;height:32px;background:linear-gradient(to bottom,var(--bg),transparent);z-index:2;pointer-events:none;}
-#transcript-area-inner{max-height:120px;overflow-y:auto;scrollbar-width:none;}
+#transcript-area-inner{max-height:120px;overflow-y:auto;scrollbar-width:none;scroll-behavior:smooth;}
 #transcript-area-inner::-webkit-scrollbar{display:none;}
+#transcript-area-inner.scrolled{-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 28%);mask-image:linear-gradient(to bottom,transparent 0%,black 28%);}
 
 /* ── DOCK AUTO-HIDE ── */
 #bottom-dock{transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
@@ -580,6 +581,7 @@ function beginSession(){
   initAudioGraph();
   setupVoice();
   buildPills();
+  txInit();
   showSecIntro();
 }
 
@@ -623,6 +625,7 @@ function askQ(){
   // Clear previous answer from screen
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').innerHTML='';
+  var _ta=document.getElementById('transcript-area-inner');if(_ta)_ta.classList.remove('scrolled');
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.k;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
@@ -771,6 +774,7 @@ function setupVoice(){
         if(accumulatedFinal.trim()&&listening){
           const text=accumulatedFinal.trim();accumulatedFinal='';
           stopListen();showAnswerActions(text);
+          setTimeout(function(){speakIt(approvePrompt(),null);},150);
         }
       },1200);
     }
@@ -780,6 +784,7 @@ function setupVoice(){
     if(listening&&accumulatedFinal.trim()){
       const text=accumulatedFinal.trim();accumulatedFinal='';
       stopListen();showAnswerActions(text);
+      setTimeout(function(){speakIt(approvePrompt(),null);},150);
     } else if(listening&&!accumulatedFinal.trim()){
       setTimeout(function(){
         if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');}}
@@ -1241,6 +1246,7 @@ function sendText(){
   }
   document.getElementById('transcript').textContent=t;
   showAnswerActions(t);
+  setTimeout(function(){speakIt(approvePrompt(),null);},150);
 }
 
 
@@ -1678,6 +1684,37 @@ function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(
 window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);setTimeout(function(){checkForSavedProgress();},200);});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(tryHideURLBar,300);});
 window.addEventListener('resize',function(){positionMic();});
+
+// ── TRANSCRIPT SCROLL FADE ─────────────────────────────────────
+var _txAutoScroll=true;
+function txScrollToBottom(){
+  var inner=document.getElementById('transcript-area-inner');
+  if(!inner)return;
+  _txAutoScroll=true;
+  inner.scrollTop=inner.scrollHeight;
+  txUpdateMask(inner);
+}
+function txUpdateMask(inner){
+  var overflows=(inner.scrollHeight>inner.clientHeight+4);
+  var scrolledUp=(inner.scrollTop>8);
+  if(overflows&&scrolledUp){inner.classList.add('scrolled');}
+  else{inner.classList.remove('scrolled');}
+}
+function txInit(){
+  var inner=document.getElementById('transcript-area-inner');
+  if(!inner||inner._txBound)return;
+  inner._txBound=true;
+  inner.addEventListener('scroll',function(){
+    txUpdateMask(inner);
+    _txAutoScroll=(inner.scrollHeight-inner.scrollTop-inner.clientHeight)<10;
+  },{passive:true});
+  if(window.ResizeObserver){
+    var ro=new ResizeObserver(function(){if(_txAutoScroll)txScrollToBottom();});
+    var t=document.getElementById('transcript');
+    var b=document.getElementById('bot-resp');
+    if(t)ro.observe(t);if(b)ro.observe(b);
+  }
+}
 
 </script>
 <!-- SWIPE TARGET -->
