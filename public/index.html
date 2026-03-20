@@ -1475,33 +1475,37 @@ function advanceWithReaskQueue(){
 // ── CONFIRM / RETRY ──────────────────────────────────────────────
 function showAnswerActions(answer){
   pendingAnswer=answer;
-  // Always make dock + mic visible before positioning — they may be autohidden
+
+  // Make dock + mic visible — remove autohide and ensure .visible class
   dockShow();
-  // Ensure mic-wrap has .visible class (it needs this to cancel the initial translateY(200px))
   var mw=document.getElementById('mic-wrap');
   if(mw&&!mw.classList.contains('visible'))mw.classList.add('visible');
 
   const aa=document.getElementById('answer-actions');
   const retry=document.getElementById('btn-retry');
   const confirm=document.getElementById('btn-confirm');
-  const micWrap=document.getElementById('mic-wrap');
-  const micBtn=document.getElementById('mic-btn');
 
-  // Ensure mic is positioned — call positionMic if it hasn't been set yet
-  if(!micWrap.style.bottom || micWrap.style.bottom==='') positionMic();
-
-  const micBtnH=micBtn?micBtn.offsetHeight:68;
-  const micLabelH=24;
-  const rawBottom=parseFloat(micWrap.style.bottom);
-  const micBottom=isNaN(rawBottom)?120:rawBottom;
-  const micCentreBottom=micBottom+micLabelH+(micBtnH/2);
-  aa.style.bottom=(micCentreBottom-17)+'px';
+  // Show buttons immediately — position AFTER transition settles (100ms)
   aa.style.display='flex';
   retry.classList.remove('pop-out');confirm.classList.remove('pop-out');
   retry.style.opacity='';confirm.style.opacity='';
-  void retry.offsetWidth;
-  retry.classList.add('pop-in');confirm.classList.add('pop-in');
-  aa.classList.add('visible');
+
+  // Position and animate after a short delay so autohide transition clears
+  setTimeout(function(){
+    var micWrap=document.getElementById('mic-wrap');
+    var micBtn=document.getElementById('mic-btn');
+    if(!micWrap.style.bottom||micWrap.style.bottom==='')positionMic();
+    var micBtnH=micBtn?micBtn.offsetHeight:68;
+    var micLabelH=24;
+    var rawBottom=parseFloat(micWrap.style.bottom);
+    var micBottom=isNaN(rawBottom)?120:rawBottom;
+    var micCentreBottom=micBottom+micLabelH+(micBtnH/2);
+    aa.style.bottom=(micCentreBottom-17)+'px';
+    void retry.offsetWidth;
+    retry.classList.add('pop-in');confirm.classList.add('pop-in');
+    aa.classList.add('visible');
+  }, 120); // wait for autohide opacity transition (0.4s) to clear enough
+
   // Auto-scroll to latest content
   txScrollToBottom();
 }
