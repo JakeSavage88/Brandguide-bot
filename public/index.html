@@ -1715,16 +1715,21 @@ function txSetMaxHeight(){
   var micWrap=document.getElementById('mic-wrap');
   if(!inner||!area||!micWrap)return;
 
-  var areaTop=area.getBoundingClientRect().top;
-  var micTop=micWrap.getBoundingClientRect().top;
-  var available=micTop-areaTop;
+  // Only run when mic is visible and positioned on screen
+  // If mic is off-screen (translateY(200px) default), skip — no constraint needed yet
+  if(!micWrap.classList.contains('visible'))return;
 
-  // Leave a comfortable buffer above the mic (60px)
+  var areaRect=area.getBoundingClientRect();
+  var micRect=micWrap.getBoundingClientRect();
+
+  // Sanity check: mic must be below the area and within viewport
+  if(micRect.top<=areaRect.top||micRect.top>window.innerHeight)return;
+
+  var available=micRect.top-areaRect.top;
   var buffer=60;
   var maxH=Math.max(80, available-buffer);
 
-  // On desktop (wide screens) be more generous — only cap when truly needed
-  // Use a minimum of 220px on desktop so short answers aren't constrained
+  // Desktop: generous minimum so content isn't cramped
   if(window.innerWidth>=768){
     maxH=Math.max(220, maxH);
   }
