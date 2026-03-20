@@ -322,7 +322,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* Transcript scroll fade — only visible when scrolled past top content.
    Default: no mask. JS adds .scrolled class when user has scrolled up. */
 #transcript-area-inner{
-  max-height:140px;
+  max-height:none; /* JS sets this dynamically based on available space */
   overflow-y:auto;
   scrollbar-width:none;
   scroll-behavior:smooth;
@@ -678,7 +678,8 @@ function askQ(){
   speakIt(q.p,function(){
     setLabel('Tap to answer');
     setMicReady();
-    positionMic(); // dynamically centre mic between content and buttons
+    positionMic();
+    txSetMaxHeight(); // recalc transcript area after mic is positioned
   });
   positionMic(); // also call immediately for layout
 }
@@ -1702,15 +1703,41 @@ function positionMic(){
 function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(function(){window.scrollTo(0,0);},100);}}
 window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);setTimeout(function(){checkForSavedProgress();},200);});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(tryHideURLBar,300);});
-window.addEventListener('resize',function(){positionMic();});
+window.addEventListener('resize',function(){positionMic();txSetMaxHeight();});
 
 // ── TRANSCRIPT SCROLL MANAGEMENT ─────────────────────────────────
 var _txAutoScroll=true; // auto-scroll enabled by default
+
+
+function txSetMaxHeight(){
+  var inner=document.getElementById('transcript-area-inner');
+  var area=document.getElementById('transcript-area');
+  var micWrap=document.getElementById('mic-wrap');
+  if(!inner||!area||!micWrap)return;
+
+  var areaTop=area.getBoundingClientRect().top;
+  var micTop=micWrap.getBoundingClientRect().top;
+  var available=micTop-areaTop;
+
+  // Leave a comfortable buffer above the mic (60px)
+  var buffer=60;
+  var maxH=Math.max(80, available-buffer);
+
+  // On desktop (wide screens) be more generous — only cap when truly needed
+  // Use a minimum of 220px on desktop so short answers aren't constrained
+  if(window.innerWidth>=768){
+    maxH=Math.max(220, maxH);
+  }
+
+  inner.style.maxHeight=maxH+'px';
+  txUpdateMask(inner);
+}
 
 function txScrollToBottom(){
   var inner=document.getElementById('transcript-area-inner');
   if(!inner)return;
   _txAutoScroll=true;
+  txSetMaxHeight(); // recalc available space before scrolling
   inner.scrollTop=inner.scrollHeight;
   txUpdateMask(inner);
 }
@@ -1742,6 +1769,7 @@ function txInit(){
   // Watch for content height changes (new words appearing)
   if(window.ResizeObserver){
     var ro=new ResizeObserver(function(){
+      txSetMaxHeight();
       if(_txAutoScroll) txScrollToBottom();
     });
     // Observe both transcript and bot-resp divs
