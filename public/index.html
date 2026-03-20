@@ -1244,8 +1244,24 @@ function toggleText(){
       btn.innerHTML='<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>Type instead';
     }
     document.getElementById('tinput').value='';
+    // Re-enable mic and reset idle timer when returning to voice
+    var mwt=document.getElementById('mic-wrap');
+    if(mwt)mwt.classList.add('visible');
+    dockShow();
+    positionMic();
+    if(!speaking&&!busy)setMicReady();
   }
 }
+
+const APPROVE_PROMPTS=[
+  "Got it. Tap approve if you are happy with that.",
+  "Noted. Hit the tick if that looks good to you.",
+  "Nice one. Approve it below if you are happy to move on.",
+  "Got that down. Tap approve when you are ready.",
+  "Okay. If that answer looks right, go ahead and approve it.",
+  "Good stuff. Tick it off below when you are ready to continue."
+];
+function approvePrompt(){return APPROVE_PROMPTS[Math.floor(Math.random()*APPROVE_PROMPTS.length)];}
 
 function sendText(){
   const inp=document.getElementById('tinput');
@@ -1262,6 +1278,7 @@ function sendText(){
   }
   document.getElementById('transcript').textContent=t;
   showAnswerActions(t);
+  speakIt(approvePrompt(),null);
 }
 
 function openForm(){window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');}
@@ -1459,6 +1476,9 @@ function showAnswerActions(answer){
   pendingAnswer=answer;
   // Always make dock + mic visible before positioning — they may be autohidden
   dockShow();
+  // Ensure mic-wrap has .visible class (it needs this to cancel the initial translateY(200px))
+  var mw=document.getElementById('mic-wrap');
+  if(mw&&!mw.classList.contains('visible'))mw.classList.add('visible');
 
   const aa=document.getElementById('answer-actions');
   const retry=document.getElementById('btn-retry');
