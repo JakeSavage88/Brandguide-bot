@@ -1107,7 +1107,17 @@ function speakIt(text,cb){
       setTimeout(done,400);
     });
   })
-  .catch(function(){botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});setTimeout(done,300);});
+  .catch(function(err){
+    // TTS failed — reveal subtitles so user can read, show status, still advance
+    botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
+    var errMsg=err&&err.message?err.message:'unknown';
+    var isQuota=errMsg.includes('401')||errMsg.includes('402')||errMsg.includes('429');
+    setLabel(isQuota?'Voice credits exhausted — reading subtitles':'Voice unavailable — reading subtitles');
+    setTimeout(function(){
+      setLabel('');
+      done();
+    }, isQuota?4000:2000); // longer pause on quota so user can read the status
+  });
 }
 
 
