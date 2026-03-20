@@ -324,9 +324,15 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   mask-image:none;
 }
 #transcript-area-inner::-webkit-scrollbar{display:none;}
-#transcript-area-inner.tx-fading{
+/* Top fade only — content hidden above scroll position */
+#transcript-area-inner.tx-top{
   -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 22%);
   mask-image:linear-gradient(to bottom, transparent 0%, black 22%);
+}
+/* Top + bottom — user scrolled up, content hidden both above and below */
+#transcript-area-inner.tx-both{
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%);
+  mask-image:linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%);
 }
 
 /* ── DOCK AUTO-HIDE ── */
@@ -1508,6 +1514,9 @@ function hideAnswerActions(cb){
 function confirmAnswer(){
   if(!pendingAnswer)return;
   const ans=pendingAnswer;pendingAnswer=null;
+  // Stop audio immediately on tap — don't wait for hideAnswerActions animation
+  sharedAudio.pause();
+  if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
   setLabel('Thinking...');setViz('speaking');
   hideAnswerActions(function(){processAnswer(ans);});
 }
@@ -1717,11 +1726,11 @@ function txGetMaxHeight() {
   if (micRect.top <= areaRect.top || micRect.top > window.innerHeight) return null;
 
   var available = micRect.top - areaRect.top;
-  var buffer = 80; // comfortable gap above mic
+  // Mobile gets tighter buffer (40px), desktop stays generous (80px)
+  var buffer = window.innerWidth >= 768 ? 80 : 40;
   var maxH = Math.max(60, available - buffer);
 
-  // Desktop: only start capping at a generous minimum (300px)
-  // so short/medium answers are never constrained
+  // Desktop: generous minimum so short answers are never constrained
   if (window.innerWidth >= 768) {
     maxH = Math.max(300, maxH);
   }
@@ -1750,23 +1759,32 @@ function txScrollToBottom() {
 }
 
 function txUpdateFade(inner) {
-  // Only fade when content is meaningfully overflowing (more than 1 line hidden above)
-  // and the user has scrolled down past the top
-  var lineHeight = 24; // approximate line height in px
-  var overflows = (inner.scrollHeight > inner.clientHeight + lineHeight);
-  var scrolledDown = (inner.scrollTop > lineHeight);
-  if (overflows && scrolledDown) {
-    inner.classList.add('tx-fading');
-  } else {
-    inner.classList.remove('tx-fading');
+  var lineH = 24;
+  var overflows = (inner.scrollHeight > inner.clientHeight + lineH);
+  var hiddenAbove = (inner.scrollTop > lineH);
+  var hiddenBelow = (inner.scrollHeight - inner.scrollTop - inner.clientHeight) > lineH;
+
+  // Remove all fade classes first
+  inner.classList.remove('tx-top', 'tx-both');
+
+  if (!overflows) return; // no overflow = no fade at all
+
+  if (hiddenAbove && hiddenBelow) {
+    // User scrolled to middle — fade both ends
+    inner.classList.add('tx-both');
+  } else if (hiddenAbove) {
+    // At bottom (auto-scroll) with content above — top fade only
+    inner.classList.add('tx-top');
   }
+  // hiddenBelow only (scrolled to very top) = no fade needed
 }
 
 function txClear() {
   // Called when moving to next question — reset scroll and fade
   var inner = document.getElementById('transcript-area-inner');
   if (!inner) return;
-  inner.classList.remove('tx-fading');
+  inner.classList.remove('tx-top');
+  inner.classList.remove('tx-both');
   inner.style.maxHeight = 'none';
   _txAutoScroll = true;
 }
