@@ -232,7 +232,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1);
   bottom:120px;
 }
-#answer-actions.visible{pointer-events:all;transform:translateX(-50%) translateY(0);}
+#answer-actions.visible{pointer-events:all;}
 .action-flanker-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
 .flanker-label{font-size:9px;font-weight:500;letter-spacing:0.6px;text-transform:uppercase;color:rgba(240,238,255,0.35);pointer-events:none;white-space:nowrap;}
 .action-flanker{
@@ -316,9 +316,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* ── TRANSCRIPT SCROLL FADE ── */
 #transcript-area{position:relative;}
 #transcript-area::before{content:'';position:absolute;top:0;left:0;right:0;height:32px;background:linear-gradient(to bottom,var(--bg),transparent);z-index:2;pointer-events:none;}
-#transcript-area-inner{max-height:120px;overflow-y:auto;scrollbar-width:none;scroll-behavior:smooth;}
+#transcript-area-inner{max-height:120px;overflow-y:auto;scrollbar-width:none;}
 #transcript-area-inner::-webkit-scrollbar{display:none;}
-#transcript-area-inner.scrolled{-webkit-mask-image:linear-gradient(to bottom,transparent 0%,black 28%);mask-image:linear-gradient(to bottom,transparent 0%,black 28%);}
 
 /* ── DOCK AUTO-HIDE ── */
 #bottom-dock{transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
@@ -581,7 +580,6 @@ function beginSession(){
   initAudioGraph();
   setupVoice();
   buildPills();
-  txInit();
   showSecIntro();
 }
 
@@ -625,7 +623,6 @@ function askQ(){
   // Clear previous answer from screen
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').innerHTML='';
-  var _ta=document.getElementById('transcript-area-inner');if(_ta)_ta.classList.remove('scrolled');
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.k;
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
@@ -754,10 +751,9 @@ function setupVoice(){
   const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   recog=new SR();
-  recog.continuous=false;
-  recog.interimResults=true;
+  recog.continuous=!isMobile; // continuous on desktop, one-shot on mobile
+  recog.interimResults=true; // always show interim for responsiveness
   recog.lang='en-AU';
-
   var pauseTimer=null;
   recog.onresult=function(e){
     let final='';let interim='';
@@ -774,7 +770,6 @@ function setupVoice(){
         if(accumulatedFinal.trim()&&listening){
           const text=accumulatedFinal.trim();accumulatedFinal='';
           stopListen();showAnswerActions(text);
-          setTimeout(function(){speakIt(approvePrompt(),null);},150);
         }
       },1200);
     }
@@ -784,11 +779,8 @@ function setupVoice(){
     if(listening&&accumulatedFinal.trim()){
       const text=accumulatedFinal.trim();accumulatedFinal='';
       stopListen();showAnswerActions(text);
-      setTimeout(function(){speakIt(approvePrompt(),null);},150);
     } else if(listening&&!accumulatedFinal.trim()){
-      setTimeout(function(){
-        if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');}}
-      },200);
+      setTimeout(function(){if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');}}},200);
     }
   };
   recog.onerror=function(e){
@@ -1112,17 +1104,7 @@ function speakIt(text,cb){
       setTimeout(done,400);
     });
   })
-  .catch(function(err){
-    // TTS failed — reveal subtitles so user can read, show status, still advance
-    botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
-    var errMsg=err&&err.message?err.message:'unknown';
-    var isQuota=errMsg.includes('401')||errMsg.includes('402')||errMsg.includes('429');
-    setLabel(isQuota?'Voice credits exhausted — reading subtitles':'Voice unavailable — reading subtitles');
-    setTimeout(function(){
-      setLabel('');
-      done();
-    }, isQuota?4000:2000); // longer pause on quota so user can read the status
-  });
+  .catch(function(){botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});setTimeout(done,300);});
 }
 
 
@@ -1246,7 +1228,6 @@ function sendText(){
   }
   document.getElementById('transcript').textContent=t;
   showAnswerActions(t);
-  setTimeout(function(){speakIt(approvePrompt(),null);},150);
 }
 
 
@@ -1450,35 +1431,22 @@ function advanceWithReaskQueue(){
 // ── CONFIRM / RETRY ──────────────────────────────────────────────
 function showAnswerActions(answer){
   pendingAnswer=answer;
-  // Ensure dock + mic are visible before measuring/showing buttons
-  dockShow();
-  const mw=document.getElementById('mic-wrap');
-  if(mw&&!mw.classList.contains('visible'))mw.classList.add('visible');
-
   const aa=document.getElementById('answer-actions');
   const retry=document.getElementById('btn-retry');
   const confirm=document.getElementById('btn-confirm');
-
-  // Show container immediately so it's in the layout
+  const micWrap=document.getElementById('mic-wrap');
+  const micBtn=document.getElementById('mic-btn');
+  const micBtnH=micBtn?micBtn.offsetHeight:68;
+  const micLabelH=24;
+  const micCentreBottom=parseFloat(micWrap.style.bottom||'120')+micLabelH+(micBtnH/2);
+  aa.style.bottom=(micCentreBottom-17)+'px';
   aa.style.display='flex';
   retry.classList.remove('pop-out');confirm.classList.remove('pop-out');
   retry.style.opacity='';confirm.style.opacity='';
-
-  // Position + animate after 120ms — lets autohide transition clear so measurements are accurate
-  setTimeout(function(){
-    const micWrap=document.getElementById('mic-wrap');
-    const micBtn=document.getElementById('mic-btn');
-    if(!micWrap.style.bottom||micWrap.style.bottom==='')positionMic();
-    const micBtnH=micBtn?micBtn.offsetHeight:68;
-    const raw=parseFloat(micWrap.style.bottom);
-    const micBottom=isNaN(raw)?120:raw;
-    aa.style.bottom=(micBottom+24+(micBtnH/2)-17)+'px';
-    void retry.offsetWidth;
-    retry.classList.add('pop-in');confirm.classList.add('pop-in');
-    aa.classList.add('visible');
-  },120);
-
-  // Auto-scroll transcript
+  void retry.offsetWidth;
+  retry.classList.add('pop-in');confirm.classList.add('pop-in');
+  aa.classList.add('visible');
+  // Auto-scroll transcript to show the answer
   const inner=document.getElementById('transcript-area-inner');
   if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},100);
 }
@@ -1684,37 +1652,6 @@ function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(
 window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);setTimeout(function(){checkForSavedProgress();},200);});
 document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(tryHideURLBar,300);});
 window.addEventListener('resize',function(){positionMic();});
-
-// ── TRANSCRIPT SCROLL FADE ─────────────────────────────────────
-var _txAutoScroll=true;
-function txScrollToBottom(){
-  var inner=document.getElementById('transcript-area-inner');
-  if(!inner)return;
-  _txAutoScroll=true;
-  inner.scrollTop=inner.scrollHeight;
-  txUpdateMask(inner);
-}
-function txUpdateMask(inner){
-  var overflows=(inner.scrollHeight>inner.clientHeight+4);
-  var scrolledUp=(inner.scrollTop>8);
-  if(overflows&&scrolledUp){inner.classList.add('scrolled');}
-  else{inner.classList.remove('scrolled');}
-}
-function txInit(){
-  var inner=document.getElementById('transcript-area-inner');
-  if(!inner||inner._txBound)return;
-  inner._txBound=true;
-  inner.addEventListener('scroll',function(){
-    txUpdateMask(inner);
-    _txAutoScroll=(inner.scrollHeight-inner.scrollTop-inner.clientHeight)<10;
-  },{passive:true});
-  if(window.ResizeObserver){
-    var ro=new ResizeObserver(function(){if(_txAutoScroll)txScrollToBottom();});
-    var t=document.getElementById('transcript');
-    var b=document.getElementById('bot-resp');
-    if(t)ro.observe(t);if(b)ro.observe(b);
-  }
-}
 
 </script>
 <!-- SWIPE TARGET -->
