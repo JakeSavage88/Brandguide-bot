@@ -919,15 +919,16 @@ function setMicReady(){
   clearIdleTimer();
   idleCount=0;
   // Start idle detection - prompt after 10s, again at 25s
+  // Do NOT fire if user has a pendingAnswer waiting for Approve/Redo
   idleTimer=setTimeout(function(){
-    if(!listening&&!busy&&!speaking){
+    if(!listening&&!busy&&!speaking&&!pendingAnswer){
       const prompt=IDLE_PROMPTS[Math.min(idleCount,IDLE_PROMPTS.length-1)];
       idleCount++;
       speakIt(prompt,function(){
         // After prompt, check again in 20s
         if(!listening&&!busy){
           idleTimer=setTimeout(function(){
-            if(!listening&&!busy&&!speaking){
+            if(!listening&&!busy&&!speaking&&!pendingAnswer){
               idleCount++;
               speakIt("Whenever you are ready — I am here.",function(){});
             }
@@ -1529,6 +1530,8 @@ function retryAnswer(){
 
 // ── DOCK AUTO-HIDE (while AI is speaking) ────────────────────────
 function dockHide(){
+  // Never hide dock/mic while user has a pending answer awaiting Approve/Redo
+  if(pendingAnswer)return;
   const dock=document.getElementById('bottom-dock');
   const mic=document.getElementById('mic-wrap');
   if(dock)dock.classList.add('autohide');
@@ -1709,8 +1712,10 @@ function txScrollToBottom(){
 }
 
 function txUpdateMask(inner){
-  // Show top fade only when there's hidden content above (i.e. scrolled down)
-  if(inner.scrollTop>8){
+  // Only show fade when content overflows AND user has scrolled up past top
+  var overflows=(inner.scrollHeight>inner.clientHeight+4);
+  var scrolledUp=(inner.scrollTop>8);
+  if(overflows&&scrolledUp){
     inner.classList.add('scrolled');
   } else {
     inner.classList.remove('scrolled');
