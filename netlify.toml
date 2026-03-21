@@ -6,12 +6,3 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
-
-[functions]
-  node_bundler = "esbuild"
-
-[functions."tts"]
-  timeout = 26
-
-[functions."claude"]
-  timeout = 26
