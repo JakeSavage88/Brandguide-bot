@@ -94,7 +94,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 @keyframes l3{0%,100%{height:28px}50%{height:78px}}
 @keyframes l4{0%,100%{height:38px}50%{height:96px}}
 /* QUESTION DISPLAY */
-#qdisplay{width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:28px;padding:0 8px;position:relative;z-index:2}
+#qdisplay{width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:28px;padding:0 8px}
 #slabel{font-size:10px;color:var(--acc2);text-transform:uppercase;letter-spacing:2px;font-weight:600;min-height:14px}
 #ptext{font-size:11px;color:var(--muted);margin-top:2px}
 #qtext{font-size:22px;font-weight:600;line-height:1.5;letter-spacing:-0.3px;max-width:560px;margin-top:8px}
@@ -149,11 +149,10 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #mic-btn:hover{transform:scale(1.06);box-shadow:0 0 44px rgba(124,106,255,0.6)}
 #mic-btn.on{background:linear-gradient(135deg,#06b6d4,#0891b2);box-shadow:0 0 40px rgba(6,182,212,0.5);animation:pring 1.5s ease-in-out infinite}
 #mic-btn.dis{opacity:0.4;cursor:not-allowed}
-#mic-btn.idle-pulse{animation:idlePulse 2s ease-in-out infinite}
-@keyframes idlePulse{0%,100%{box-shadow:0 0 30px rgba(124,106,255,0.4)}50%{box-shadow:0 0 52px rgba(124,106,255,0.8),0 0 0 8px rgba(124,106,255,0.15)}}
-/* Ready-pulse: immediate gentle glow when mic is waiting for tap */
 #mic-btn.ready{animation:readyPulse 2.4s ease-in-out infinite}
 @keyframes readyPulse{0%,100%{box-shadow:0 0 28px rgba(124,106,255,0.35),0 0 0 0px rgba(124,106,255,0)}55%{box-shadow:0 0 44px rgba(124,106,255,0.6),0 0 0 6px rgba(124,106,255,0.12)}}
+#mic-btn.idle-pulse{animation:idlePulse 2s ease-in-out infinite}
+@keyframes idlePulse{0%,100%{box-shadow:0 0 30px rgba(124,106,255,0.4)}50%{box-shadow:0 0 52px rgba(124,106,255,0.8),0 0 0 8px rgba(124,106,255,0.15)}}
 @keyframes pring{0%,100%{box-shadow:0 0 28px rgba(6,182,212,0.35)}50%{box-shadow:0 0 52px rgba(6,182,212,0.65)}}
 #mic-label{font-size:12px;color:var(--muted);text-align:center;letter-spacing:0.3px}
 /* TWO-ROW BOTTOM BUTTONS */
@@ -318,26 +317,16 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 .submit-confirm-card h3{font-size:22px;font-weight:700;color:var(--text);}
 .submit-confirm-card p{font-size:14px;color:var(--muted);line-height:1.6;max-width:360px;}
 
-/* ── REFERENCE ARCHIVE BUTTON ── */
-.abtn-ref{position:relative}
-.ref-badge{
-  position:absolute;top:-5px;right:-5px;
-  min-width:16px;height:16px;padding:0 4px;
-  background:var(--acc);border-radius:8px;
-  font-size:9px;font-weight:700;color:white;
-  display:none;align-items:center;justify-content:center;
-  line-height:1;letter-spacing:0;
-}
-.ref-badge.visible{display:flex;}
-/* Reference loaded state — button gets a subtle accent tint */
-.abtn.ref-loaded{border-color:rgba(124,106,255,0.45);color:var(--acc2);}
-#thinking-dots{display:none;align-items:center;gap:5px;justify-content:center;margin-top:10px;height:20px}
+/* ── THINKING DOTS ── */
+#thinking-dots{display:none;align-items:center;gap:5px;justify-content:center;margin-top:8px;height:20px}
 #thinking-dots.visible{display:flex}
-.t-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);opacity:0.3;animation:tdot 1.2s ease-in-out infinite}
-.t-dot:nth-child(1){animation-delay:0s}
-.t-dot:nth-child(2){animation-delay:0.2s}
-.t-dot:nth-child(3){animation-delay:0.4s}
-@keyframes tdot{0%,80%,100%{opacity:0.3;transform:scale(1)}40%{opacity:1;transform:scale(1.35)}}
+.t-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);opacity:0.35;animation:tdot 1.2s ease-in-out infinite}
+.t-dot:nth-child(1){animation-delay:0s}.t-dot:nth-child(2){animation-delay:0.2s}.t-dot:nth-child(3){animation-delay:0.4s}
+@keyframes tdot{0%,80%,100%{opacity:0.35;transform:scale(1)}40%{opacity:1;transform:scale(1.3)}}
+/* ── REFERENCE BADGE ── */
+.abtn-ref{position:relative}
+#ref-badge{display:none;position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 3px;background:var(--acc);border-radius:8px;font-size:9px;font-weight:700;color:white;align-items:center;justify-content:center;line-height:1;}
+/* ── TRANSCRIPT SCROLL FADE ── */
 #transcript-area{position:relative;}
 #transcript-area-inner{
   max-height:none;
@@ -362,9 +351,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* ── DOCK AUTO-HIDE ── */
 #bottom-dock{transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
 #bottom-dock.autohide{transform:translateY(110%);opacity:0;pointer-events:none;}
-/* Mic stays visible always — changes label to "Tap to interrupt" during AI speech */
 #mic-wrap{transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1),transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
-#mic-wrap.autohide{opacity:1;pointer-events:all;} /* override — never hide mic */
+#mic-wrap.autohide{opacity:1;pointer-events:all;} /* mic always visible */
 
 </style>
 </head>
@@ -376,12 +364,11 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 <div id="start-ov">
   <div style="display:flex;align-items:center;gap:12px"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20115%20126%22%3E%3Cpath%20d%3D%22M105.6%2C69l-11.6-29.8c-.5-1.4-2-2.2-3.4-2.3s-3.1.9-4.1%2C2.3c-2%2C3-3.4%2C6.3-3.7%2C9.9l-.2%2C1.7c0%2C.6%2C0%2C1.1%2C0%2C1.7v1c.2%2C2.1.8%2C4.3%2C1.6%2C6.3l12.4%2C31.9c.7%2C1.9%2C1%2C4.3.8%2C6.2-.8%2C6.9-6.6%2C12-13.6%2C12h-32.3c-8.8%2C0-17.3-5.3-20.5-13.4l-10.9-27.9-1.8-4.8c-.5-1.3-.9-2.5-.9-3.9s0-1.7%2C0-2.5c.6-5.9%2C4.9-10.8%2C10.7-11.9l.9-.2h1c0%2C0%2C6.6%2C0%2C6.6%2C0l-2.5-6.5c-.4-.9-.6-1.8-.7-2.8s-.2-2.9%2C0-4.2c1-5.9%2C5.8-10.5%2C11.7-11.2.5%2C0%2C.9-.1%2C1.4-.1h33.4c8.3%2C0%2C16.7%2C5.8%2C19.7%2C13.4l13%2C33.4c.6%2C1.5.7%2C3.2.7%2C4.8-.2%2C6.6-5.1%2C12-11.6%2C12.9-.2%2C0-.4%2C0-.7%2C0l-2.7-7c0%2C0%2C.1-.2.2-.2h.6c1.4%2C0%2C2.7-.2%2C3.9-.9%2C2.8-1.6%2C3.6-4.9%2C2.5-7.8ZM48%2C76.9c0-.4%2C0-.7-.1-1.1v-.9c-.3-1.2-.6-2.3-1-3.4l-7.2-18.6c0-.1-.2-.5-.3-.5h-8.8c-3.2%2C0-6.1%2C3.1-5.8%2C6.8s.4%2C2%2C.8%2C3l11.2%2C28.8c.6%2C1.5%2C2.3%2C2.3%2C3.7%2C2.3s3-.9%2C3.8-2.3c2-2.9%2C3.3-6.2%2C3.7-9.7s0-.6%2C0-.9v-1.4c0-.2%2C0-.5%2C0-.8v-1.3ZM63.2%2C45.2c.4%2C0%2C.9%2C0%2C1.3%2C0%2C6.8-.7%2C12.5-4.4%2C16.2-10.1l.6-1c.5-.8.7-1.6.6-2.5-.2-1.8-1.7-3.8-3.8-3.8h-31.9c-3%2C0-5.3%2C2.8-5.6%2C5.5-.1%2C1.4.1%2C2.5.6%2C3.7l7.6%2C19.5%2C3%2C7.6c3.2%2C8.1%2C11.2%2C13.8%2C19.9%2C13.8h11.7s-4.3-10.9-4.3-10.9c-1.2-3.1-3.1-5.9-5.5-8.2-4-3.8-9.2-5.9-14.8-6.1h-4.5s-2.8-7.3-2.8-7.3h11.6ZM86.3%2C85.1h-19c-.4%2C0-1.9.2-2.3.3-5.5.9-10.4%2C3.8-13.7%2C8.3-.7%2C1-1.4%2C1.9-2%2C3s-.6%2C2.7.2%2C3.9c.7%2C1.1%2C1.9%2C2%2C3.4%2C2h31.6c1.2%2C0%2C2.4-.6%2C3.3-1.2s.8-.7%2C1.2-1.2c1.4-1.8%2C1.6-4.3.8-6.4l-3.4-8.7Z%22%20fill%3D%22%237462f9%22/%3E%3C/svg%3E" width="52" height="57" alt="" style="display:block;flex-shrink:0"><span style="font-size:32px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">Strat<span style="color:#7462f9">IQ</span></span></div>
   <h1>Your brand strategy<br>starts here.</h1>
-  <p>I am your AI brand consultant. We will chat through your brand brief together — voice or text. Got an existing strategy doc? Upload it and I will pre-fill what I can. About 15 minutes and your full report lands shortly after.</p>
+  <p>I am your AI brand consultant. We will chat through your brand brief together — I ask the questions, you bring the insights. About 15 minutes and your full strategy report lands shortly after.</p>
   <div class="feats">
     <div class="feat">Voice-guided</div>
     <div class="feat">AI-powered insights</div>
     <div class="feat">7 sections</div>
-    <div class="feat">Upload existing docs</div>
     <div class="feat">Full strategy report</div>
   </div>
   <button class="begbtn" onclick="beginSession()">Let's do this →</button>
@@ -452,12 +439,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
       <div id="itext"></div>
     </div>
 
-    <div id="thinking-dots">
-      <div class="t-dot"></div>
-      <div class="t-dot"></div>
-      <div class="t-dot"></div>
-    </div>
-
+    <div id="thinking-dots"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
     <div id="transcript-area">
       <div id="transcript-area-inner">
         <div id="transcript"></div>
@@ -503,15 +485,16 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 9.5v-7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4 5l3-3.5 3 3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12.5" x2="12" y2="12.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
         Upload doc
       </button>
-      <button class="abtn abtn-ref" id="ref-btn" onclick="openRefUpload()" title="Add reference documents — Claude will use these as background context">
+      <button class="abtn abtn-ref" id="ref-btn" onclick="openRefUpload()" title="Add reference docs — Claude uses these as background context throughout">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-          <rect x="2" y="2" width="7" height="9" rx="1" stroke="currentColor" stroke-width="1.25"/>
-          <path d="M5 2V1M9 2V1" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-          <rect x="7" y="7" width="5" height="5" rx="1" fill="currentColor" opacity="0.9"/>
-          <path d="M9.5 8.5v2M8.5 9.5h2" stroke="white" stroke-width="1.1" stroke-linecap="round"/>
+          <rect x="2" y="1.5" width="7" height="9" rx="1" stroke="currentColor" stroke-width="1.25"/>
+          <line x1="4" y1="4.5" x2="7" y2="4.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          <line x1="4" y1="6.5" x2="7" y2="6.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          <circle cx="10.5" cy="10.5" r="2.5" fill="currentColor" opacity="0.9"/>
+          <path d="M10.5 9.3v2.4M9.3 10.5h2.4" stroke="white" stroke-width="1.1" stroke-linecap="round"/>
         </svg>
         Add reference
-        <span class="ref-badge" id="ref-badge">0</span>
+        <span class="ref-badge" id="ref-badge"></span>
       </button>
     </div>
     <!-- Row 2: Skip — plain text, no pill, visually distinct -->
@@ -570,7 +553,7 @@ const SECS=[
    intro:"Let us dig into what you are actually selling and why people should choose you. This is the commercial heart of the strategy.",
    qs:[
     {k:'Key Products or Services',e:'entry.528379571',p:"What are your main products or services? Give me a clear picture of your core offering.",req:true},
-    {k:'Product / Service Unique Mechanics',e:'entry.569842307',p:"How does your product or service actually work — what is the specific method, process, or delivery that makes it distinctive?",req:true,ins:"This is the how, not the what. The mechanism behind your offering that no one else does quite like you."},
+    {k:'Product / Service Unique Mechanics',e:'entry.569842307',p:"How does your product or service actually work — what is the specific method, process, or delivery that makes it distinctive?",req:true,ins:"This is the how not the what — the mechanism behind your offering that no one else does quite like you."},
     {k:'Features & Benefits',e:'entry.575306966',p:"Key features and the real benefit behind each one. What does each feature actually mean for the customer?",req:false,ins:"Features tell, benefits sell. This is where most brands leave serious money on the table."},
     {k:'Pricing Strategy',e:'entry.1425749582',p:"How are you priced — premium, mid-market, freemium? What is the logic behind it?",req:false},
     {k:'Customer Experience Overview',e:'entry.1836847594',p:"Walk me through the customer experience — from first contact through to long-term relationship.",req:false}
@@ -613,7 +596,7 @@ let pendingAnswer=null;
 let wordTimings=null;
 let accumulatedFinal='';
 let speechPauseTimer=null;
-let refDocs=[]; // [{name, content}] — background reference docs Claude uses as context
+let refDocs=[];
 const synth=window.speechSynthesis;
 
 function beginSession(){
@@ -671,13 +654,12 @@ function showSecIntro(){
   // Show header briefly, then hide as soon as voice starts
   document.querySelector('header').classList.remove('hidden');
   updatePills();
+  // Hide header as soon as speech starts (300ms grace to see it)
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},300);
   setTimeout(function(){document.querySelector('header').classList.add('hidden');var sb=document.getElementById('save-btn');if(sb)sb.classList.remove('header-shown');},300);
-
-  // On the very first section, follow the intro with a UI orientation briefing
   if(cs===0){
     speakIt(sec.intro,function(){
-      // Make sure dock is visible before describing the buttons
+      // Show dock before describing buttons
       var dock=document.getElementById('bottom-dock');
       var micWrap=document.getElementById('mic-wrap');
       if(dock&&!dock.classList.contains('visible')){
@@ -685,10 +667,8 @@ function showSecIntro(){
         if(micWrap)micWrap.classList.add('visible');
         setTimeout(positionMic,100);
       }
-      var uiGuide='Quick heads up on the interface before we dive in. The mic button in the middle — tap it to speak, tap again when you are done. Bottom left you have a Type button if you prefer to type. Next to that, Download grabs your answers as a file any time. Upload doc lets you drop in a completed form or brief and I will pre-fill what I can. And Add Reference — that one is useful if you have got existing strategy docs, brand guidelines, or any background material. Upload them there and I will draw on them throughout our conversation without asking you to repeat yourself. The save icon in the top right saves your progress. And you can ask me anything about how this works at any point. Alright — first question.';
-      speakIt(uiGuide,function(){
-        askQ();
-      });
+      var uiGuide='Quick heads up on the interface. The mic button in the middle — tap it to speak, tap again when you are done. At the bottom you have Type if you prefer to type, Download to grab your answers any time, Upload Doc to drop in a completed form, and Add Reference for any existing strategy docs or brand guidelines — I will draw on those throughout our whole conversation. Save icon is top right. And any time you have a question about how this works, just ask me. Alright — first question.';
+      speakIt(uiGuide,function(){askQ();});
     });
   } else {
     speakIt(sec.intro,function(){askQ();});
@@ -700,7 +680,7 @@ function askQ(){
   if(cq>=sec.qs.length){completeSection();return;}
   const q=sec.qs[cq];
   const done=totalDone(),all=totalAll();
-  // Clear previous answer from screen but KEEP the question text visible
+  // Clear previous answer from screen
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').innerHTML='';
   txClear();
@@ -762,11 +742,8 @@ function completeSection(){
   document.getElementById('sec-title').textContent=SECS[cs].name+' — done!';
   document.getElementById('sec-msg').textContent=msg;
   document.getElementById('sec-ov').style.display='flex';
-  // Reveal header again between sections
   document.querySelector('header').classList.remove('hidden');
-  // Submit this section's answers to Google Form immediately (don't batch)
-  submitSection(cs);
-  // Also auto-save progress locally
+  submitSection(cs); // submit each section immediately — fixes Google Sheet cutoff
   saveProgress(false);
 }
 
@@ -831,7 +808,6 @@ function setupVoice(){
     toggleText();
     return;
   }
-
   recog=new SR();
   recog.continuous=false;
   recog.interimResults=true;
@@ -843,24 +819,21 @@ function setupVoice(){
       if(e.results[i].isFinal){final+=e.results[i][0].transcript+' ';}
       else{interim+=e.results[i][0].transcript;}
     }
-    if(interim){
-      document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();
-    }
+    if(interim){document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();}
     if(final.trim()){
       accumulatedFinal+=final;
       document.getElementById('transcript').textContent=accumulatedFinal.trim();
-      // Reset pause timer on every new final chunk — user is still speaking
       if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
       speechPauseTimer=setTimeout(function(){
         speechPauseTimer=null;
         var captured=accumulatedFinal.trim();
         if(captured&&listening){
-          // Natural pause after speech — submit
           listening=false;
           accumulatedFinal='';
-          if(recog)try{recog.stop();}catch(e){}
+          if(recog)try{recog.stop();}catch(e2){}
           var mb=document.getElementById('mic-btn');
           if(mb){mb.classList.remove('on','ready','idle-pulse');}
+          document.getElementById('mic-label').textContent='Tap to speak';
           setViz('idle');
           showAnswerActions(captured);
           setTimeout(function(){speakIt(approvePrompt(),null);},150);
@@ -870,31 +843,20 @@ function setupVoice(){
   };
 
   recog.onend=function(){
-    if(speechPauseTimer){
-      // Timer still pending — let it fire naturally (handles the captured text)
-      return;
-    }
+    if(speechPauseTimer){return;} // timer pending — let it fire
     var captured=accumulatedFinal.trim();
     if(listening&&captured){
-      // Recognition ended before timer fired but we have text — submit it
       listening=false;
       accumulatedFinal='';
       var mb=document.getElementById('mic-btn');
       if(mb){mb.classList.remove('on','ready','idle-pulse');}
+      document.getElementById('mic-label').textContent='Tap to speak';
       setViz('idle');
       showAnswerActions(captured);
       setTimeout(function(){speakIt(approvePrompt(),null);},150);
     } else if(listening&&!captured){
-      // No speech detected — restart recognition quietly
       setTimeout(function(){
-        if(listening){
-          try{recog.start();}catch(err){
-            listening=false;
-            setViz('idle');
-            var mb2=document.getElementById('mic-btn');
-            if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}
-          }
-        }
+        if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}}
       },200);
     }
   };
@@ -904,65 +866,44 @@ function setupVoice(){
     if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
     if(e.error==='not-allowed'||e.error==='permission-denied'){
       stopListen();
-      document.getElementById('bot-resp').textContent='Mic access needed. Please allow microphone access when your browser asks, then tap the mic again.';
+      document.getElementById('bot-resp').textContent='Mic access needed — please allow microphone access and tap the mic again.';
       setLabel('Tap Allow when prompted');
       if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
         navigator.mediaDevices.getUserMedia({audio:true})
-          .then(function(stream){
-            stream.getTracks().forEach(function(t){t.stop();});
-            document.getElementById('bot-resp').textContent='Mic access granted. Tap the mic to try again.';
-            setLabel('Tap to speak');
-          })
-          .catch(function(){
-            document.getElementById('bot-resp').textContent='Mic access denied. Enable microphone in browser settings, or use the Type button below.';
-            setLabel('');
-            toggleText();
-          });
+          .then(function(stream){stream.getTracks().forEach(function(t){t.stop();});document.getElementById('bot-resp').textContent='Mic access granted. Tap the mic to try again.';setLabel('Tap to speak');})
+          .catch(function(){document.getElementById('bot-resp').textContent='Mic access denied. Use the Type button below.';setLabel('');toggleText();});
       }
     } else if(e.error==='no-speech'){
-      if(listening){
-        setTimeout(function(){if(listening)try{recog.start();}catch(err){}},200);
-      }
+      if(listening){setTimeout(function(){if(listening)try{recog.start();}catch(err){}},200);}
     } else {
       stopListen();
       setMicReady();
-      setLabel('Mic error — tap to retry');
     }
   };
 }
-
 function toggleMic(){
-  // If AI is speaking — tap mic to interrupt and start listening immediately
   if(speaking){
     sharedAudio.pause();
     if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
-    stopAudioViz();
-    speaking=false;
-    busy=false;
-    setViz('idle');
-    setLabel('');
-    dockShow();
-    setTimeout(function(){startListen();},200);
+    stopAudioViz();speaking=false;busy=false;setViz('idle');setLabel('');dockShow();
+    setTimeout(function(){startListen();},250);
     return;
   }
   if(busy)return;
   if(listening){
-    // Second tap while recording: if there's text, submit it; otherwise cancel cleanly
     var captured=accumulatedFinal.trim();
+    if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
     if(captured){
-      // User is done — treat exactly like natural end-of-speech
-      listening=false;
-      accumulatedFinal='';
+      listening=false;accumulatedFinal='';
       if(recog)try{recog.stop();}catch(e){}
       var mb=document.getElementById('mic-btn');
       if(mb){mb.classList.remove('on','ready','idle-pulse');}
+      document.getElementById('mic-label').textContent='Tap to speak';
       setViz('idle');
       showAnswerActions(captured);
       setTimeout(function(){speakIt(approvePrompt(),null);},150);
     } else {
-      // Nothing captured yet — just cancel listening gracefully
-      stopListen();
-      setMicReady();
+      stopListen();setMicReady();
     }
     return;
   }
@@ -970,49 +911,31 @@ function toggleMic(){
 }
 
 function startListen(){
-  if(!recog){
-    setLabel('Voice not available');
-    toggleText();
-    return;
-  }
-  // Guard against mic opening while AI audio is still playing (causes feedback loop)
+  if(!recog){setLabel('Voice not available');toggleText();return;}
   if(!sharedAudio.paused&&sharedAudio.currentTime>0){
     sharedAudio.pause();
     if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
-    stopAudioViz();
-    speaking=false;
-    // Small gap before opening mic
-    setTimeout(startListen,250);
-    return;
+    stopAudioViz();speaking=false;
+    setTimeout(startListen,250);return;
   }
   clearIdleTimer();
   if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
-  listening=true;
-  accumulatedFinal='';
+  listening=true;accumulatedFinal='';
   setViz('listening');
   var mb=document.getElementById('mic-btn');
-  if(mb){mb.classList.remove('ready','idle-pulse');mb.classList.add('on');}
+  if(mb){mb.classList.remove('ready','idle-pulse','dis');mb.classList.add('on');}
   document.getElementById('mic-label').textContent='Listening...';
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').textContent='';
   try{recog.abort();}catch(e){}
   setTimeout(function(){
-    try{
-      recog.start();
-      setLabel('Speak now');
-    }catch(e){
-      setLabel('Mic error: '+e.message);
-      listening=false;
-      setViz('idle');
-      document.getElementById('mic-btn').classList.remove('on');
-    }
+    try{recog.start();setLabel('Speak now');}
+    catch(e){setLabel('Mic error — tap to retry');listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}
   },100);
 }
 
 function stopListen(){
   listening=false;
-  // Clear the pause timer — but do NOT clear accumulatedFinal here
-  // The timer callback or toggleMic handles captured text
   if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
   if(recog)try{recog.stop();}catch(e){}
   var mb=document.getElementById('mic-btn');
@@ -1024,7 +947,6 @@ function stopListen(){
 let idleTimer=null;
 let idleCount=0;
 
-// Varied, genuinely human idle nudges — never repeated in sequence, never generic
 const IDLE_PROMPTS=[
   "Take your time — no rush at all.",
   "Hmm, even a rough answer is totally fine here.",
@@ -1036,11 +958,26 @@ const IDLE_PROMPTS=[
 ];
 let _lastIdleIdx=-1;
 function _pickIdlePrompt(){
-  // Never repeat the last one
   var pool=IDLE_PROMPTS.map(function(_,i){return i;}).filter(function(i){return i!==_lastIdleIdx;});
   var idx=pool[Math.floor(Math.random()*pool.length)];
   _lastIdleIdx=idx;
   return IDLE_PROMPTS[idx];
+}
+
+const RETRY_PHRASES=[
+  "No worries — give it another go.",
+  "All good — try again whenever you are ready.",
+  "That is fine — let us hear it.",
+  "No stress — take your time.",
+  "Easy — have another crack at it.",
+  "No problem — whenever you are ready.",
+];
+let _lastRetryIdx=-1;
+function _pickRetryPhrase(){
+  var pool=RETRY_PHRASES.map(function(_,i){return i;}).filter(function(i){return i!==_lastRetryIdx;});
+  var idx=pool[Math.floor(Math.random()*pool.length)];
+  _lastRetryIdx=idx;
+  return RETRY_PHRASES[idx];
 }
 
 function clearIdleTimer(){
@@ -1055,20 +992,20 @@ function setMicReady(){
   document.getElementById('mic-label').textContent='Tap to speak';
   clearIdleTimer();
   idleCount=0;
-  // First idle: 30s — visual pulse only, zero audio interruption
+  // 30s: visual idle pulse only — no audio interruption
   idleTimer=setTimeout(function(){
     if(!listening&&!busy&&!speaking&&!pendingAnswer){
-      var mb=document.getElementById('mic-btn');
-      if(mb)mb.classList.add('idle-pulse');
+      var mb2=document.getElementById('mic-btn');
+      if(mb2){mb2.classList.remove('ready');mb2.classList.add('idle-pulse');}
       idleCount++;
-      // Second idle: 45s later — one brief spoken nudge, then stop
+      // 45s later: one brief spoken nudge
       idleTimer=setTimeout(function(){
         if(!listening&&!busy&&!speaking&&!pendingAnswer){
-          var mb2=document.getElementById('mic-btn');
-          if(mb2)mb2.classList.remove('idle-pulse');
+          var mb3=document.getElementById('mic-btn');
+          if(mb3){mb3.classList.remove('idle-pulse');mb3.classList.add('ready');}
           speakIt(_pickIdlePrompt(),function(){
             idleCount++;
-            // Third idle: 60s later — one final nudge, then silence forever
+            // 60s later: one final nudge, then silence
             if(!listening&&!busy){
               idleTimer=setTimeout(function(){
                 if(!listening&&!busy&&!speaking&&!pendingAnswer){
@@ -1309,116 +1246,137 @@ async function processAnswer(text){
   if(window._resumeChoiceMode){_handleResumeChoice(text);return;}
   if(busy)return;
 
-  // Detect UI / meta questions — handle conversationally without consuming an answer slot
+  // UI / interface meta-questions — answer without consuming an answer slot
   var lower=text.toLowerCase();
-  var isMetaQ=(lower.includes('how do i')||lower.includes('what does')||lower.includes('what is the')||lower.includes('how does')||lower.includes('what are the button')||lower.includes('where is')||lower.includes('what button')||lower.includes('how do you work')||lower.includes('explain the')||lower.includes('tell me about the interface')||lower.includes('how do i upload')||lower.includes('how do i save')||lower.includes('how do i skip')||lower.includes('can i type')||lower.includes('can i upload'))
-    &&(lower.includes('button')||lower.includes('upload')||lower.includes('download')||lower.includes('save')||lower.includes('skip')||lower.includes('type')||lower.includes('interface')||lower.includes('mic')||lower.includes('work')||lower.includes('use'));
+  var isMetaQ=(lower.includes('how do i')||lower.includes('what does')||lower.includes('how does')||lower.includes('what button')||lower.includes('where is the')||lower.includes('how do you work')||lower.includes('can i type')||lower.includes('can i upload')||lower.includes('what are the buttons'))
+    &&(lower.includes('button')||lower.includes('upload')||lower.includes('download')||lower.includes('save')||lower.includes('skip')||lower.includes('type')||lower.includes('mic')||lower.includes('interface')||lower.includes('reference'));
   if(isMetaQ){
-    speakIt('Sure — the mic button in the middle is your main control, tap it to speak. You also have Type, Download, Upload doc, and Add Reference buttons at the bottom. Add Reference is great for dropping in existing strategy docs or brand guidelines — I will use them as background context throughout. The save icon is top right. Skip any optional question with the skip button. What else?',function(){setMicReady();});
+    speakIt('Sure — the mic button in the middle is your main control. Tap to speak, tap again when you are done. You also have Type, Download, Upload doc, and Add Reference buttons at the bottom. Add Reference is great for existing strategy docs or brand guidelines — I will draw on them throughout. Save icon is top right. What else?',function(){setMicReady();});
     return;
   }
-  busy=true;
-  speaking=false;
-  sharedAudio.pause();
-  stopAudioViz();
+
+  busy=true;speaking=false;
+  sharedAudio.pause();stopAudioViz();
   const sec=SECS[cs];
   if(cq>=sec.qs.length){busy=false;return;}
   const q=sec.qs[cq];
   history.push({role:'user',content:text});
   if(history.length>40)history.splice(0,history.length-40);
-  setLabel('Thinking...');
-  setViz('speaking');
+  setLabel('Thinking...');setViz('speaking');
   document.getElementById('transcript').textContent=text;
   document.getElementById('bot-resp').innerHTML='';
-  // Show thinking dots while waiting for API
-  var td=document.getElementById('thinking-dots');
-  if(td)td.classList.add('visible');
+  var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
   positionMic();
 
-  // Safety timeout - if API takes too long, move on
   const safetyTimer=setTimeout(function(){
+    var td2=document.getElementById('thinking-dots');if(td2)td2.classList.remove('visible');
     busy=false;answers[q.k]=text;cq++;speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
-  }, 18000);
+  },18000);
 
-  // Build compact answers summary for system prompt context
-  const answersSummary = Object.entries(answers)
-    .filter(function([k,v]){ return v && v.trim(); })
-    .map(function([k,v]){ return k+': '+v.substring(0,80)+(v.length>80?'...':''); })
+  const answersSummary=Object.entries(answers)
+    .filter(function(_ref){var v=_ref[1];return v&&v.trim();})
+    .map(function(_ref2){var k=_ref2[0],v=_ref2[1];return k+': '+v.substring(0,80)+(v.length>80?'...':'');})
     .join('\n');
 
-  const sys='You are a warm, patient, genuinely human-like brand strategy consultant. 20 years expertise across Brand Strategy, Creative Direction, Marketing, and Consumer Insights.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n\nANSWERS SO FAR:\n'+(answersSummary||'None yet — this is the first question.')+'\n\nCRITICAL: Check ANSWERS SO FAR before every question. If a prior answer already covers this field fully or partially, say so and confirm rather than asking from scratch. Example: "You touched on this earlier when you mentioned X — does that cover it here too?"'+_buildRefContext()+'\n\nFOR EACH QUESTION:\n1. Acknowledge their answer warmly in 1 sentence.\n2. If answer is sufficient: output ANSWER: [captured answer] then READY_NEXT on next line.\n3. If incomplete or vague: ask ONE specific follow-up under 20 words. Do NOT auto-advance.\n4. After up to 2 follow-ups: synthesise all parts, present starting with "So your answer is:" and confirm. If yes — output ANSWER and READY_NEXT.\n\nCurrent question: \''+q.p+'\'\nField: '+q.k+'\nRequired: '+q.req+'\n\nRULES:\n1. Spoken response MAX 35 words. Brevity is everything — this is voice.\n2. Use natural contractions. Sound human.\n3. Never mention being an AI or bot.\n4. CRITICAL: Spoken text ends cleanly. ANSWER: and READY_NEXT appear ONLY on their own lines, never mid-sentence.'
+  const refContext=_buildRefContext();
+
+  const sys='You are a warm, patient, genuinely human-like brand strategy consultant. 20 years expertise across Brand Strategy, Creative Direction, Marketing, and Consumer Insights.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n\nANSWERS SO FAR:\n'+(answersSummary||'None yet.')+refContext+'\n\nCRITICAL: Check ANSWERS SO FAR before every question. If a prior answer already covers this field, say so and confirm rather than asking again. Example: \"You touched on this earlier — does that cover it here too?\"\n\nFOR EACH QUESTION:\n1. Acknowledge their answer warmly in 1 sentence.\n2. If sufficient: output ANSWER: [captured answer] then READY_NEXT on next line.\n3. If vague: ask ONE specific follow-up under 20 words. Do NOT auto-advance.\n4. After up to 2 follow-ups: synthesise, present starting \"So your answer is:\" confirm. If yes — ANSWER and READY_NEXT.\n\nCurrent question: \''+q.p+'\' Field: '+q.k+' Required: '+q.req+'\n\nRULES: Spoken response MAX 35 words. Natural contractions. Never mention being AI. ANSWER: and READY_NEXT on their own lines only.';
 
   try{
-    const res=await fetch('/api/claude',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:350,
-        system:sys,
-        messages:history.slice(-12)
-      })
-    });
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:350,system:sys,messages:history.slice(-12)})});
     const data=await res.json();
     clearTimeout(safetyTimer);
-    // Hide thinking dots
-    var td=document.getElementById('thinking-dots');
-    if(td)td.classList.remove('visible');
+    var td3=document.getElementById('thinking-dots');if(td3)td3.classList.remove('visible');
     const reply=(data.content&&data.content[0])?data.content[0].text:'';
     history.push({role:'assistant',content:reply});
     const am=reply.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
     const ready=reply.includes('READY_NEXT');
-    let disp=reply
-      .replace(/ANSWER:[\s\S]*$/m,'')
-      .replace(/READY_NEXT/g,'')
-      .replace(/\s+$/,'')
-      .trim();
-
+    let disp=reply.replace(/ANSWER:[\s\S]*$/m,'').replace(/READY_NEXT/g,'').replace(/\s+$/,'').trim();
     if(disp){
       busy=false;
       speakIt(disp,function(){
         if(ready&&am){
-          const capturedAnswer=am[1].trim();
-          answers[q.k]=capturedAnswer;
-          // Auto-advance optional questions; confirm required ones
-          if(!q.req){
-            cq++;
-            advanceWithReaskQueue();
-          } else {
-            // Show confirm for required questions so user can verify
-            showAnswerActions(capturedAnswer);
-            // But mark answer as captured — confirm just moves forward
-            window._pendingConfirmedAnswer={key:q.k,val:capturedAnswer};
-          }
-        } else {
-          setMicReady();
-        }
+          const captured=am[1].trim();
+          answers[q.k]=captured;
+          if(!q.req){cq++;advanceWithReaskQueue();}
+          else{showAnswerActions(captured);window._pendingConfirmedAnswer={key:q.k,val:captured};}
+        } else {setMicReady();}
       });
     } else if(ready&&am){
       busy=false;
-      const capturedAnswer=am[1].trim();
-      answers[q.k]=capturedAnswer;
-      if(!q.req){
-        cq++;
-        advanceWithReaskQueue();
-      } else {
-        showAnswerActions(capturedAnswer);
-        window._pendingConfirmedAnswer={key:q.k,val:capturedAnswer};
-      }
-    } else {
-      busy=false;
-      setMicReady();
-    }
+      const captured=am[1].trim();
+      answers[q.k]=captured;
+      if(!q.req){cq++;advanceWithReaskQueue();}
+      else{showAnswerActions(captured);window._pendingConfirmedAnswer={key:q.k,val:captured};}
+    } else {busy=false;setMicReady();}
   }catch(e){
     clearTimeout(safetyTimer);
-    var td2=document.getElementById('thinking-dots');
-    if(td2)td2.classList.remove('visible');
-    busy=false;
-    setLabel('');setViz('idle');
+    var td4=document.getElementById('thinking-dots');if(td4)td4.classList.remove('visible');
+    busy=false;setLabel('');setViz('idle');
     answers[q.k]=text;cq++;
     speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
   }
 }
+// ── REFERENCE ARCHIVE ─────────────────────────────────────────────
+function openRefUpload(){document.getElementById('ref-input').click();}
+
+async function handleRefUpload(input){
+  var files=Array.from(input.files);if(!files.length)return;input.value='';
+  speakIt('Got it — reading '+(files.length===1?'that document':'those documents')+' now.',null);
+  var loaded=0;
+  for(var i=0;i<files.length;i++){
+    var file=files[i];var ext=file.name.toLowerCase().split('.').pop();
+    try{
+      var content=await _readRefFile(file,ext);
+      if(content){refDocs=refDocs.filter(function(d){return d.name!==file.name;});refDocs.push({name:file.name,content:content.substring(0,5000)});loaded++;}
+    }catch(e){console.warn('Ref read error:',file.name,e);}
+  }
+  _updateRefBadge();
+  if(loaded>0){
+    speakIt(loaded===1?'Loaded "'+refDocs[refDocs.length-1].name+'" as background context. I will draw on it throughout.':'Loaded '+loaded+' reference docs — I will draw on all of them as we go.',function(){if(!speaking&&!busy)setMicReady();});
+  } else {speakIt('Could not read that file. Try a PDF, Word doc, or plain text file.',null);}
+}
+
+function _readRefFile(file,ext){
+  return new Promise(function(resolve,reject){
+    var reader=new FileReader();
+    if(ext==='txt'||ext==='md'){
+      reader.onload=function(e){resolve(e.target.result);};reader.onerror=reject;reader.readAsText(file);
+    } else if(ext==='pdf'||ext==='docx'){
+      reader.onload=async function(e){
+        var base64=e.target.result.split(',')[1];
+        var mt=ext==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        try{
+          var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:mt,data:base64}},{type:'text',text:'Extract all meaningful text from this document. Plain text only, no commentary.'}]}]})});
+          var data=await res.json();
+          resolve((data.content&&data.content[0])?data.content[0].text:null);
+        }catch(err){reject(err);}
+      };
+      reader.onerror=reject;reader.readAsDataURL(file);
+    } else {resolve(null);}
+  });
+}
+
+function _updateRefBadge(){
+  var badge=document.getElementById('ref-badge');
+  var btn=document.getElementById('ref-btn');
+  if(!badge||!btn)return;
+  if(refDocs.length>0){
+    badge.textContent=refDocs.length;badge.style.display='inline-flex';
+    btn.style.borderColor='rgba(124,106,255,0.5)';btn.style.color='var(--acc2)';
+    btn.title=refDocs.length+' doc'+(refDocs.length>1?'s':'')+' loaded: '+refDocs.map(function(d){return d.name;}).join(', ');
+  } else {
+    badge.style.display='none';btn.style.borderColor='';btn.style.color='';
+    btn.title='Add reference documents — Claude uses these as background context';
+  }
+}
+
+function _buildRefContext(){
+  if(!refDocs.length)return '';
+  return '\n\nREFERENCE DOCUMENTS (use as background context — do not quote directly):\n'+
+    refDocs.map(function(d){return '--- '+d.name+' ---\n'+d.content;}).join('\n\n');
+}
+
 
 function skipQ(){
   clearIdleTimer();
@@ -1453,7 +1411,6 @@ function toggleText(){
   }
 }
 
-// Approve prompt only shown for required fields
 const APPROVE_PROMPTS=["Got it. Tap the tick to confirm and move on.","Noted — confirm that below when you are ready.","Nice one. Tick it off to continue.","Got that. Confirm below when you are happy with it."];
 function approvePrompt(){return APPROVE_PROMPTS[Math.floor(Math.random()*APPROVE_PROMPTS.length)];}
 
@@ -1462,7 +1419,8 @@ function sendText(){
   const t=inp.value.trim();
   if(!t)return;
   inp.value='';
-  inp.style.height='auto'; // reset textarea height
+  inp.style.height='auto';
+  if(textActive){
     textActive=false;
     document.getElementById('text-mode').style.display='none';
     const btn=document.getElementById('toggle-text-btn');
@@ -1478,74 +1436,44 @@ function sendText(){
 
 
 function openForm(){
-  // Build a pre-filled text download of all answers so far
-  var lines=['StratIQ Brand Strategy Brief\n','='.repeat(40)+'\n'];
-  var hasAnswers=false;
-  SECS.forEach(function(sec){
-    lines.push('\n── '+sec.name.toUpperCase()+' ──\n');
-    sec.qs.forEach(function(q){
-      var ans=answers[q.k]||'';
-      lines.push('\nQ: '+q.p);
-      lines.push('A: '+(ans||'(no answer)'));
-      if(ans)hasAnswers=true;
-    });
-  });
+  var hasAnswers=Object.values(answers).some(function(v){return v&&v.trim();});
   if(!hasAnswers){
-    // No answers yet — open the Google Form to fill in manually
     window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');
     return;
   }
-  // Download as text file with current answers pre-filled
+  var lines=['StratIQ Brand Strategy Brief','='.repeat(40)];
+  SECS.forEach(function(sec){
+    lines.push('\n── '+sec.name.toUpperCase()+' ──');
+    sec.qs.forEach(function(q){
+      lines.push('\nQ: '+q.p);
+      lines.push('A: '+(answers[q.k]||'(no answer)'));
+    });
+  });
   var blob=new Blob([lines.join('\n')],{type:'text/plain'});
   var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;a.download='StratIQ_Brief.txt';a.click();
+  var a=document.createElement('a');a.href=url;a.download='StratIQ_Brief.txt';a.click();
   URL.revokeObjectURL(url);
-  // Show a toast explaining they can re-upload this file
   showSaveToast();
-  setTimeout(function(){
-    var t=document.getElementById('save-toast');
-    if(t)t.textContent='Downloaded with your answers ✓ — upload it back anytime';
-  },100);
 }
 
-// Upload a strategy doc — PDF, DOCX, or TXT — Claude reads it and pre-populates answers
-function uploadForm(){
-  document.getElementById('upload-input').click();
-}
+function uploadForm(){document.getElementById('upload-input').click();}
 
 function handleUpload(input){
-  const file=input.files[0];
-  if(!file)return;
-  input.value='';
-
-  const name=file.name.toLowerCase();
-  const isText=name.endsWith('.txt')||name.endsWith('.md');
-  const isPDF=name.endsWith('.pdf');
-  const isDOCX=name.endsWith('.docx');
-
-  if(!isText&&!isPDF&&!isDOCX){
-    speakIt('Please upload a PDF, Word doc, or plain text file.',null);
-    return;
-  }
-
-  speakIt('Got it — reading your document now. Give me a moment.',null);
-
-  const reader=new FileReader();
-
-  if(isText){
+  var file=input.files[0];if(!file)return;input.value='';
+  var ext=file.name.toLowerCase().split('.').pop();
+  speakIt('Got it — reading your document now.',null);
+  var reader=new FileReader();
+  if(ext==='txt'||ext==='md'){
     reader.onload=function(e){
-      const text=e.target.result;
+      var text=e.target.result;
       // Try Q:/A: format first (re-upload of downloaded brief)
-      const pairs=text.match(/Q:\s*(.+?)\nA:\s*([\s\S]+?)(?=\nQ:|$)/g);
+      var pairs=text.match(/Q:\s*(.+?)\nA:\s*([\s\S]+?)(?=\nQ:|$)/g);
       if(pairs&&pairs.length>0){
-        let loaded=0;
+        var loaded=0;
         pairs.forEach(function(pair){
-          const qm=pair.match(/Q:\s*(.+)/);
-          const am=pair.match(/A:\s*([\s\S]+)/);
+          var qm=pair.match(/Q:\s*(.+)/);var am=pair.match(/A:\s*([\s\S]+)/);
           if(qm&&am){
-            const qtext=qm[1].trim();
-            const atext=am[1].replace(/\(no answer\)/,'').trim();
+            var qtext=qm[1].trim();var atext=am[1].replace(/\(no answer\)/,'').trim();
             SECS.forEach(function(sec){sec.qs.forEach(function(q){
               if(q.p.toLowerCase().includes(qtext.toLowerCase().substring(0,30))||qtext.toLowerCase().includes(q.k.toLowerCase().substring(0,20))){
                 if(atext){answers[q.k]=atext;loaded++;}
@@ -1553,281 +1481,72 @@ function handleUpload(input){
             });});
           }
         });
-        if(loaded>0){
-          speakIt('Loaded '+loaded+' answers from your brief. Let me pick up where the gaps are.',function(){
-            // Skip to first unanswered question
-            _skipToFirstGap();
-          });
-        } else {
-          // Plain text — send to Claude for extraction
-          _extractAnswersWithClaude(text);
-        }
-      } else {
-        _extractAnswersWithClaude(text);
-      }
+        if(loaded>0){_afterUploadPreFill(loaded);}
+        else{_extractAnswersWithClaude(text);}
+      } else {_extractAnswersWithClaude(text);}
     };
     reader.readAsText(file);
-  } else if(isPDF||isDOCX){
-    // Read as base64 and send to Claude
+  } else if(ext==='pdf'||ext==='docx'){
     reader.onload=function(e){
-      const base64=e.target.result.split(',')[1];
-      const mediaType=isPDF?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-      _extractAnswersFromDoc(base64,mediaType,file.name);
+      var base64=e.target.result.split(',')[1];
+      var mediaType=ext==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      _extractAnswersFromDoc(base64,mediaType);
     };
     reader.readAsDataURL(file);
+  } else {
+    speakIt('Please upload a PDF, Word doc, or plain text file.',null);
   }
 }
 
-async function _extractAnswersFromDoc(base64Data,mediaType,fileName){
-  // Build question list for Claude
-  const qList=[];
-  SECS.forEach(function(sec){sec.qs.forEach(function(q){qList.push(q.k);});});
-
-  const prompt='This is a brand strategy document or marketing brief. Extract answers to the following brand strategy questions. For each, output FIELD: [field name] then ANSWER: [extracted answer]. If no clear answer exists for a field, skip it. Be thorough — use any relevant content from the doc.\n\nFields to extract:\n'+qList.join('\n');
-
+async function _extractAnswersFromDoc(base64,mediaType){
+  var qList=[];SECS.forEach(function(sec){sec.qs.forEach(function(q){qList.push(q.k);});});
   try{
-    const res=await fetch('/api/claude',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:2000,
-        messages:[{role:'user',content:[
-          {type:'document',source:{type:'base64',media_type:mediaType,data:base64Data}},
-          {type:'text',text:prompt}
-        ]}]
-      })
-    });
-    const data=await res.json();
-    const reply=(data.content&&data.content[0])?data.content[0].text:'';
+    var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:'Extract answers to these brand strategy fields. For each found, output:\nFIELD: [field name]\nANSWER: [answer]\n\nFields:\n'+qList.join('\n')}]}]})});
+    var data=await res.json();
+    var reply=(data.content&&data.content[0])?data.content[0].text:'';
     _parseClaudeExtraction(reply);
-  }catch(e){
-    speakIt('Could not read the document. Try a plain text file instead.',null);
-  }
+  }catch(e){speakIt('Could not read that file. Try a plain text version.',null);}
 }
 
 async function _extractAnswersWithClaude(text){
-  const qList=[];
-  SECS.forEach(function(sec){sec.qs.forEach(function(q){qList.push(q.k);});});
-  const prompt='This is a brand strategy document or marketing brief. Extract answers to the following brand strategy questions. For each answer found, output exactly:\nFIELD: [field name]\nANSWER: [extracted answer]\n\nIf no clear answer exists for a field, skip it entirely. Be thorough.\n\nFields:\n'+qList.join('\n')+'\n\nDocument:\n'+text.substring(0,8000);
+  var qList=[];SECS.forEach(function(sec){sec.qs.forEach(function(q){qList.push(q.k);});});
   try{
-    const res=await fetch('/api/claude',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:2000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data=await res.json();
-    const reply=(data.content&&data.content[0])?data.content[0].text:'';
+    var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:'Extract answers to these brand strategy fields from the document below. For each found output:\nFIELD: [field name]\nANSWER: [answer]\n\nFields:\n'+qList.join('\n')+'\n\nDocument:\n'+text.substring(0,6000)}]})});
+    var data=await res.json();
+    var reply=(data.content&&data.content[0])?data.content[0].text:'';
     _parseClaudeExtraction(reply);
-  }catch(e){
-    speakIt('Could not read the document. Please try again.',null);
-  }
+  }catch(e){speakIt('Could not read that document. Let us go through the questions together.',function(){askQ();});}
 }
 
 function _parseClaudeExtraction(reply){
-  const blocks=reply.match(/FIELD:\s*(.+?)\nANSWER:\s*([\s\S]+?)(?=\nFIELD:|$)/g)||[];
-  let loaded=0;
+  var loaded=0;
+  var blocks=reply.match(/FIELD:\s*(.+?)\nANSWER:\s*([\s\S]+?)(?=\nFIELD:|$)/g)||[];
   blocks.forEach(function(block){
-    const fm=block.match(/FIELD:\s*(.+)/);
-    const am=block.match(/ANSWER:\s*([\s\S]+)/);
+    var fm=block.match(/FIELD:\s*(.+)/);var am=block.match(/ANSWER:\s*([\s\S]+)/);
     if(!fm||!am)return;
-    const fieldName=fm[1].trim();
-    const answerText=am[1].trim();
+    var fieldName=fm[1].trim();var answerText=am[1].trim();
     if(!answerText)return;
     SECS.forEach(function(sec){sec.qs.forEach(function(q){
-      // Fuzzy match field name
-      if(q.k.toLowerCase()===fieldName.toLowerCase()||
-         q.k.toLowerCase().includes(fieldName.toLowerCase().substring(0,15))||
-         fieldName.toLowerCase().includes(q.k.toLowerCase().substring(0,15))){
+      if(q.k.toLowerCase()===fieldName.toLowerCase()||q.k.toLowerCase().includes(fieldName.toLowerCase().substring(0,15))||fieldName.toLowerCase().includes(q.k.toLowerCase().substring(0,15))){
         if(!answers[q.k]){answers[q.k]=answerText;loaded++;}
       }
     });});
   });
-  if(loaded>0){
-    saveProgress(false);
-    speakIt('Great — I pulled '+loaded+' answers from your document. Let me just ask about the gaps.',function(){
-      _skipToFirstGap();
-    });
-  } else {
-    speakIt('I could not match answers to the question fields. Let us go through them together.',function(){askQ();});
-  }
+  if(loaded>0){_afterUploadPreFill(loaded);}
+  else{speakIt('Could not match answers to fields. Let us go through them together.',function(){askQ();});}
 }
 
-// ── REFERENCE ARCHIVE ─────────────────────────────────────────────
-function openRefUpload(){
-  document.getElementById('ref-input').click();
-}
-
-async function handleRefUpload(input){
-  var files=Array.from(input.files);
-  if(!files.length)return;
-  input.value='';
-
-  var count=files.length;
-  var plural=count===1?'document':'documents';
-  speakIt('Got it — reading '+(count===1?'that':'those')+' '+count+' '+plural+' now.',null);
-
-  var loaded=0;
-  for(var i=0;i<files.length;i++){
-    var file=files[i];
-    var name=file.name;
-    var ext=name.toLowerCase().split('.').pop();
-    try{
-      var content=await _readRefFile(file,ext);
-      if(content){
-        // Deduplicate by filename
-        refDocs=refDocs.filter(function(d){return d.name!==name;});
-        refDocs.push({name:name,content:content.substring(0,6000)});
-        loaded++;
-      }
-    }catch(e){
-      console.warn('Could not read ref file:',name,e);
-    }
-  }
-
-  _updateRefBadge();
-
-  if(loaded>0){
-    var names=refDocs.slice(-loaded).map(function(d){return d.name;}).join(', ');
-    var msg=loaded===1
-      ?'Loaded "'+refDocs[refDocs.length-1].name+'" as background context. I will draw on it throughout.'
-      :'Loaded '+loaded+' reference docs — I will draw on all of them as we go.';
-    speakIt(msg,function(){if(!speaking&&!busy)setMicReady();});
-  } else {
-    speakIt('Could not read that file. Try a PDF, Word doc, or plain text file.',null);
-  }
-}
-
-function _readRefFile(file,ext){
-  return new Promise(function(resolve,reject){
-    var reader=new FileReader();
-    if(ext==='txt'||ext==='md'){
-      reader.onload=function(e){resolve(e.target.result);};
-      reader.onerror=reject;
-      reader.readAsText(file);
-    } else if(ext==='pdf'||ext==='docx'){
-      // Read as base64 then extract text via Claude
-      reader.onload=async function(e){
-        var base64=e.target.result.split(',')[1];
-        var mediaType=ext==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        try{
-          var res=await fetch('/api/claude',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-              model:'claude-sonnet-4-6',
-              max_tokens:1500,
-              messages:[{role:'user',content:[
-                {type:'document',source:{type:'base64',media_type:mediaType,data:base64}},
-                {type:'text',text:'Extract all meaningful text content from this document. Output plain text only, no commentary, no formatting markers. Preserve key information like brand names, values, strategies, descriptions.'}
-              ]}]
-            })
-          });
-          var data=await res.json();
-          var text=(data.content&&data.content[0])?data.content[0].text:'';
-          resolve(text||null);
-        }catch(err){reject(err);}
-      };
-      reader.onerror=reject;
-      reader.readAsDataURL(file);
-    } else {
-      resolve(null);
-    }
-  });
-}
-
-function _updateRefBadge(){
-  var badge=document.getElementById('ref-badge');
-  var btn=document.getElementById('ref-btn');
-  if(!badge||!btn)return;
-  if(refDocs.length>0){
-    badge.textContent=refDocs.length;
-    badge.classList.add('visible');
-    btn.classList.add('ref-loaded');
-    btn.title=refDocs.length+' reference doc'+(refDocs.length>1?'s':'')+' loaded: '+refDocs.map(function(d){return d.name;}).join(', ');
-  } else {
-    badge.classList.remove('visible');
-    btn.classList.remove('ref-loaded');
-    btn.title='Add reference documents — Claude will use these as background context';
-  }
-}
-
-function _buildRefContext(){
-  if(!refDocs.length)return '';
-  return '\n\nREFERENCE DOCUMENTS (use as background context — do not quote directly, just let them inform your understanding):\n'+
-    refDocs.map(function(d){return '--- '+d.name+' ---\n'+d.content;}).join('\n\n');
-}
-
-function _skipToFirstGap(){
-  // After upload pre-fill, check if there are already some answers from a prior session
+function _afterUploadPreFill(loaded){
+  saveProgress(false);
   var totalAnswered=Object.keys(answers).filter(function(k){return answers[k]&&answers[k].trim();}).length;
   var totalQs=SECS.reduce(function(a,s){return a+s.qs.length;},0);
-
-  // Find first unanswered required Q for summary
-  var firstGapSec=-1,firstGapQ='';
-  for(var si=0;si<SECS.length;si++){
-    for(var qi=0;qi<SECS[si].qs.length;qi++){
-      if(!answers[SECS[si].qs[qi].k]){
-        if(firstGapSec===-1){firstGapSec=si;firstGapQ=SECS[si].qs[qi].k;}
-      }
-    }
-  }
-
-  // Build a quick section summary
   var secSummary=SECS.map(function(sec){
     var answered=sec.qs.filter(function(q){return answers[q.k]&&answers[q.k].trim();}).length;
     return sec.name+': '+answered+'/'+sec.qs.length;
   }).join(', ');
-
-  if(totalAnswered===0){
-    speakIt('I could not find any matching answers in that document. Let us go through the questions together.',function(){cs=0;cq=0;askQ();});
-    return;
-  }
-
-  var gapMsg=firstGapSec>-1?' The first gap I can see is in '+SECS[firstGapSec].name+'.':'';
-  var msg='I pulled '+totalAnswered+' out of '+totalQs+' answers from your document. Here is where things stand — '+secSummary+'.'+gapMsg+' Would you like to skip straight to the gaps, review and confirm what I found, or start fresh from the beginning?';
-
-  window._resumeChoiceMode=true;
-  window._resumeChoiceContext='upload';
-  speakIt(msg,function(){
-    setLabel('Skip to gaps · Review · Start fresh');
-    setMicReady();
-  });
-}
-
-function _handleUploadResumeChoice(text){
-  window._resumeChoiceMode=false;
-  window._resumeChoiceContext=null;
-  var t=text.toLowerCase();
-  if(t.includes('fresh')||t.includes('start over')||t.includes('scratch')||t.includes('reset')||t.includes('delete')||t.includes('begin again')){
-    // Ask to confirm deletion
-    speakIt('Just to confirm — this will clear all the answers I just pulled from your document and start from the top. Say yes to confirm, or no to keep them.',function(){
-      window._resumeChoiceMode=true;
-      window._resumeChoiceContext='confirm_delete_upload';
-      setMicReady();
-    });
-  } else if(t.includes('review')||t.includes('check')||t.includes('see')||t.includes('confirm')||t.includes('look')||t.includes('overview')){
-    saveProgress(false);
-    showReviewWheel(false);
-  } else {
-    // Default: skip to gaps
-    saveProgress(false);
-    // Find first unanswered question
-    for(var si=0;si<SECS.length;si++){
-      for(var qi=0;qi<SECS[si].qs.length;qi++){
-        if(!answers[SECS[si].qs[qi].k]){
-          cs=si;cq=qi;
-          speakIt('Great — picking up from '+SECS[si].name+'.',function(){askQ();});
-          return;
-        }
-      }
-    }
-    showSubmit();
-  }
+  var msg='I pulled '+loaded+' answers from your document. Here is where things stand — '+secSummary+'. Would you like to skip to the gaps, review what I found, or start fresh from the beginning?';
+  window._resumeChoiceMode=true;window._resumeChoiceContext='upload';
+  speakIt(msg,function(){setLabel('Skip to gaps · Review · Start fresh');setMicReady();});
 }
 
 // FIX 5: Hide browser URL bar for immersive full-screen feel
@@ -1948,7 +1667,7 @@ document.addEventListener('visibilitychange',function(){if(document.hidden&&(cs>
 window.addEventListener('pagehide',function(){if(cs>0||cq>0)saveProgress(false);});
 
 // ── CONTINUE SESSION ─────────────────────────────────────────────
-function continueSession(){
+function continueSession(){window._resumeChoiceContext=null;
   try{const p=JSON.parse(localStorage.getItem(SAVE_KEY));cs=p.cs||0;cq=p.cq||0;answers=p.answers||{};}catch(e){cs=0;cq=0;answers={};}
   document.getElementById('start-ov').style.display='none';
   try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
@@ -1967,39 +1686,49 @@ function continueSession(){
   speakIt(welcomeText,function(){setLabel('Start over · Review · Continue');setMicReady();window._resumeChoiceMode=true;});
 }
 function _handleResumeChoice(text){
-  // Route to upload-specific handler if in upload context
-  if(window._resumeChoiceContext==='upload'){
-    _handleUploadResumeChoice(text);
-    return;
-  }
-  // Handle delete confirmation after upload fresh-start request
-  if(window._resumeChoiceContext==='confirm_delete_upload'){
-    window._resumeChoiceMode=false;
-    window._resumeChoiceContext=null;
+  if(window._resumeChoiceContext==='upload'){_handleUploadChoice(text);return;}
+  if(window._resumeChoiceContext==='confirm_delete'){
+    window._resumeChoiceMode=false;window._resumeChoiceContext=null;
     var tc=text.toLowerCase();
-    if(tc.includes('yes')||tc.includes('yeah')||tc.includes('yep')||tc.includes('confirm')||tc.includes('go ahead')||tc.includes('sure')){
-      answers={};cs=0;cq=0;
-      saveProgress(false);
+    if(tc.includes('yes')||tc.includes('yeah')||tc.includes('confirm')||tc.includes('sure')||tc.includes('go ahead')){
+      answers={};cs=0;cq=0;saveProgress(false);
       speakIt('Done — all cleared. Starting from the top.',function(){showSecIntro();});
     } else {
-      // Keep answers, skip to gaps instead
-      speakIt('No problem — keeping everything. Let me pick up from the first gap.',function(){
-        for(var si=0;si<SECS.length;si++){
-          for(var qi=0;qi<SECS[si].qs.length;qi++){
-            if(!answers[SECS[si].qs[qi].k]){cs=si;cq=qi;askQ();return;}
-          }
-        }
-        showSubmit();
+      speakIt('No problem — keeping your answers. Picking up from the first gap.',function(){
+        for(var si=0;si<SECS.length;si++){for(var qi=0;qi<SECS[si].qs.length;qi++){if(!answers[SECS[si].qs[qi].k]){cs=si;cq=qi;askQ();return;}}}showSubmit();
       });
     }
     return;
   }
-  // Standard session resume flow
   window._resumeChoiceMode=false;
   var t=text.toLowerCase();
   if(t.includes('start')||t.includes('fresh')||t.includes('over')||t.includes('begin')||t.includes('reset')){startFresh();}
   else if(t.includes('review')||t.includes('overview')||t.includes('summary')||t.includes('answers')){reviewAnswers();}
   else{var qName=SECS[cs]&&SECS[cs].qs[cq]?SECS[cs].qs[cq].k:'';speakIt('Perfect — picking up right from '+qName+'.',function(){askQ();});}
+}
+
+function _handleUploadChoice(text){
+  window._resumeChoiceMode=false;window._resumeChoiceContext=null;
+  var t=text.toLowerCase();
+  if(t.includes('fresh')||t.includes('scratch')||t.includes('start over')||t.includes('delete')||t.includes('clear')){
+    speakIt('Just to confirm — this clears all pre-filled answers and starts from the top. Say yes to confirm.',function(){
+      window._resumeChoiceMode=true;window._resumeChoiceContext='confirm_delete';setMicReady();
+    });
+  } else if(t.includes('review')||t.includes('check')||t.includes('see')||t.includes('look')){
+    showReviewWheel(false);
+  } else {
+    // Default: skip to gaps
+    for(var si=0;si<SECS.length;si++){
+      for(var qi=0;qi<SECS[si].qs.length;qi++){
+        if(!answers[SECS[si].qs[qi].k]){
+          cs=si;cq=qi;
+          speakIt('Great — picking up from '+SECS[si].name+'.',function(){askQ();});
+          return;
+        }
+      }
+    }
+    showSubmit();
+  }
 }
 function startFresh(){localStorage.removeItem(SAVE_KEY);cs=0;cq=0;answers={};speakIt('Starting fresh. Let us kick things off from the top.',function(){showSecIntro();});}
 function reviewAnswers(){showReviewWheel(false);}
@@ -2053,43 +1782,18 @@ function hideAnswerActions(cb){
 }
 function confirmAnswer(){
   if(!pendingAnswer&&!window._pendingConfirmedAnswer)return;
-  // Stop audio immediately
   sharedAudio.pause();
   if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
-
   if(window._pendingConfirmedAnswer){
-    // Answer already captured by processAnswer — just advance
     var pca=window._pendingConfirmedAnswer;
-    window._pendingConfirmedAnswer=null;
-    pendingAnswer=null;
-    hideAnswerActions(function(){
-      cq++;
-      advanceWithReaskQueue();
-    });
+    window._pendingConfirmedAnswer=null;pendingAnswer=null;
+    hideAnswerActions(function(){cq++;advanceWithReaskQueue();});
   } else {
-    // Voice answer not yet processed — send to Claude
     const ans=pendingAnswer;pendingAnswer=null;
     setLabel('Thinking...');setViz('speaking');
     hideAnswerActions(function(){processAnswer(ans);});
   }
 }
-const RETRY_PHRASES=[
-  "No worries — give it another go.",
-  "All good — try again whenever you are ready.",
-  "That's fine — let's hear it.",
-  "No stress — take your time.",
-  "Totally fine — go ahead.",
-  "No problem — whenever you are ready.",
-  "Easy — have another crack at it.",
-];
-let _lastRetryIdx=-1;
-function _pickRetryPhrase(){
-  var pool=RETRY_PHRASES.map(function(_,i){return i;}).filter(function(i){return i!==_lastRetryIdx;});
-  var idx=pool[Math.floor(Math.random()*pool.length)];
-  _lastRetryIdx=idx;
-  return RETRY_PHRASES[idx];
-}
-
 function retryAnswer(){
   pendingAnswer=null;
   window._pendingConfirmedAnswer=null;
@@ -2103,23 +1807,21 @@ function retryAnswer(){
 // ── DOCK AUTO-HIDE (while AI is speaking) ────────────────────────
 function dockHide(){
   if(pendingAnswer)return;
-  const dock=document.getElementById('bottom-dock');
-  // Never fully hide dock — just hide the action buttons area
+  var dock=document.getElementById('bottom-dock');
   if(dock)dock.classList.add('autohide');
-  // Mic stays visible but changes label to show it can be tapped to interrupt
+  // Mic stays visible — changes to "Tap to interrupt"
   var mb=document.getElementById('mic-btn');
   var ml=document.getElementById('mic-label');
-  if(mb)mb.classList.remove('on','dis');
-  if(ml)ml.textContent='Tap to interrupt';
   var mw=document.getElementById('mic-wrap');
+  if(mb){mb.classList.remove('ready','idle-pulse','on');}
+  if(ml)ml.textContent='Tap to interrupt';
   if(mw){mw.classList.add('visible');mw.classList.remove('autohide');}
 }
 function dockShow(){
-  const dock=document.getElementById('bottom-dock');
-  const mic=document.getElementById('mic-wrap');
+  var dock=document.getElementById('bottom-dock');
+  var mic=document.getElementById('mic-wrap');
   if(dock)dock.classList.remove('autohide');
   if(mic)mic.classList.remove('autohide');
-  // Restore mic label from "Tap to interrupt" back to "Tap to speak"
   var ml=document.getElementById('mic-label');
   if(ml&&!listening)ml.textContent='Tap to speak';
 }
@@ -2246,7 +1948,17 @@ function finishReview(){
 
 // ── MOBILE KEYBOARD HANDLER ───────────────────────────────────────
 if(window.visualViewport){
-  
+  window.visualViewport.addEventListener('resize',function(){
+    const keyboardH=window.innerHeight-window.visualViewport.height;
+    if(keyboardH>80&&textActive){
+      document.getElementById('app').style.paddingBottom=(keyboardH+20)+'px';
+      setTimeout(function(){var inp=document.getElementById('tinput');if(inp)inp.scrollIntoView({behavior:'smooth',block:'center'});},80);
+    } else {
+      document.getElementById('app').style.paddingBottom='';
+    }
+    positionMic();
+  });
+}
 
 // ── URL BAR HIDE ──────────────────────────────────────────────────
 function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(function(){window.scrollTo(0,0);},100);}}

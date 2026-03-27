@@ -2,7 +2,7 @@
 // V2: OPTIONS preflight, body validation, model allowlist, token cap, rate limiting
 
 const ALLOWED_MODELS = ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'];
-const MAX_TOKENS_CAP = 500; // Never allow more than this — protects against abuse
+const MAX_TOKENS_CAP = 2000; // Never allow more than this — protects against abuse
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
 const RATE_LIMIT_MAX = 30; // max requests per IP per minute
 
