@@ -1,17 +1,6 @@
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
-};
-
 exports.handler = async function(event) {
-  // Handle OPTIONS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers: CORS_HEADERS, body: '' };
-  }
-
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers: CORS_HEADERS, body: 'Method Not Allowed' };
+    return { statusCode: 405, body: 'Method Not Allowed' };
   }
 
   const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
@@ -75,12 +64,12 @@ exports.handler = async function(event) {
         }
       );
       if (!fallback.ok) {
-        return { statusCode: fallback.status, headers: CORS_HEADERS, body: JSON.stringify({ error: err }) };
+        return { statusCode: fallback.status, body: JSON.stringify({ error: err }) };
       }
       const audioBuffer = await fallback.arrayBuffer();
       return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
         body: JSON.stringify({ audio: Buffer.from(audioBuffer).toString('base64'), alignment: null })
       };
     }
@@ -104,7 +93,7 @@ exports.handler = async function(event) {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({
         audio: data.audio_base64,
         alignment: wordTimings
@@ -115,7 +104,6 @@ exports.handler = async function(event) {
     console.log('TTS catch error:', err.message);
     return {
       statusCode: 500,
-      headers: CORS_HEADERS,
       body: JSON.stringify({ error: err.message })
     };
   }
