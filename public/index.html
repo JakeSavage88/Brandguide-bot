@@ -10,6 +10,7 @@
 <title>StratIQ — AI Brand Strategy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -294,56 +295,94 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 .submit-confirm-card p{font-size:14px;color:var(--muted);line-height:1.6;max-width:360px;}
 
 
-/* ── UI TOUR HIGHLIGHTS — soft radial bloom, no hard border ── */
+/* ── UI TOUR HIGHLIGHTS — slide up + glow bloom, mic-style ── */
+
+/* Tour element enters: slides up from 12px below, glow builds as it rises */
 .tour-highlight{
   position:relative;
   z-index:25;
+  animation:tourRise 0.7s cubic-bezier(0.34,1.2,0.64,1) forwards;
 }
-/* Default glow for dock-area elements — pill-shaped bloom */
+@keyframes tourRise{
+  0%{transform:translateY(12px);filter:brightness(1);}
+  100%{transform:translateY(0px);filter:brightness(1);}
+}
+
+/* Soft radial glow bloom — builds from 0 to full as element rises */
 .tour-highlight::after{
   content:'';
   position:absolute;
-  inset:-12px;
+  inset:-16px;
   border-radius:28px;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.22) 0%, rgba(124,106,255,0.08) 55%, transparent 75%);
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.28) 0%, rgba(124,106,255,0.10) 50%, transparent 72%);
   pointer-events:none;
-  animation:tourBloom 2.8s ease-in-out infinite;
+  opacity:0;
+  animation:tourGlow 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s forwards, tourPulse 2.6s ease-in-out 0.7s infinite;
 }
-/* Mic button — circular bloom matching mic glow style exactly */
+@keyframes tourGlow{
+  0%{opacity:0;transform:scale(0.85);}
+  100%{opacity:1;transform:scale(1);}
+}
+@keyframes tourPulse{
+  0%,100%{opacity:0.75;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.05);}
+}
+
+/* Mic button — glow blooms on the button itself, no transform conflict */
+#mic-wrap.tour-highlight{
+  animation:none; /* mic position is JS-controlled, don't override transform */
+}
+#mic-wrap.tour-highlight #mic-btn{
+  animation:tourMicGlow 0.7s ease forwards, tourMicPulse 2.6s ease-in-out 0.7s infinite;
+}
+@keyframes tourMicGlow{
+  0%{box-shadow:0 0 0px rgba(124,106,255,0);}
+  100%{box-shadow:0 0 40px rgba(124,106,255,0.8), 0 0 80px rgba(124,106,255,0.4), 0 0 0 8px rgba(124,106,255,0.15);}
+}
+@keyframes tourMicPulse{
+  0%,100%{box-shadow:0 0 30px rgba(124,106,255,0.6), 0 0 60px rgba(124,106,255,0.3), 0 0 0 6px rgba(124,106,255,0.10);}
+  50%{box-shadow:0 0 50px rgba(124,106,255,0.9), 0 0 90px rgba(124,106,255,0.5), 0 0 0 10px rgba(124,106,255,0.20);}
+}
 #mic-wrap.tour-highlight::after{
-  inset:-20px;
+  inset:-24px;
   border-radius:50%;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.35) 0%, rgba(124,106,255,0.15) 45%, transparent 70%);
-  animation:tourBloomMic 2.8s ease-in-out infinite;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.35) 0%, rgba(124,106,255,0.12) 50%, transparent 70%);
+  opacity:0;
+  animation:tourGlow 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s forwards, tourPulseMic 2.6s ease-in-out 0.7s infinite;
 }
+@keyframes tourPulseMic{
+  0%,100%{opacity:0.7;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.09);}
+}
+
 /* Save button — circular */
 #save-btn.tour-highlight::after{
-  inset:-16px;
+  inset:-18px;
   border-radius:50%;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.30) 0%, rgba(124,106,255,0.10) 50%, transparent 72%);
-  animation:tourBloom 2.8s ease-in-out infinite;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.35) 0%, rgba(124,106,255,0.12) 50%, transparent 70%);
 }
-/* Bottom dock — wide horizontal bloom */
+
+/* Bottom dock — wide horizontal */
 #bottom-dock.tour-highlight::after{
-  inset:-8px -16px;
+  inset:-6px -20px;
   border-radius:24px;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.18) 0%, rgba(124,106,255,0.06) 60%, transparent 80%);
-  animation:tourBloom 2.8s ease-in-out infinite;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.22) 0%, rgba(124,106,255,0.07) 60%, transparent 80%);
 }
-/* Ref button — standard pill bloom */
+
+/* Ref button — pill */
 #ref-btn.tour-highlight::after{
-  inset:-10px -8px;
+  inset:-12px -10px;
   border-radius:24px;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.25) 0%, rgba(124,106,255,0.08) 55%, transparent 75%);
-  animation:tourBloom 2.8s ease-in-out infinite;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.30) 0%, rgba(124,106,255,0.10) 55%, transparent 74%);
 }
-@keyframes tourBloom{
-  0%,100%{opacity:0.7;transform:scale(1);}
-  50%{opacity:1;transform:scale(1.06);}
+
+/* Removing highlight — smooth fade out */
+.tour-unhighlight{
+  animation:tourSink 0.5s ease forwards;
 }
-@keyframes tourBloomMic{
-  0%,100%{opacity:0.6;transform:scale(1);}
-  50%{opacity:1;transform:scale(1.08);}
+@keyframes tourSink{
+  0%{transform:translateY(0);opacity:1;}
+  100%{transform:translateY(4px);opacity:0.8;}
 }
 
 /* ── THINKING DOTS ── */
@@ -636,12 +675,246 @@ const FORM='https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO
 const SAVE_KEY='stratiq_progress';
 const API='/api/claude';
 
-let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaking=false,textActive=false;
-let wordTimings=null;
-let accumulatedFinal='';
-let speechPauseTimer=null;
-let refDocs=[];
-const synth=window.speechSynthesis;
+// ── VAPI CONFIG ──────────────────────────────────────────────────
+const VAPI_PUBLIC_KEY = '513efab2-1838-40ce-a7c5-3072ed7b5dda';
+const VAPI_ASSISTANT_ID = '66a225b1-1a0d-4d47-8cbf-22261036cf95';
+
+// ── VAPI INSTANCE ─────────────────────────────────────────────────
+const vapi = new Vapi(VAPI_PUBLIC_KEY);
+let vapiActive = false;
+let vapiStarting = false;
+
+// ── SESSION EXTENSION — silent masked restart at 45 min ──────────
+const SESSION_WARN_MS = 45 * 60 * 1000;
+let _sessionTimer = null;
+let _sessionExtended = false;
+
+const SESSION_BRIDGE_LINES = [
+  "Sorry, I think I lost you for a second there — say that again?",
+  "Hmm, dropped out for a moment — where were you?",
+  "Sorry, missed that last bit — can you pick up from there?"
+];
+let _lastBridgeIdx = -1;
+function _pickBridgeLine(){
+  var pool = SESSION_BRIDGE_LINES.map(function(_,i){return i;}).filter(function(i){return i!==_lastBridgeIdx;});
+  var idx = pool[Math.floor(Math.random()*pool.length)];
+  _lastBridgeIdx = idx;
+  return SESSION_BRIDGE_LINES[idx];
+}
+
+function _startSessionTimer(){
+  if(_sessionTimer)clearTimeout(_sessionTimer);
+  _sessionTimer = setTimeout(function(){
+    _triggerSilentExtension();
+  }, SESSION_WARN_MS);
+}
+
+function _triggerSilentExtension(){
+  if(_sessionExtended)return;
+  _sessionExtended = true;
+  // Speak bridge line locally while Vapi restarts
+  speakIt(_pickBridgeLine(), function(){
+    // Restart Vapi silently — fresh 50 min window
+    vapi.stop();
+    vapiActive = false;
+    setTimeout(function(){
+      _startVapiSession();
+      // Reset extension flag after delay so it can fire again if needed
+      setTimeout(function(){_sessionExtended = false;}, 5000);
+    }, 800);
+  });
+  // Restart session timer for next potential extension
+  _startSessionTimer();
+}
+
+// ── BUILD DYNAMIC SYSTEM PROMPT ───────────────────────────────────
+function _buildSystemPrompt(){
+  const answersSummary = Object.entries(answers)
+    .filter(function(_ref){return _ref[1]&&_ref[1].trim();})
+    .map(function(_ref2){return _ref2[0]+': '+_ref2[1].substring(0,80)+(_ref2[1].length>80?'...':'');})
+    .join('\n');
+  const refContext = _buildRefContext();
+  const sec = SECS[cs];
+  const q = sec ? sec.qs[cq] : null;
+
+  return 'You are Cass — a senior brand strategy consultant at a boutique creative agency.\n\nYou have 15 years across brand strategy, identity design, positioning, and go-to-market execution. You have run discovery sessions, sat in creative direction reviews, stress-tested messaging frameworks, and watched brands scale and watched others dissolve into category noise. You understand why positioning matters, what makes a visual identity system hold together, how tone of voice either builds trust or erodes it, and what separates brands that compound in value from those that stay transactional.\n\nYou know the vocabulary — archetype frameworks, competitive whitespace, audience psychographics, brand architecture, messaging hierarchy — but you wear it lightly. You do not lecture. You listen. You ask the question behind the question when it matters.\n\nRight now your job is brand intake — drawing out everything this client knows about their brand so the strategy team has the richest possible brief to work from.\n\nYou conduct this intake like a real consultant would — warm, curious, professionally direct. You follow threads when they are revealing. You let the conversation breathe when someone is working something out. You notice when an answer hints at something deeper and you gently go there — once — before returning to the agenda. You never make the client feel like they are filling out a form.\n\nBut you are punctual. You keep the trains on the tracks. Drift is intentional and brief — one sentence of genuine engagement — then you are back on course.\n\nANSWERS SO FAR:\n'+(answersSummary||'None yet.')+'\n\n'+(refContext||'')+'\n\nCROSS-REFERENCE RULE: Before every single question, scan every answer already collected. If a prior answer already covers the current field — even partially — do not ask again. Acknowledge it naturally and output ANSWER: [prior answer] and READY_NEXT.\n\nCONTROLLED DRIFT RULE: When a client says something genuinely interesting or strategically significant — briefly engage before capturing and moving on. One sentence of real reaction, one optional follow-up. Then return to the form. Maximum one drift per question. Never drift on vague answers.\n\nFOR EACH QUESTION:\n1. Acknowledge their answer in one warm natural sentence.\n2. If sufficient — output ANSWER: [captured answer] then READY_NEXT on the next line.\n3. If too vague — ask one specific follow-up under 20 words. Do not auto-advance.\n4. After maximum two follow-ups — synthesise and present back starting with "So what I am getting from you is —" and confirm. If they agree — output ANSWER and READY_NEXT.\n\n'+(q?'Current question: \''+q.p+'\' Field: '+q.k+' Required: '+q.req:'')+'\n\nABSOLUTE RULES:\n- Spoken response maximum 40 words. Drift responses may stretch to 50 — no more.\n- Natural contractions. Real sentences. Never sound scripted.\n- Never mention being AI or a bot.\n- ANSWER: and READY_NEXT appear on their own lines only.\n- Never ask more than one question at a time.\n- Never volunteer strategic recommendations.\n- If they ask your opinion, offer a brief honest reaction then redirect: "That is worth unpacking in the strategy — for now, tell me more about X."';
+}
+
+// ── START VAPI SESSION ────────────────────────────────────────────
+async function _startVapiSession(){
+  if(vapiActive||vapiStarting)return;
+  vapiStarting = true;
+  try{
+    await vapi.start(VAPI_ASSISTANT_ID, {
+      assistantOverrides: {
+        model: {
+          provider: 'anthropic',
+          model: 'claude-sonnet-4-6',
+          systemPrompt: _buildSystemPrompt(),
+          maxTokens: 350,
+          temperature: 0.4
+        }
+      }
+    });
+  } catch(err){
+    console.error('Vapi start error:', err);
+    vapiStarting = false;
+    setLabel('Connection error — tap mic to retry');
+    setViz('idle');
+  }
+}
+
+// ── STOP VAPI SESSION ─────────────────────────────────────────────
+function _stopVapiSession(){
+  if(!vapiActive&&!vapiStarting)return;
+  vapi.stop();
+  vapiActive = false;
+  vapiStarting = false;
+}
+
+// ── VAPI EVENT LISTENERS ──────────────────────────────────────────
+vapi.on('call-start', function(){
+  vapiActive = true;
+  vapiStarting = false;
+  setViz('listening');
+  setLabel('Listening...');
+  _startSessionTimer();
+});
+
+vapi.on('call-end', function(){
+  vapiActive = false;
+  vapiStarting = false;
+  setViz('idle');
+  setLabel('');
+  if(_sessionTimer){clearTimeout(_sessionTimer);_sessionTimer=null;}
+});
+
+vapi.on('speech-start', function(){
+  // User started speaking
+  setViz('listening');
+  clearWaiting();
+});
+
+vapi.on('speech-end', function(){
+  // User finished — Vapi is processing
+  setViz('speaking');
+  setLabel('Thinking...');
+  var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
+});
+
+vapi.on('message', function(message){
+  // Handle transcript events
+  if(message.type === 'transcript'){
+    if(message.role === 'user' && message.transcriptType === 'final'){
+      document.getElementById('transcript').textContent = message.transcript;
+    }
+    if(message.role === 'assistant'){
+      var td=document.getElementById('thinking-dots');if(td)td.classList.remove('visible');
+      setViz('speaking');
+      setLabel('');
+      // Display Cass response as subtitles
+      var cleaned = message.transcript
+        .replace(/ANSWER:[\s\S]*$/m,'')
+        .replace(/READY_NEXT/g,'')
+        .trim();
+      if(cleaned){
+        var botEl=document.getElementById('bot-resp');
+        botEl.innerHTML='';
+        cleaned.split(' ').forEach(function(w,i){
+          var span=document.createElement('span');
+          span.className='bot-word reveal';
+          span.textContent=(i>0?' ':'')+w;
+          botEl.appendChild(span);
+        });
+      }
+      // Parse ANSWER / READY_NEXT from final assistant transcript
+      if(message.transcriptType === 'final'){
+        _handleVapiReply(message.transcript);
+      }
+    }
+  }
+});
+
+vapi.on('error', function(err){
+  console.error('Vapi error:', err);
+  vapiActive = false;
+  vapiStarting = false;
+  setViz('idle');
+  setLabel('');
+  var td=document.getElementById('thinking-dots');if(td)td.classList.remove('visible');
+});
+
+// ── PARSE VAPI ASSISTANT REPLY ────────────────────────────────────
+function _handleVapiReply(text){
+  const am = text.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
+  const ready = text.includes('READY_NEXT');
+
+  if(am && ready){
+    const sec = SECS[cs];
+    const q = sec ? sec.qs[cq] : null;
+    if(q){
+      answers[q.k] = am[1].trim();
+      saveProgress(false);
+    }
+    cq++;
+    // Advance to next question — restart Vapi with updated context
+    setTimeout(function(){
+      _advanceVapi();
+    }, 600);
+  }
+}
+
+// ── ADVANCE TO NEXT QUESTION ──────────────────────────────────────
+function _advanceVapi(){
+  const sec = SECS[cs];
+  if(!sec || cq >= sec.qs.length){
+    // Section complete
+    _stopVapiSession();
+    completeSection();
+    return;
+  }
+  // Restart Vapi with updated system prompt for next question
+  _stopVapiSession();
+  setTimeout(function(){
+    _startVapiSession();
+  }, 400);
+}
+
+// ── MIC BUTTON — toggle Vapi ──────────────────────────────────────
+function toggleMic(){
+  if(vapiActive){
+    // User tapping mic while Vapi is active — interrupt
+    vapi.stop();
+    vapiActive = false;
+    setViz('idle');
+    setLabel('');
+    return;
+  }
+  if(vapiStarting)return;
+  _startVapiSession();
+}
+
+// ── STUB OUT OLD VOICE FUNCTIONS — replaced by Vapi ───────────────
+function setupVoice(){}
+function startListen(){}
+function stopListen(){}
+function setMicReady(){
+  var mb=document.getElementById('mic-btn');
+  if(mb){mb.classList.remove('dis','on','idle-pulse');mb.classList.add('ready');}
+  document.getElementById('mic-label').textContent='Tap to speak';
+  clearIdleTimer();
+  idleCount=0;
+  idleTimer=setTimeout(function(){
+    if(!vapiActive&&!vapiStarting){
+      setViz('waiting');
+      var mb2=document.getElementById('mic-btn');
+      if(mb2){mb2.classList.remove('ready');mb2.classList.add('idle-pulse');}
+    }
+  },20000);
+}
+
+let idleTimer=null;
+let idleCount=0;
 
 function beginSession(){
   try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
@@ -904,205 +1177,11 @@ function doFinalSubmit(){
 
 async function submitAll(){doFinalSubmit();}
 
-function setupVoice(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){
-    document.getElementById('mic-btn').classList.add('dis');
-    document.getElementById('mic-label').textContent='Voice not available — use text';
-    toggleText();
-    return;
-  }
-  recog=new SR();
-  recog.continuous=false;
-  recog.interimResults=true;
-  recog.lang='en-AU';
-
-  recog.onresult=function(e){
-    let final='';let interim='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      if(e.results[i].isFinal){final+=e.results[i][0].transcript+' ';}
-      else{interim+=e.results[i][0].transcript;}
-    }
-    if(interim){document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();}
-    if(final.trim()){
-      accumulatedFinal+=final;
-      document.getElementById('transcript').textContent=accumulatedFinal.trim();
-      if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
-      speechPauseTimer=setTimeout(function(){
-        speechPauseTimer=null;
-        var captured=accumulatedFinal.trim();
-        if(captured&&listening){
-          listening=false;
-          accumulatedFinal='';
-          if(recog)try{recog.stop();}catch(e2){}
-          var mb=document.getElementById('mic-btn');
-          if(mb){mb.classList.remove('on','ready','idle-pulse');}
-          document.getElementById('mic-label').textContent='Tap to speak';
-          setViz('idle');
-          processAnswer(captured);
-        }
-      },2800);
-    }
-  };
-
-  recog.onend=function(){
-    if(speechPauseTimer){return;}
-    var captured=accumulatedFinal.trim();
-    if(listening&&captured){
-      listening=false;
-      accumulatedFinal='';
-      var mb=document.getElementById('mic-btn');
-      if(mb){mb.classList.remove('on','ready','idle-pulse');}
-      document.getElementById('mic-label').textContent='Tap to speak';
-      setViz('idle');
-      processAnswer(captured);
-    } else if(listening&&!captured){
-      setTimeout(function(){
-        if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}}
-      },200);
-    }
-  };
-
-  recog.onerror=function(e){
-    accumulatedFinal='';
-    if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
-    if(e.error==='not-allowed'||e.error==='permission-denied'){
-      stopListen();
-      document.getElementById('bot-resp').textContent='Mic access needed — please allow microphone access and tap the mic again.';
-      setLabel('Tap Allow when prompted');
-      if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
-        navigator.mediaDevices.getUserMedia({audio:true})
-          .then(function(stream){stream.getTracks().forEach(function(t){t.stop();});document.getElementById('bot-resp').textContent='Mic access granted. Tap the mic to try again.';setLabel('Tap to speak');})
-          .catch(function(){document.getElementById('bot-resp').textContent='Mic access denied. Use the Type button below.';setLabel('');toggleText();});
-      }
-    } else if(e.error==='no-speech'){
-      if(listening){setTimeout(function(){if(listening)try{recog.start();}catch(err){}},200);}
-    } else {
-      stopListen();
-      setMicReady();
-    }
-  };
-}
-function toggleMic(){
-  if(speaking){
-    sharedAudio.pause();
-    if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
-    stopAudioViz();speaking=false;busy=false;setViz('idle');setLabel('');dockShow();
-    setTimeout(function(){startListen();},300);
-    return;
-  }
-  if(busy)return;
-  if(listening){
-    var captured=accumulatedFinal.trim();
-    if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
-    if(captured){
-      listening=false;accumulatedFinal='';
-      if(recog)try{recog.stop();}catch(e){}
-      var mb=document.getElementById('mic-btn');
-      if(mb){mb.classList.remove('on','ready','idle-pulse');}
-      document.getElementById('mic-label').textContent='Tap to speak';
-      setViz('idle');
-      processAnswer(captured);
-    } else {
-      stopListen();setMicReady();
-    }
-    return;
-  }
-  startListen();
-}
-
-function startListen(){
-  if(!recog){setLabel('Voice not available');toggleText();return;}
-  // Echo loop guard — never open mic while TTS is playing
-  if(!sharedAudio.paused){
-    sharedAudio.pause();
-    if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
-    stopAudioViz();speaking=false;
-    setTimeout(startListen,300);return;
-  }
-  clearIdleTimer();
-  clearWaiting();
-  if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
-  listening=true;accumulatedFinal='';
-  setViz('listening');
-  var mb=document.getElementById('mic-btn');
-  if(mb){mb.classList.remove('ready','idle-pulse','dis');mb.classList.add('on');}
-  document.getElementById('mic-label').textContent='Listening...';
-  document.getElementById('transcript').textContent='';
-  // Keep bot-resp visible but clear transcript line only — question stays in qtext
-  try{recog.abort();}catch(e){}
-  setTimeout(function(){
-    try{recog.start();setLabel('Speak now');}
-    catch(e){setLabel('Mic error — tap to retry');listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}
-  },100);
-}
-
-function stopListen(){
-  listening=false;
-  if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
-  if(recog)try{recog.stop();}catch(e){}
-  var mb=document.getElementById('mic-btn');
-  if(mb){mb.classList.remove('on','ready','idle-pulse');}
-  document.getElementById('mic-label').textContent='Tap to speak';
-  setViz('idle');
-}
-
-let idleTimer=null;
-let idleCount=0;
-
-const IDLE_PROMPTS=[
-  "Take your time — no rush at all.",
-  "Hmm, even a rough answer is totally fine here.",
-  "Not sure if you stepped away — still here when you are back.",
-  "No pressure — say whatever comes to mind first.",
-  "This one can be tricky. Just go with your gut.",
-  "Whenever you are ready — I am not going anywhere.",
-  "Feel free to think out loud if that helps.",
-];
-let _lastIdleIdx=-1;
-function _pickIdlePrompt(){
-  var pool=IDLE_PROMPTS.map(function(_,i){return i;}).filter(function(i){return i!==_lastIdleIdx;});
-  var idx=pool[Math.floor(Math.random()*pool.length)];
-  _lastIdleIdx=idx;
-  return IDLE_PROMPTS[idx];
-}
-
-const RETRY_PHRASES=[
-  "No worries — give it another go.",
-  "All good — try again whenever you are ready.",
-  "That is fine — let us hear it.",
-  "No stress — take your time.",
-  "Easy — have another crack at it.",
-  "No problem — whenever you are ready.",
-];
-let _lastRetryIdx=-1;
-function _pickRetryPhrase(){
-  var pool=RETRY_PHRASES.map(function(_,i){return i;}).filter(function(i){return i!==_lastRetryIdx;});
-  var idx=pool[Math.floor(Math.random()*pool.length)];
-  _lastRetryIdx=idx;
-  return RETRY_PHRASES[idx];
-}
 
 function clearIdleTimer(){
   if(idleTimer){clearTimeout(idleTimer);idleTimer=null;}
   var mb=document.getElementById('mic-btn');
   if(mb)mb.classList.remove('idle-pulse');
-}
-
-function setMicReady(){
-  var mb=document.getElementById('mic-btn');
-  if(mb){mb.classList.remove('dis','on','idle-pulse');mb.classList.add('ready');}
-  document.getElementById('mic-label').textContent='Tap to speak';
-  clearIdleTimer();
-  idleCount=0;
-  // 20s: switch viz bars to heartbeat waiting glow — silent, no voice nudge
-  idleTimer=setTimeout(function(){
-    if(!listening&&!busy&&!speaking){
-      setViz('waiting');
-      var mb2=document.getElementById('mic-btn');
-      if(mb2){mb2.classList.remove('ready');mb2.classList.add('idle-pulse');}
-    }
-  },20000);
 }
 
 function setLabel(t){document.getElementById('viz-label').textContent=t;}
@@ -1326,108 +1405,6 @@ function speakIt(text,cb){
 }
 
 
-async function processAnswer(text){
-  clearIdleTimer();
-  if(!text||text.trim()==='')return;
-  if(window._resumeChoiceMode){_handleResumeChoice(text);return;}
-  if(busy)return;
-
-  // UI / interface meta-questions — answer without consuming an answer slot
-  var lower=text.toLowerCase();
-  var isMetaQ=(lower.includes('how do i')||lower.includes('what does')||lower.includes('how does')||lower.includes('what button')||lower.includes('where is the')||lower.includes('how do you work')||lower.includes('can i type')||lower.includes('can i upload')||lower.includes('what are the buttons'))
-    &&(lower.includes('button')||lower.includes('upload')||lower.includes('download')||lower.includes('save')||lower.includes('skip')||lower.includes('type')||lower.includes('mic')||lower.includes('interface')||lower.includes('reference'));
-  if(isMetaQ){
-    speakIt('Sure — the mic button in the middle is your main control. Tap to speak, tap again when you are done. You also have Type, Download, Upload doc, and Add Reference buttons at the bottom. Add Reference is great for existing strategy docs or brand guidelines — I will draw on them throughout. Save icon is top right. What else?',function(){setMicReady();});
-    return;
-  }
-
-  busy=true;speaking=false;
-  sharedAudio.pause();stopAudioViz();
-  const sec=SECS[cs];
-  if(cq>=sec.qs.length){busy=false;return;}
-  const q=sec.qs[cq];
-  history.push({role:'user',content:text});
-  if(history.length>40)history.splice(0,history.length-40);
-  setLabel('Thinking...');setViz('speaking');
-  document.getElementById('transcript').textContent=text;
-  document.getElementById('bot-resp').innerHTML='';
-  var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
-  positionMic();
-
-  const safetyTimer=setTimeout(function(){
-    var td2=document.getElementById('thinking-dots');if(td2)td2.classList.remove('visible');
-    busy=false;
-    // Safety timer fired — save answer and move on gracefully
-    answers[q.k]=text;cq++;
-    speakIt('Sorry, that took too long — I have saved your answer and we will keep going.',function(){advanceWithReaskQueue();});
-  },12000);
-
-  const answersSummary=Object.entries(answers)
-    .filter(function(_ref){var v=_ref[1];return v&&v.trim();})
-    .map(function(_ref2){var k=_ref2[0],v=_ref2[1];return k+': '+v.substring(0,80)+(v.length>80?'...':'');})
-    .join('\n');
-
-  const refContext=_buildRefContext();
-
-  const sys='You are Cass — a warm, sharp, genuinely human brand strategy consultant. 20 years expertise across Brand Strategy, Creative Direction, Marketing, and Consumer Insights.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n\nANSWERS SO FAR:\n'+(answersSummary||'None yet.')+refContext+'\n\nCRITICAL — CROSS-REFERENCE RULE: Before responding to ANY question, scan ALL of ANSWERS SO FAR. If a previous answer already fully or partially covers the current field, DO NOT ask again. Instead say something like "You actually covered this earlier when you mentioned X — does that still stand?" then output ANSWER: [that earlier answer] and READY_NEXT. Only ask if genuinely not covered.\n\nFOR EACH QUESTION:\n1. Acknowledge their answer warmly in 1 sentence.\n2. If sufficient: output ANSWER: [captured answer] then READY_NEXT on next line.\n3. If vague: ask ONE specific follow-up under 20 words. Do NOT auto-advance.\n4. After up to 2 follow-ups: synthesise, present starting "So your answer is:" — if they confirm, output ANSWER and READY_NEXT.\n\nCurrent question: \''+q.p+'\' Field: '+q.k+' Required: '+q.req+'\n\nRULES: Spoken response MAX 35 words. Natural contractions. Never mention being AI. ANSWER: and READY_NEXT on their own lines only.';
-
-  try{
-    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:350,system:sys,messages:history.slice(-12)})});
-    const data=await res.json();
-    clearTimeout(safetyTimer);
-    var td3=document.getElementById('thinking-dots');if(td3)td3.classList.remove('visible');
-    // Check for API error response
-    if(data.error||!data.content){
-      clearTimeout(safetyTimer);
-      var td5=document.getElementById('thinking-dots');if(td5)td5.classList.remove('visible');
-      busy=false;setLabel('');setViz('idle');
-      var errMsg=data.error?data.error.message||JSON.stringify(data.error):'No response';
-      console.error('API error:',errMsg,data);
-      answers[q.k]=text;cq++;
-      speakIt('Got a connection issue — saved your answer and moving on.',function(){advanceWithReaskQueue();});
-      return;
-    }
-    const reply=(data.content&&data.content[0])?data.content[0].text:'';
-    history.push({role:'assistant',content:reply});
-    const am=reply.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
-    const ready=reply.includes('READY_NEXT');
-    let disp=reply.replace(/ANSWER:[\s\S]*$/m,'').replace(/READY_NEXT/g,'').replace(/\s+$/,'').trim();
-    if(disp){
-      busy=false;
-      speakIt(disp,function(){
-        if(ready&&am){
-          const captured=am[1].trim();
-          answers[q.k]=captured;
-          cq++;
-          saveProgress(false);
-          advanceWithReaskQueue();
-        } else {
-          // Cass responded but didn't capture answer — reopen mic so user can continue
-          setMicReady();
-          setTimeout(startListen,400);
-        }
-      });
-    } else if(ready&&am){
-      busy=false;
-      const captured=am[1].trim();
-      answers[q.k]=captured;
-      cq++;
-      saveProgress(false);
-      advanceWithReaskQueue();
-    } else {
-      // Unexpected empty response — reopen mic, never stall
-      busy=false;
-      setMicReady();
-      setTimeout(startListen,400);
-    }
-  }catch(e){
-    clearTimeout(safetyTimer);
-    var td4=document.getElementById('thinking-dots');if(td4)td4.classList.remove('visible');
-    busy=false;setLabel('');setViz('idle');
-    answers[q.k]=text;cq++;
-    speakIt('Got a connection hiccup there — saved your answer and moving on.',function(){advanceWithReaskQueue();});
-  }
-}
 // ── REFERENCE ARCHIVE ─────────────────────────────────────────────
 function openRefUpload(){document.getElementById('ref-input').click();}
 
@@ -1548,7 +1525,10 @@ function sendText(){
     }
   }
   document.getElementById('transcript').textContent=t;
-  processAnswer(t);
+  // Send typed text as user input to Vapi
+  if(vapiActive){
+    vapi.send({type:'add-message',message:{role:'user',content:t}});
+  }
 }
 
 
