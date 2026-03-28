@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#08080f">
+<title>StratIQ — AI Brand Strategy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--glass:rgba(255,255,255,0.04);--gb:rgba(255,255,255,0.08);
+  --acc:#7c6aff;--acc2:#a78bfa;--text:#f0eeff;--muted:rgba(240,238,255,0.45);
+  --font:'Inter',sans-serif;
+  --dock-h:96px;
+  --dock-h-desk:80px;
+}
+html,body{font-family:var(--font);background:var(--bg);color:var(--text);height:100%;overflow-x:hidden;overscroll-behavior:none}
+body{display:flex;flex-direction:column}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:0.28;pointer-events:none;z-index:0;animation:drift 22s ease-in-out infinite}
+.orb1{width:600px;height:600px;background:#2d0fff;top:-200px;left:-150px}
+.orb2{width:500px;height:500px;background:#5500bb;bottom:-150px;right:-100px;animation-delay:-8s}
+.orb3{width:350px;height:350px;background:#0d10ee;top:40%;left:40%;animation-delay:-15s}
+@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(25px,-25px) scale(1.04)}66%{transform:translate(-20px,20px) scale(0.96)}}
+#app{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;
+  padding:0 1.25rem calc(var(--dock-h) + 20px);
+  overscroll-behavior:none;
+}
+/* HEADER — smooth hide/show */
+header{
+  width:100%;max-width:700px;
+  padding:1.4rem 0 0.9rem;
+  display:flex;flex-direction:column;align-items:center;gap:0.65rem;
+  flex-shrink:0;overflow:hidden;
+  transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1),opacity 0.4s ease,padding 0.4s ease;
+  max-height:180px;
+}
+header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-events:none}
+.logo-wrap{display:flex;align-items:center;gap:11px}
+.logo-icon{width:40px;height:40px;background:none;border-radius:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:#ffffff}
+#sec-nav{display:none;flex-direction:column;align-items:center;gap:4px;width:100%}
+.sec-row{display:flex;align-items:center;justify-content:center;flex-wrap:nowrap}
+.sec-item{font-size:10.5px;font-weight:500;color:rgba(240,238,255,0.25);transition:color 0.35s;letter-spacing:0.3px;white-space:nowrap;padding:3px 10px;position:relative}
+.sec-item+.sec-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:1px;height:10px;background:rgba(255,255,255,0.1)}
+.sec-item.active{color:var(--acc)}
+.sec-item.done{color:rgba(124,106,255,0.48)}
+#panel{width:100%;max-width:680px;flex:1;display:flex;flex-direction:column;align-items:center;padding:0.5rem 0 0;gap:0}
+#viz-label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;font-weight:500;height:16px;text-align:center;transition:opacity 0.3s;margin-bottom:10px}
+/* VISUALISER */
+#viz{display:flex;align-items:center;justify-content:center;gap:8px;height:90px;margin-bottom:0}
+.bar{width:11px;border-radius:50px;background:#7c6aff;transition:height 0.05s ease;flex-shrink:0}
+.bar:nth-child(1){animation:i1 2.3s ease-in-out infinite}
+.bar:nth-child(2){animation:i2 2.0s ease-in-out infinite}
+.bar:nth-child(3){animation:i3 1.8s ease-in-out infinite}
+.bar:nth-child(4){animation:i4 1.6s ease-in-out infinite}
+.bar:nth-child(5){animation:i3 1.9s ease-in-out infinite}
+.bar:nth-child(6){animation:i2 2.1s ease-in-out infinite}
+.bar:nth-child(7){animation:i1 2.4s ease-in-out infinite}
+@keyframes i1{0%,100%{height:7px}50%{height:16px}}
+@keyframes i2{0%,100%{height:11px}50%{height:28px}}
+@keyframes i3{0%,100%{height:18px}50%{height:48px}}
+@keyframes i4{0%,100%{height:24px}50%{height:66px}}
+#viz.speaking .bar{background:#7c6aff}
+#viz.speaking .bar:nth-child(1){animation:s1 0.44s ease-in-out infinite}
+#viz.speaking .bar:nth-child(2){animation:s2 0.36s ease-in-out infinite}
+#viz.speaking .bar:nth-child(3){animation:s3 0.29s ease-in-out infinite}
+#viz.speaking .bar:nth-child(4){animation:s4 0.23s ease-in-out infinite}
+#viz.speaking .bar:nth-child(5){animation:s3 0.31s ease-in-out infinite}
+#viz.speaking .bar:nth-child(6){animation:s2 0.37s ease-in-out infinite}
+#viz.speaking .bar:nth-child(7){animation:s1 0.45s ease-in-out infinite}
+@keyframes s1{0%,100%{height:12px}50%{height:42px}}
+@keyframes s2{0%,100%{height:22px}50%{height:68px}}
+@keyframes s3{0%,100%{height:38px}50%{height:86px}}
+@keyframes s4{0%,100%{height:50px}50%{height:100px}}
+#viz.live .bar{animation:none!important;background:#7c6aff;transition:height 0.05s ease}
+#viz.listening .bar{background:#06b6d4}
+#viz.listening .bar:nth-child(1){animation:l1 0.60s ease-in-out infinite}
+#viz.listening .bar:nth-child(2){animation:l2 0.50s ease-in-out infinite}
+#viz.listening .bar:nth-child(3){animation:l3 0.41s ease-in-out infinite}
+#viz.listening .bar:nth-child(4){animation:l4 0.35s ease-in-out infinite}
+#viz.listening .bar:nth-child(5){animation:l3 0.43s ease-in-out infinite}
+#viz.listening .bar:nth-child(6){animation:l2 0.52s ease-in-out infinite}
+#viz.listening .bar:nth-child(7){animation:l1 0.62s ease-in-out infinite}
+@keyframes l1{0%,100%{height:8px}50%{height:32px}}
+@keyframes l2{0%,100%{height:16px}50%{height:56px}}
+@keyframes l3{0%,100%{height:28px}50%{height:78px}}
+@keyframes l4{0%,100%{height:38px}50%{height:96px}}
+/* QUESTION DISPLAY */
+#qdisplay{width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:28px;padding:0 8px}
+#slabel{font-size:10px;color:var(--acc2);text-transform:uppercase;letter-spacing:2px;font-weight:600;min-height:14px}
+#ptext{font-size:11px;color:var(--muted);margin-top:2px}
+#qtext{font-size:22px;font-weight:600;line-height:1.5;letter-spacing:-0.3px;max-width:560px;margin-top:8px}
+#itext{font-size:12px;color:var(--acc2);font-style:italic;opacity:0;transition:opacity 0.6s ease,max-height 0.5s ease,margin-top 0.5s ease;max-width:460px;line-height:1.5;margin-top:4px;overflow:hidden;max-height:0}
+#itext.show{opacity:1;max-height:80px}
+#itext.fade-out{opacity:0;max-height:0;margin-top:0}
+/* TRANSCRIPT + BOT RESPONSE */
+#transcript-area{width:100%;max-width:560px;text-align:center;margin-top:20px;margin-bottom:4px;min-height:28px}
+#transcript{font-size:14px;color:rgba(240,238,255,0.65);font-style:italic;line-height:1.7}
+#bot-resp{font-size:15px;color:var(--acc2);font-style:italic;line-height:1.7;margin-top:4px;min-height:22px}
+/* Word-by-word animation — .reveal class triggers the animation */
+.bot-word{display:inline;opacity:0}
+.bot-word.reveal{animation:wordIn 0.15s ease forwards}
+@keyframes wordIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+/* TEXT INPUT */
+#text-mode{display:none;width:100%;max-width:540px;flex-direction:column;gap:8px;margin-top:8px}
+#trow{display:flex;gap:8px}
+#tinput{flex:1;background:rgba(255,255,255,0.05);border:0.5px solid var(--gb);color:var(--text);padding:11px 15px;border-radius:12px;font-size:14px;font-family:var(--font);outline:none;transition:border-color 0.2s;resize:none;line-height:1.5;min-height:44px;max-height:160px;overflow-y:auto;}
+#tinput:focus{border-color:rgba(124,106,255,0.5)}
+#tinput::placeholder{color:var(--muted)}
+.sbtn{padding:0 18px;height:44px;background:linear-gradient(135deg,#7c6aff,#6054cc);border:none;border-radius:12px;color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
+.skipbtn{font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;font-family:var(--font);text-align:right}
+.skipbtn:hover{color:var(--text)}
+/* FIXED BOTTOM DOCK — starts off-screen, slides in */
+#bottom-dock{
+  position:fixed;bottom:0;left:0;right:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  padding:14px 20px 22px;
+  background:linear-gradient(to top,rgba(8,8,15,0.98) 60%,transparent);
+  pointer-events:none;
+  transform:translateY(110%);
+  transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1);
+}
+#bottom-dock.visible{transform:translateY(0)}
+#bottom-dock>*{pointer-events:all}
+/* MIC — fixed position, JS-controlled vertical centering */
+#mic-wrap{
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%) translateY(200px);
+  z-index:20;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1),transform 0.6s cubic-bezier(0.34,1.2,0.64,1);
+  pointer-events:none;
+  bottom:120px; /* default — JS overrides */
+}
+#mic-wrap.visible{
+  transform:translateX(-50%) translateY(0);
+  pointer-events:all;
+}
+#mic-btn{width:68px;height:68px;background:linear-gradient(135deg,#7c6aff,#5a4de6);border:none;border-radius:50%;cursor:pointer;box-shadow:0 0 30px rgba(124,106,255,0.4);transition:box-shadow 0.2s,background 0.2s,transform 0.15s;display:flex;align-items:center;justify-content:center}
+#mic-btn:hover{transform:scale(1.06);box-shadow:0 0 44px rgba(124,106,255,0.6)}
+#mic-btn.on{background:linear-gradient(135deg,#06b6d4,#0891b2);box-shadow:0 0 40px rgba(6,182,212,0.5);animation:pring 1.5s ease-in-out infinite}
+#mic-btn.dis{opacity:0.4;cursor:not-allowed}
+#mic-btn.ready{animation:readyPulse 2.4s ease-in-out infinite}
+@keyframes readyPulse{0%,100%{box-shadow:0 0 28px rgba(124,106,255,0.35),0 0 0 0px rgba(124,106,255,0)}55%{box-shadow:0 0 44px rgba(124,106,255,0.6),0 0 0 6px rgba(124,106,255,0.12)}}
+#mic-btn.idle-pulse{animation:idlePulse 2s ease-in-out infinite}
+@keyframes idlePulse{0%,100%{box-shadow:0 0 30px rgba(124,106,255,0.4)}50%{box-shadow:0 0 52px rgba(124,106,255,0.8),0 0 0 8px rgba(124,106,255,0.15)}}
+@keyframes pring{0%,100%{box-shadow:0 0 28px rgba(6,182,212,0.35)}50%{box-shadow:0 0 52px rgba(6,182,212,0.65)}}
+#mic-label{font-size:12px;color:var(--muted);text-align:center;letter-spacing:0.3px}
+/* TWO-ROW BOTTOM BUTTONS */
+#alts{display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;max-width:560px}
+#alts-row1{display:flex;gap:7px;flex-wrap:nowrap;justify-content:center}
+#skip-row{display:flex;justify-content:center;gap:16px}
+#back-btn{background:none;border:none;color:rgba(240,238,255,0.3);font-size:11px;font-weight:400;cursor:pointer;font-family:var(--font);letter-spacing:0.3px;padding:3px 8px;transition:color 0.15s;display:flex;align-items:center;gap:5px}
+#back-btn:hover{color:rgba(240,238,255,0.6)}
+.abtn{display:flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.12);border-radius:20px;color:rgba(240,238,255,0.55);font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all 0.15s;white-space:nowrap}
+.abtn:hover{border-color:rgba(124,106,255,0.45);color:var(--text)}
+.abtn svg{flex-shrink:0;opacity:0.7}
+/* Skip — plain text, no border, visually distinct from pills */
+#skip-btn{background:none;border:none;color:rgba(240,238,255,0.3);font-size:11px;font-weight:400;cursor:pointer;font-family:var(--font);letter-spacing:0.3px;padding:3px 8px;transition:color 0.15s;display:flex;align-items:center;gap:5px}
+#skip-btn:hover{color:rgba(240,238,255,0.6)}
+/* START OVERLAY */
+#start-ov{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.75rem;padding:2rem;text-align:center}
+#start-ov h1{font-size:40px;font-weight:700;letter-spacing:-1.5px;line-height:1.1;background:linear-gradient(135deg,#ffffff 30%,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+#start-ov p{font-size:15px;color:var(--muted);max-width:400px;line-height:1.7}
+.feats{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.feat{padding:5px 13px;background:var(--glass);border:0.5px solid var(--gb);border-radius:20px;font-size:12px;color:var(--muted)}
+.begbtn{padding:15px 44px;background:linear-gradient(135deg,#7c6aff,#5a4de6);border:none;border-radius:16px;color:white;font-size:16px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 0 40px rgba(124,106,255,0.4);transition:all 0.2s;letter-spacing:0.3px}
+.begbtn:hover{transform:translateY(-2px);box-shadow:0 0 55px rgba(124,106,255,0.55)}
+.begsub{font-size:11px;color:var(--muted)}
+#sec-ov{display:none;position:fixed;inset:0;z-index:50;background:rgba(8,8,15,0.9);backdrop-filter:blur(10px);align-items:center;justify-content:center}
+.sec-card{background:rgba(255,255,255,0.05);border:0.5px solid rgba(124,106,255,0.3);border-radius:24px;padding:3rem 2.5rem;text-align:center;max-width:400px;display:flex;flex-direction:column;align-items:center;gap:1.25rem}
+.sec-card h3{font-size:22px;font-weight:700;letter-spacing:-0.5px}
+.sec-card p{font-size:14px;color:var(--muted);line-height:1.6}
+.nxtbtn{padding:12px 32px;background:linear-gradient(135deg,#7c6aff,#6054cc);border:none;border-radius:12px;color:white;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);box-shadow:0 0 22px rgba(124,106,255,0.3)}
+#sub-ov{display:none;position:fixed;inset:0;z-index:50;background:rgba(8,8,15,0.92);backdrop-filter:blur(12px);align-items:center;justify-content:center;padding:2rem}
+.sub-card{background:rgba(255,255,255,0.04);border:0.5px solid rgba(124,106,255,0.3);border-radius:24px;padding:2.5rem;max-width:480px;width:100%;display:flex;flex-direction:column;gap:1rem;text-align:center}
+.sub-card h3{font-size:22px;font-weight:700}
+.sub-card p{font-size:13px;color:var(--muted);line-height:1.6}
+.submainbtn{padding:14px;background:linear-gradient(135deg,#7c6aff,#6054cc);border:none;border-radius:14px;color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 0 28px rgba(124,106,255,0.3);transition:all 0.2s}
+.submainbtn:hover{box-shadow:0 0 44px rgba(124,106,255,0.5)}
+#substatus{font-size:13px;color:var(--acc2);min-height:20px}
+/* DESKTOP */
+@media(min-width:768px){
+  #app{padding:0 2rem calc(var(--dock-h-desk) + 160px)}
+  header{padding:1.75rem 0 1rem}
+  .logo-icon{width:44px;height:44px;background:none;border-radius:0}
+  .logo{font-size:30px;color:#ffffff}
+  .sec-item{font-size:11.5px;padding:3px 12px}
+  #viz{height:100px;gap:10px}
+  .bar{width:16px;border-radius:50px}
+  #qdisplay{margin-top:36px;gap:12px;padding:0 16px}
+  #qtext{font-size:24px;max-width:600px;margin-top:10px}
+  #slabel{font-size:11px}
+  #transcript-area{margin-top:28px;max-width:600px}
+  #bot-resp{font-size:16px}
+  /* Desktop dock: generous padding from screen bottom */
+  #bottom-dock{gap:0;padding:12px 40px 52px}
+  /* Desktop: single row for all buttons */
+  #alts{flex-direction:row;align-items:center;gap:10px}
+  #alts-row1{gap:10px}
+  #skip-row{align-items:center}
+  #mic-btn{width:74px;height:74px}
+  .abtn{font-size:11.5px;padding:8px 16px}
+  #skip-btn{font-size:11.5px;padding:4px 10px}
+}
+/* Header swipe-down-to-reveal touch target */
+#header-swipe{position:fixed;top:0;left:0;right:0;height:20px;z-index:30;pointer-events:all}
+/* SMALL MOBILE */
+@media(max-width:400px){
+  .sec-item{font-size:9px;padding:2px 6px}
+  .abtn{font-size:10px;padding:6px 10px}
+  #skip-btn{font-size:10px}
+}
+/* Icons: hidden portrait mobile, shown landscape + desktop */
+@media(max-width:600px) and (orientation:portrait){
+  .abtn svg{display:none}
+  #skip-btn svg{display:none}
+}
+@media(min-width:601px),(orientation:landscape){
+  .abtn svg{display:inline-block}
+  #skip-btn svg{display:inline-block}
+}
+/* ── SAVE BUTTON ── */
+#save-btn{
+  position:fixed;top:14px;right:16px;z-index:31;
+  width:40px;height:40px;background:var(--acc);border:none;border-radius:50%;
+  color:white;cursor:pointer;display:none;align-items:center;justify-content:center;
+  box-shadow:0 2px 12px rgba(124,106,255,0.35);
+  transition:top 0.45s cubic-bezier(0.4,0,0.2,1),transform 0.15s,box-shadow 0.15s;
+}
+#save-btn:hover{transform:scale(1.08);box-shadow:0 4px 20px rgba(124,106,255,0.5);}
+#save-btn.header-shown{top:90px;}
+@keyframes savedPulse{0%,100%{box-shadow:0 2px 12px rgba(124,106,255,0.35);}50%{box-shadow:0 0 0 6px rgba(124,106,255,0.15),0 2px 12px rgba(124,106,255,0.35);}}
+#save-btn.saving{animation:savedPulse 0.6s ease;}
+
+/* ── CONTINUE BUTTON on start screen ── */
+.contbtn{padding:11px 36px;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.18);border-radius:14px;color:rgba(240,238,255,0.75);font-size:14px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all 0.2s;display:none}
+.contbtn:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+#cont-info{font-size:11px;color:var(--muted);display:none}
+
+/* ── REVIEW WHEEL OVERLAY ── */
+#review-ov{position:fixed;inset:0;z-index:120;background:var(--bg);display:none;flex-direction:column;align-items:center;padding:0;overflow:hidden;}
+#review-ov.open{display:flex;}
+#review-header{width:100%;max-width:680px;padding:1.4rem 1.5rem 0.8rem;display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+#review-header h2{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-0.3px;}
+#review-header p{font-size:12px;color:var(--muted);text-align:center;line-height:1.5;max-width:340px;}
+#review-wheel{flex:1;width:100%;max-width:680px;position:relative;overflow:hidden;cursor:grab;}
+#review-wheel:active{cursor:grabbing;}
+#review-wheel::before,#review-wheel::after{content:'';position:absolute;left:0;right:0;height:38%;z-index:3;pointer-events:none;}
+#review-wheel::before{top:0;background:linear-gradient(to bottom,var(--bg) 0%,transparent 100%);}
+#review-wheel::after{bottom:0;background:linear-gradient(to top,var(--bg) 0%,transparent 100%);}
+#review-wheel-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;will-change:transform;transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);padding:0 1.25rem;}
+.rw-card{width:100%;max-width:620px;flex-shrink:0;display:flex;align-items:flex-start;gap:14px;padding:18px 0;border-bottom:0.5px solid rgba(255,255,255,0.06);transition:transform 0.35s ease,opacity 0.35s ease;transform-origin:center;}
+.rw-card-text{flex:1;}
+.rw-q{font-size:11px;font-weight:600;color:var(--acc2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px;}
+.rw-q-num{font-size:11px;color:var(--muted);font-weight:400;margin-right:8px;}
+.rw-a{font-size:16px;font-weight:500;color:var(--text);line-height:1.55;}
+.rw-card.rw-active .rw-a{font-size:18px;}
+.rw-card.rw-active .rw-q{color:var(--acc);}
+.rw-tick{flex-shrink:0;width:32px;height:32px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.2);background:none;color:rgba(255,255,255,0.3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;margin-top:4px;}
+.rw-tick:hover{border-color:rgba(124,106,255,0.6);}
+.rw-tick.checked{background:var(--acc);border-color:var(--acc);color:white;}
+#review-done-wrap{flex-shrink:0;width:100%;max-width:680px;padding:16px 1.5rem 32px;display:flex;flex-direction:column;align-items:center;gap:10px;background:linear-gradient(to top,var(--bg) 60%,transparent);}
+#review-done-btn{padding:14px 40px;background:var(--acc);border:none;border-radius:16px;color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 0 28px rgba(124,106,255,0.35);transition:all 0.2s;letter-spacing:0.2px;}
+#review-done-btn:hover{transform:translateY(-1px);box-shadow:0 0 40px rgba(124,106,255,0.5);}
+#review-stats{font-size:12px;color:var(--muted);text-align:center;}
+
+/* ── FINAL REVIEW OVERLAY (pre-submit) ── */
+#final-review-ov{position:fixed;inset:0;z-index:125;background:var(--bg);display:none;flex-direction:column;align-items:center;}
+#final-review-ov.open{display:flex;}
+#final-review-header{width:100%;max-width:680px;padding:1.4rem 1.5rem 0.8rem;display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;}
+#final-review-header h2{font-size:20px;font-weight:700;color:var(--text);}
+#final-review-header p{font-size:12px;color:var(--muted);text-align:center;line-height:1.5;max-width:380px;}
+#final-submit-wrap{flex-shrink:0;width:100%;max-width:680px;padding:16px 1.5rem 32px;display:flex;flex-direction:column;align-items:center;gap:10px;background:linear-gradient(to top,var(--bg) 60%,transparent);}
+#final-submit-btn{padding:14px 40px;background:var(--acc);border:none;border-radius:16px;color:white;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);box-shadow:0 0 28px rgba(124,106,255,0.35);transition:all 0.2s;opacity:0.4;pointer-events:none;}
+#final-submit-btn.ready{opacity:1;pointer-events:all;}
+#final-submit-btn.ready:hover{transform:translateY(-1px);box-shadow:0 0 40px rgba(124,106,255,0.5);}
+#final-review-stats{font-size:12px;color:var(--muted);text-align:center;}
+
+/* ── SUBMISSION CONFIRMATION OVERLAY ── */
+#submit-confirm-ov{display:none;position:fixed;inset:0;z-index:130;background:rgba(8,8,15,0.96);backdrop-filter:blur(16px);align-items:center;justify-content:center;padding:2rem;}
+#submit-confirm-ov.open{display:flex;}
+.submit-confirm-card{background:rgba(255,255,255,0.04);border:0.5px solid rgba(124,106,255,0.3);border-radius:24px;padding:2.5rem;max-width:460px;width:100%;display:flex;flex-direction:column;align-items:center;gap:1.25rem;text-align:center;}
+.submit-confirm-card h3{font-size:22px;font-weight:700;color:var(--text);}
+.submit-confirm-card p{font-size:14px;color:var(--muted);line-height:1.6;max-width:360px;}
+
+
+/* ── UI TOUR HIGHLIGHTS — soft radial bloom, no hard border ── */
+.tour-highlight{
+  position:relative;
+  z-index:25;
+}
+/* Default glow for dock-area elements — pill-shaped bloom */
+.tour-highlight::after{
+  content:'';
+  position:absolute;
+  inset:-12px;
+  border-radius:28px;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.22) 0%, rgba(124,106,255,0.08) 55%, transparent 75%);
+  pointer-events:none;
+  animation:tourBloom 2.8s ease-in-out infinite;
+}
+/* Mic button — circular bloom matching mic glow style exactly */
+#mic-wrap.tour-highlight::after{
+  inset:-20px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.35) 0%, rgba(124,106,255,0.15) 45%, transparent 70%);
+  animation:tourBloomMic 2.8s ease-in-out infinite;
+}
+/* Save button — circular */
+#save-btn.tour-highlight::after{
+  inset:-16px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.30) 0%, rgba(124,106,255,0.10) 50%, transparent 72%);
+  animation:tourBloom 2.8s ease-in-out infinite;
+}
+/* Bottom dock — wide horizontal bloom */
+#bottom-dock.tour-highlight::after{
+  inset:-8px -16px;
+  border-radius:24px;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.18) 0%, rgba(124,106,255,0.06) 60%, transparent 80%);
+  animation:tourBloom 2.8s ease-in-out infinite;
+}
+/* Ref button — standard pill bloom */
+#ref-btn.tour-highlight::after{
+  inset:-10px -8px;
+  border-radius:24px;
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.25) 0%, rgba(124,106,255,0.08) 55%, transparent 75%);
+  animation:tourBloom 2.8s ease-in-out infinite;
+}
+@keyframes tourBloom{
+  0%,100%{opacity:0.7;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.06);}
+}
+@keyframes tourBloomMic{
+  0%,100%{opacity:0.6;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.08);}
+}
+
+/* ── THINKING DOTS ── */
+#thinking-dots{display:none;align-items:center;gap:5px;justify-content:center;margin-top:8px;height:20px}
+#thinking-dots.visible{display:flex}
+.t-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);opacity:0.35;animation:tdot 1.2s ease-in-out infinite}
+.t-dot:nth-child(1){animation-delay:0s}.t-dot:nth-child(2){animation-delay:0.2s}.t-dot:nth-child(3){animation-delay:0.4s}
+@keyframes tdot{0%,80%,100%{opacity:0.35;transform:scale(1)}40%{opacity:1;transform:scale(1.3)}}
+/* ── REFERENCE BADGE ── */
+.abtn-ref{position:relative}
+#ref-badge{display:none;position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 3px;background:var(--acc);border-radius:8px;font-size:9px;font-weight:700;color:white;align-items:center;justify-content:center;line-height:1;}
+/* ── TRANSCRIPT SCROLL FADE ── */
+#transcript-area{position:relative;}
+#transcript-area-inner{
+  max-height:none;
+  overflow-y:auto;
+  scrollbar-width:none;
+  scroll-behavior:smooth;
+  -webkit-mask-image:none;
+  mask-image:none;
+}
+#transcript-area-inner::-webkit-scrollbar{display:none;}
+/* Top fade only — content hidden above scroll position */
+#transcript-area-inner.tx-top{
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 22%);
+  mask-image:linear-gradient(to bottom, transparent 0%, black 22%);
+}
+/* Top + bottom — user scrolled up, content hidden both above and below */
+#transcript-area-inner.tx-both{
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%);
+  mask-image:linear-gradient(to bottom, transparent 0%, black 22%, black 78%, transparent 100%);
+}
+
+/* ── WAITING / HEARTBEAT STATE — Cass patiently present ── */
+#viz.waiting .bar{background:#7c6aff}
+#viz.waiting .bar:nth-child(1){animation:hb1 3.2s ease-in-out infinite}
+#viz.waiting .bar:nth-child(2){animation:hb2 3.2s ease-in-out infinite}
+#viz.waiting .bar:nth-child(3){animation:hb3 3.2s ease-in-out infinite}
+#viz.waiting .bar:nth-child(4){animation:hb4 3.2s ease-in-out infinite}
+#viz.waiting .bar:nth-child(5){animation:hb3 3.2s ease-in-out infinite}
+#viz.waiting .bar:nth-child(6){animation:hb2 3.2s ease-in-out infinite}
+#viz.waiting .bar:nth-child(7){animation:hb1 3.2s ease-in-out infinite}
+@keyframes hb1{0%,100%{height:7px;box-shadow:none}45%,55%{height:10px;box-shadow:0 0 6px rgba(124,106,255,0.4)}}
+@keyframes hb2{0%,100%{height:11px;box-shadow:none}45%,55%{height:16px;box-shadow:0 0 8px rgba(124,106,255,0.5)}}
+@keyframes hb3{0%,100%{height:16px;box-shadow:none}45%,55%{height:24px;box-shadow:0 0 10px rgba(124,106,255,0.6)}}
+@keyframes hb4{0%,100%{height:20px;box-shadow:none}45%,55%{height:30px;box-shadow:0 0 14px rgba(124,106,255,0.7)}}
+#bottom-dock{transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
+#bottom-dock.autohide{transform:translateY(110%);opacity:0;pointer-events:none;}
+#mic-wrap{transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1),transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
+#mic-wrap.autohide{opacity:1;pointer-events:all;} /* mic always visible */
+
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+<div class="orb orb3"></div>
+
+<div id="start-ov">
+  <div style="display:flex;align-items:center;gap:12px"><img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20115%20126%22%3E%3Cpath%20d%3D%22M105.6%2C69l-11.6-29.8c-.5-1.4-2-2.2-3.4-2.3s-3.1.9-4.1%2C2.3c-2%2C3-3.4%2C6.3-3.7%2C9.9l-.2%2C1.7c0%2C.6%2C0%2C1.1%2C0%2C1.7v1c.2%2C2.1.8%2C4.3%2C1.6%2C6.3l12.4%2C31.9c.7%2C1.9%2C1%2C4.3.8%2C6.2-.8%2C6.9-6.6%2C12-13.6%2C12h-32.3c-8.8%2C0-17.3-5.3-20.5-13.4l-10.9-27.9-1.8-4.8c-.5-1.3-.9-2.5-.9-3.9s0-1.7%2C0-2.5c.6-5.9%2C4.9-10.8%2C10.7-11.9l.9-.2h1c0%2C0%2C6.6%2C0%2C6.6%2C0l-2.5-6.5c-.4-.9-.6-1.8-.7-2.8s-.2-2.9%2C0-4.2c1-5.9%2C5.8-10.5%2C11.7-11.2.5%2C0%2C.9-.1%2C1.4-.1h33.4c8.3%2C0%2C16.7%2C5.8%2C19.7%2C13.4l13%2C33.4c.6%2C1.5.7%2C3.2.7%2C4.8-.2%2C6.6-5.1%2C12-11.6%2C12.9-.2%2C0-.4%2C0-.7%2C0l-2.7-7c0%2C0%2C.1-.2.2-.2h.6c1.4%2C0%2C2.7-.2%2C3.9-.9%2C2.8-1.6%2C3.6-4.9%2C2.5-7.8ZM48%2C76.9c0-.4%2C0-.7-.1-1.1v-.9c-.3-1.2-.6-2.3-1-3.4l-7.2-18.6c0-.1-.2-.5-.3-.5h-8.8c-3.2%2C0-6.1%2C3.1-5.8%2C6.8s.4%2C2%2C.8%2C3l11.2%2C28.8c.6%2C1.5%2C2.3%2C2.3%2C3.7%2C2.3s3-.9%2C3.8-2.3c2-2.9%2C3.3-6.2%2C3.7-9.7s0-.6%2C0-.9v-1.4c0-.2%2C0-.5%2C0-.8v-1.3ZM63.2%2C45.2c.4%2C0%2C.9%2C0%2C1.3%2C0%2C6.8-.7%2C12.5-4.4%2C16.2-10.1l.6-1c.5-.8.7-1.6.6-2.5-.2-1.8-1.7-3.8-3.8-3.8h-31.9c-3%2C0-5.3%2C2.8-5.6%2C5.5-.1%2C1.4.1%2C2.5.6%2C3.7l7.6%2C19.5%2C3%2C7.6c3.2%2C8.1%2C11.2%2C13.8%2C19.9%2C13.8h11.7s-4.3-10.9-4.3-10.9c-1.2-3.1-3.1-5.9-5.5-8.2-4-3.8-9.2-5.9-14.8-6.1h-4.5s-2.8-7.3-2.8-7.3h11.6ZM86.3%2C85.1h-19c-.4%2C0-1.9.2-2.3.3-5.5.9-10.4%2C3.8-13.7%2C8.3-.7%2C1-1.4%2C1.9-2%2C3s-.6%2C2.7.2%2C3.9c.7%2C1.1%2C1.9%2C2%2C3.4%2C2h31.6c1.2%2C0%2C2.4-.6%2C3.3-1.2s.8-.7%2C1.2-1.2c1.4-1.8%2C1.6-4.3.8-6.4l-3.4-8.7Z%22%20fill%3D%22%237462f9%22/%3E%3C/svg%3E" width="52" height="57" alt="" style="display:block;flex-shrink:0"><span style="font-size:32px;font-weight:700;color:#ffffff;letter-spacing:-0.5px">Strat<span style="color:#7462f9">IQ</span></span></div>
+  <h1>Your brand strategy<br>starts here.</h1>
+  <p>I am your AI brand consultant. We will chat through your brand brief together — I ask the questions, you bring the insights. About 15 minutes and your full strategy report lands shortly after.</p>
+  <div class="feats">
+    <div class="feat">Voice-guided</div>
+    <div class="feat">AI-powered insights</div>
+    <div class="feat">7 sections</div>
+    <div class="feat">Full strategy report</div>
+  </div>
+  <button class="begbtn" onclick="beginSession()">Let's do this →</button>
+  <button class="contbtn" id="cont-btn" onclick="continueSession()">Continue where I left off →</button>
+  <p id="cont-info"></p>
+  <p class="begsub">Best in Chrome or Edge · Microphone required for voice mode</p>
+</div>
+
+<div id="sec-ov">
+  <div class="sec-card">
+    <div id="sec-icon" style="display:flex;align-items:center;justify-content:center;height:56px"></div>
+    <h3 id="sec-title">Section complete!</h3>
+    <p id="sec-msg">Ripper work. Solid stuff locked in.</p>
+    <button class="nxtbtn" onclick="nextSection()">Keep going →</button>
+  </div>
+</div>
+
+<div id="sub-ov">
+  <div class="sub-card">
+    <div style="font-size:36px">🚀</div>
+    <h3>That is a wrap!</h3>
+    <p>You have just given us everything we need to build something seriously powerful. Your brand strategy report is about to come to life.</p>
+    <button class="submainbtn" id="subbtn" onclick="submitAll()">Generate my strategy report →</button>
+    <div id="substatus"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="logo-wrap">
+      <div class="logo-icon">
+        <img src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20115%20126%22%3E%3Cpath%20d%3D%22M105.6%2C69l-11.6-29.8c-.5-1.4-2-2.2-3.4-2.3s-3.1.9-4.1%2C2.3c-2%2C3-3.4%2C6.3-3.7%2C9.9l-.2%2C1.7c0%2C.6%2C0%2C1.1%2C0%2C1.7v1c.2%2C2.1.8%2C4.3%2C1.6%2C6.3l12.4%2C31.9c.7%2C1.9%2C1%2C4.3.8%2C6.2-.8%2C6.9-6.6%2C12-13.6%2C12h-32.3c-8.8%2C0-17.3-5.3-20.5-13.4l-10.9-27.9-1.8-4.8c-.5-1.3-.9-2.5-.9-3.9s0-1.7%2C0-2.5c.6-5.9%2C4.9-10.8%2C10.7-11.9l.9-.2h1c0%2C0%2C6.6%2C0%2C6.6%2C0l-2.5-6.5c-.4-.9-.6-1.8-.7-2.8s-.2-2.9%2C0-4.2c1-5.9%2C5.8-10.5%2C11.7-11.2.5%2C0%2C.9-.1%2C1.4-.1h33.4c8.3%2C0%2C16.7%2C5.8%2C19.7%2C13.4l13%2C33.4c.6%2C1.5.7%2C3.2.7%2C4.8-.2%2C6.6-5.1%2C12-11.6%2C12.9-.2%2C0-.4%2C0-.7%2C0l-2.7-7c0%2C0%2C.1-.2.2-.2h.6c1.4%2C0%2C2.7-.2%2C3.9-.9%2C2.8-1.6%2C3.6-4.9%2C2.5-7.8ZM48%2C76.9c0-.4%2C0-.7-.1-1.1v-.9c-.3-1.2-.6-2.3-1-3.4l-7.2-18.6c0-.1-.2-.5-.3-.5h-8.8c-3.2%2C0-6.1%2C3.1-5.8%2C6.8s.4%2C2%2C.8%2C3l11.2%2C28.8c.6%2C1.5%2C2.3%2C2.3%2C3.7%2C2.3s3-.9%2C3.8-2.3c2-2.9%2C3.3-6.2%2C3.7-9.7s0-.6%2C0-.9v-1.4c0-.2%2C0-.5%2C0-.8v-1.3ZM63.2%2C45.2c.4%2C0%2C.9%2C0%2C1.3%2C0%2C6.8-.7%2C12.5-4.4%2C16.2-10.1l.6-1c.5-.8.7-1.6.6-2.5-.2-1.8-1.7-3.8-3.8-3.8h-31.9c-3%2C0-5.3%2C2.8-5.6%2C5.5-.1%2C1.4.1%2C2.5.6%2C3.7l7.6%2C19.5%2C3%2C7.6c3.2%2C8.1%2C11.2%2C13.8%2C19.9%2C13.8h11.7s-4.3-10.9-4.3-10.9c-1.2-3.1-3.1-5.9-5.5-8.2-4-3.8-9.2-5.9-14.8-6.1h-4.5s-2.8-7.3-2.8-7.3h11.6ZM86.3%2C85.1h-19c-.4%2C0-1.9.2-2.3.3-5.5.9-10.4%2C3.8-13.7%2C8.3-.7%2C1-1.4%2C1.9-2%2C3s-.6%2C2.7.2%2C3.9c.7%2C1.1%2C1.9%2C2%2C3.4%2C2h31.6c1.2%2C0%2C2.4-.6%2C3.3-1.2s.8-.7%2C1.2-1.2c1.4-1.8%2C1.6-4.3.8-6.4l-3.4-8.7Z%22%20fill%3D%22%23ffffff%22/%3E%3C/svg%3E" width="26" height="28" alt="" style="display:block;flex-shrink:0">
+      </div>
+      <span class="logo">Strat<span style="color:#7462f9">IQ</span></span>
+    </div>
+    <div id="sec-nav">
+      <div class="sec-row">
+        <span class="sec-item" id="s0">Brand Overview</span>
+        <span class="sec-item" id="s1">Audience &amp; Market</span>
+        <span class="sec-item" id="s2">Competition</span>
+        <span class="sec-item" id="s3">Brand Identity</span>
+      </div>
+      <div class="sec-row">
+        <span class="sec-item" id="s4">Products &amp; Pricing</span>
+        <span class="sec-item" id="s5">Marketing &amp; Channels</span>
+        <span class="sec-item" id="s6">Final Details</span>
+      </div>
+    </div>
+    <div id="pills" style="display:none!important"></div>
+  </header>
+
+  <div id="panel">
+    <div id="viz-label">Ready when you are</div>
+    <div id="viz">
+      <div class="bar" style="height:8px"></div>
+      <div class="bar" style="height:14px"></div>
+      <div class="bar" style="height:22px"></div>
+      <div class="bar" style="height:30px"></div>
+      <div class="bar" style="height:22px"></div>
+      <div class="bar" style="height:14px"></div>
+      <div class="bar" style="height:8px"></div>
+    </div>
+
+    <div id="qdisplay">
+      <div id="slabel"></div>
+      <div id="ptext"></div>
+      <div id="qtext"></div>
+      <div id="itext"></div>
+    </div>
+
+    <div id="thinking-dots"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
+    <div id="transcript-area">
+      <div id="transcript-area-inner">
+        <div id="transcript"></div>
+        <div id="bot-resp"></div>
+      </div>
+    </div>
+
+    <div id="text-mode">
+      <div id="trow">
+        <textarea id="tinput" placeholder="Type your answer..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendText();}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px'"></textarea>
+        <button class="sbtn" onclick="sendText()">Send</button>
+      </div>
+      <button class="skipbtn" onclick="skipQ()">Skip this question →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Swipe-down-to-reveal header zone -->
+<div id="header-swipe"></div>
+
+<!-- MIC — fixed position, JS-centred between content and buttons -->
+<div id="mic-wrap">
+  <button id="mic-btn" onclick="toggleMic()">
+    <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><rect x="9" y="2" width="10" height="16" rx="5" fill="white"/><path d="M5 14a9 9 0 0 0 18 0" stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none"/><line x1="14" y1="23" x2="14" y2="27" stroke="white" stroke-width="2.2" stroke-linecap="round"/><line x1="10" y1="27" x2="18" y2="27" stroke="white" stroke-width="2.2" stroke-linecap="round"/></svg>
+  </button>
+  <div id="mic-label">Tap to speak</div>
+</div>
+
+<!-- Fixed bottom dock — action buttons only -->
+<div id="bottom-dock">
+  <div id="alts">
+    <!-- Row 1: three pill buttons -->
+    <div id="alts-row1">
+      <button class="abtn" id="toggle-text-btn" onclick="toggleText()">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
+        Type instead
+      </button>
+      <button class="abtn" onclick="openForm()">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4 6l3 3.5 3-3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12.5" x2="12" y2="12.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
+        Download form
+      </button>
+      <button class="abtn" onclick="uploadForm()">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 9.5v-7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4 5l3-3.5 3 3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12.5" x2="12" y2="12.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
+        Upload doc
+      </button>
+      <button class="abtn abtn-ref" id="ref-btn" onclick="openRefUpload()" title="Add reference docs — Claude uses these as background context throughout">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+          <rect x="2" y="1.5" width="7" height="9" rx="1" stroke="currentColor" stroke-width="1.25"/>
+          <line x1="4" y1="4.5" x2="7" y2="4.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          <line x1="4" y1="6.5" x2="7" y2="6.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          <circle cx="10.5" cy="10.5" r="2.5" fill="currentColor" opacity="0.9"/>
+          <path d="M10.5 9.3v2.4M9.3 10.5h2.4" stroke="white" stroke-width="1.1" stroke-linecap="round"/>
+        </svg>
+        Add reference
+        <span class="ref-badge" id="ref-badge"></span>
+      </button>
+    </div>
+    <!-- Row 2: Skip + Go Back -->
+    <div id="skip-row">
+      <button id="back-btn" onclick="goBackSection()">
+        <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M9.5 2.5l-4 4 4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 2.5l-4 4 4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to section start
+      </button>
+      <button id="skip-btn" onclick="skipQ()">
+        <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M3.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Skip question
+      </button>
+    </div>
+  </div>
+  <input type="file" id="upload-input" accept=".txt,.md,.pdf,.docx" style="display:none" onchange="handleUpload(this)"/>
+  <input type="file" id="ref-input" accept=".txt,.md,.pdf,.docx" multiple style="display:none" onchange="handleRefUpload(this)"/>
+</div>
+
+
+<script>
+const SECS=[
+  {name:'Brand Overview',emoji:'🏛',
+   intro:"Let's kick things off with the big picture — who you are and what you stand for. This is the foundation everything else gets built on. Let's make it count.",
+   qs:[
+    {k:'Business / Brand Name',e:'entry.1328640500',p:"First up — what is the name of your business or brand?",req:true},
+    {k:'Website URL',e:'entry.2058893301',p:"Do you have a website URL? Drop it here — or skip if you are still pre-launch.",req:false},
+    {k:'Business / Brand Mission',e:'entry.1693427484',p:"What is your brand mission — what do you do every day and why does it genuinely matter?",req:true,ins:"A sharp mission is the anchor for every brand decision. It stops drift before it starts."},
+    {k:'Business / Brand Vision',e:'entry.1081121510',p:"Now the big one — what is your 10-year vision? Where is this brand going at its most ambitious?",req:true,ins:"Brands with a bold vision attract people who want to be part of something bigger than a product."},
+    {k:'Brand Promise / Value Proposition',e:'entry.1733062109',p:"What is the core promise you make to customers? What can they always count on from you that competitors cannot touch?",req:true,ins:"This is often the single most powerful line in your entire strategy. Get specific."},
+    {k:'Tagline / Slogan (if any)',e:'entry.267571652',p:"Got a tagline or slogan? Share it — even rough is useful. Or tell me if you are open to developing one.",req:false},
+    {k:'Brand Story & History',e:'entry.1496968690',p:"Tell me the origin story — how did this brand actually come to life? The real human story behind it.",req:false,ins:"Founder stories create emotional connection that no ad budget can manufacture. The messier and more honest, the better."},
+    {k:'Founder / Leadership Perspective',e:'entry.129963583',p:"What does the founder or leadership believe about your industry that others are getting wrong?",req:false}
+  ]},
+  {name:'Audience and Market',emoji:'🎯',
+   intro:"Awesome — now let us get into who you are actually building this for. This is where we find the real insight that makes everything click.",
+   qs:[
+    {k:'Target Audience / Customer Personas',e:'entry.874530462',p:"Who is your ideal customer? Describe them as a real person — age, lifestyle, values, what keeps them up at night.",req:true,ins:"The more specific your audience, the stronger every single piece of communication becomes."},
+    {k:'Customer Pain Points',e:'entry.156417213',p:"What problems, frustrations, or fears does your customer live with that your brand actually solves?",req:true,ins:"Brands that name pain points explicitly and honestly outperform those that only talk about features. Every time."},
+    {k:'Customer Journey / Key Touchpoints',e:'entry.1614361266',p:"Walk me through how customers find you and move toward buying — from first awareness to loyal client.",req:false},
+    {k:'Market Positioning',e:'entry.458460268',p:"Where do you sit in the market — premium, accessible, niche, challenger? What positioning are you going for?",req:true},
+    {k:'Market Segment / Industry',e:'entry.611388736',p:"What industry or market segment are you in? Any specific niche within it?",req:true}
+  ]},
+  {name:'Competition',emoji:'⚡',
+   intro:"Now we get spicy — let us look at who you are up against and where the real opportunity lives. This is where we find your whitespace.",
+   qs:[
+    {k:'Primary Competitors',e:'entry.464842167',p:"Name your main competitors — the brands you are genuinely up against, even the ones you secretly admire.",req:true,ins:"Knowing your competitive landscape is how we find the territory your brand can own and defend."},
+    {k:'Competitive Advantage / Differentiation',e:'entry.599782147',p:"What makes you genuinely different from those competitors? What can you do or say that they cannot?",req:true,ins:"The more specific and defensible your difference, the stronger your entire strategy."},
+    {k:'SWOT Notes',e:'entry.1487653342',p:"Quick SWOT — real strengths, honest weaknesses, opportunities ahead, and threats you are watching?",req:false}
+  ]},
+  {name:'Brand Identity',emoji:'✨',
+   intro:"This is where the brand really comes alive — personality, values, voice. Let us build the character that people will fall in love with.",
+   qs:[
+    {k:'Brand Personality',e:'entry.1833508930',p:"If your brand were a person at a dinner party — how would you describe them? Energy, attitude, how they talk.",req:true,ins:"Brand personality drives tone of voice, visual style, and who feels naturally drawn to you."},
+    {k:'Brand Values',e:'entry.2063536651',p:"What are your core brand values — the genuine non-negotiables that govern how you operate?",req:true},
+    {k:'Tone of Voice',e:'entry.837359968',p:"How does your brand communicate? Give me 3 to 5 words that nail your ideal tone of voice.",req:true},
+    {k:'Visual Style / Brand Aesthetic Notes',e:'entry.105852221',p:"Describe the visual style you are going for — how should this brand look and feel?",req:false},
+    {k:'Colour Palette & Typography Preferences',e:'entry.74914230',p:"Any colour or font preferences? Even rough directions like warm and earthy or clean and minimal work perfectly.",req:false}
+  ]},
+  {name:'Products and Pricing',emoji:'💎',
+   intro:"Let us dig into what you are actually selling and why people should choose you. This is the commercial heart of the strategy.",
+   qs:[
+    {k:'Key Products or Services',e:'entry.528379571',p:"What are your main products or services? Give me a clear picture of your core offering.",req:true},
+    {k:'Product / Service Unique Mechanics',e:'entry.569842307',p:"How does your product or service actually work — what is the specific method, process, or delivery that makes it distinctive?",req:true,ins:"This is the how not the what — the mechanism behind your offering that no one else does quite like you."},
+    {k:'Features & Benefits',e:'entry.575306966',p:"Key features and the real benefit behind each one. What does each feature actually mean for the customer?",req:false,ins:"Features tell, benefits sell. This is where most brands leave serious money on the table."},
+    {k:'Pricing Strategy',e:'entry.1425749582',p:"How are you priced — premium, mid-market, freemium? What is the logic behind it?",req:false},
+    {k:'Customer Experience Overview',e:'entry.1836847594',p:"Walk me through the customer experience — from first contact through to long-term relationship.",req:false}
+  ]},
+  {name:'Marketing and Channels',emoji:'📡',
+   intro:"Now let us talk about how you actually get this brand in front of the right people. Strategy without distribution is just a document.",
+   qs:[
+    {k:'Current Marketing Channels',e:'entry.2015870901',p:"What marketing channels are you using or planning — social, email, SEO, paid, events, partnerships?",req:true},
+    {k:'Core Messaging Pillars',e:'entry.80992174',p:"What are the 2 to 4 core themes you want your brand to consistently communicate — the ideas that show up everywhere?",req:true,ins:"Messaging pillars create coherence. Without them brands say different things in different places and confuse everyone."},
+    {k:'Key Messages / Elevator Pitch',e:'entry.138088170',p:"Your best elevator pitch — how do you describe what you do in 30 seconds to someone who has never heard of you?",req:true},
+    {k:'Brand Goals & Objectives',e:'entry.558277507',p:"What are your brand goals for the next 6 to 12 months — awareness, revenue, audience, product launch?",req:true},
+    {k:'Channel-specific Messaging / Tone Notes',e:'entry.1417062535',p:"Do you adjust your tone across channels — more playful on Instagram, more direct on LinkedIn?",req:false}
+  ]},
+  {name:'Final Details',emoji:'🏁',
+   intro:"Last stretch — nearly there! These final questions make sure your strategy is built for the real world, not just the ideal one.",
+   qs:[
+    {k:'Challenges & Barriers',e:'entry.756862771',p:"What is genuinely holding the brand back right now? Be honest — what are the real challenges you are navigating?",req:false,ins:"Identifying barriers upfront means your strategy attacks them directly rather than working around them."},
+    {k:'Inspirations / References',e:'entry.1597764886',p:"Which brands do you genuinely admire — inside or outside your industry? What specifically appeals to you?",req:false},
+    {k:'Brand Archetype / Personality Archetype',e:'entry.1645480047',p:"Do you have a brand archetype in mind — Hero, Sage, Rebel, Creator, Caregiver? Or should we work it out together?",req:false,ins:"Archetypes give your whole team a decision-making shorthand for every brand choice."},
+    {k:'Notes / Special Request',e:'entry.1735860965',p:"Last one — any special requests or context you want the strategy report to focus on that we have not covered?",req:false}
+  ]}
+];
+
+const COMPLETE_MSGS=[
+  "Nice work on that section. Brand foundations are locked in — that is a solid base to build on.",
+  "Great stuff. Audience and market context is clear — this will make the strategy much sharper.",
+  "Good. Competitive landscape mapped. We know where the real opportunity sits for you.",
+  "Brand identity section done. Starting to get a real sense of who this brand is.",
+  "Products and pricing sorted. The commercial picture is coming together nicely.",
+  "Marketing and channels covered. Good clarity on how to get this in front of people.",
+  "And that is everything. You have just completed your brand brief."
+];
+
+const FORM='https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/formResponse';
+const SAVE_KEY='stratiq_progress';
+const API='/api/claude';
+
+let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaking=false,textActive=false;
+let wordTimings=null;
+let accumulatedFinal='';
+let speechPauseTimer=null;
+let refDocs=[];
+const synth=window.speechSynthesis;
+
+function beginSession(){
+  try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+    navigator.mediaDevices.getUserMedia({audio:true})
+      .then(function(stream){stream.getTracks().forEach(function(t){t.stop();});})
+      .catch(function(err){console.log('Mic permission denied:',err.message);});
+  }
+  document.getElementById('start-ov').style.display='none';
+  document.getElementById('save-btn').style.display='flex';
+  sharedAudio.load();
+  var actxInit=getAudioCtx();if(actxInit&&actxInit.state==='suspended'){actxInit.resume().catch(function(){});}
+  tryHideURLBar();
+  initAudioGraph();
+  setupVoice();
+  buildPills();
+  txInit();
+
+  // PART 1 — Cass intro
+  speakIt("Hey, I'm Cass — I'll be your brand strategy consultant today. Before we dive in, let me quickly show you around.", function(){
+    // PART 2 — UX orientation tour
+    runUITour(function(){
+      tourHighlight([],0);
+      // PART 3 — fire into first section
+      setTimeout(showSecIntro, 400);
+    });
+  });
+}
+
+function buildPills(){
+  // Show the static sec-nav (items already in HTML)
+  document.getElementById('sec-nav').style.display='flex';
+  // Set initial active state
+  updatePills();
+}
+
+function updatePills(){
+  SECS.forEach(function(s,i){
+    const el=document.getElementById('s'+i);
+    if(!el)return;
+    el.className='sec-item'+(i<cs?' done':i===cs?' active':'');
+  });
+}
+
+// ── UI TOUR HIGHLIGHT SYSTEM ─────────────────────────────────────
+function tourHighlight(ids, durationMs){
+  // Remove any existing highlights
+  document.querySelectorAll('.tour-highlight').forEach(function(el){
+    el.classList.remove('tour-highlight');
+  });
+  if(!ids||ids.length===0)return;
+  ids.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.classList.add('tour-highlight');
+  });
+  if(durationMs){
+    setTimeout(function(){
+      ids.forEach(function(id){
+        var el=document.getElementById(id);
+        if(el)el.classList.remove('tour-highlight');
+      });
+    },durationMs);
+  }
+}
+
+function runUITour(onComplete){
+  // Slide dock and mic fully into view BEFORE tour starts
+  var dock=document.getElementById('bottom-dock');
+  var micWrap=document.getElementById('mic-wrap');
+  var saveBtn=document.getElementById('save-btn');
+  dock.classList.add('visible');
+  micWrap.classList.add('visible');
+  saveBtn.style.display='flex';
+  setTimeout(positionMic,100);
+
+  var steps=[
+    {
+      ids:['mic-wrap'],
+      text:"The mic button here in the middle is your main control — tap to speak, tap again when you are done. You can also switch to typing any time using the Type button."
+    },
+    {
+      ids:['ref-btn'],
+      text:"Add Reference is a handy one — if you have existing brand docs, strategy files, or guidelines, drop them in here and I will draw on them throughout our whole conversation."
+    },
+    {
+      ids:['bottom-dock'],
+      text:"Down here you can also download your answers as a file any time, or upload a pre-filled brief if you have one ready."
+    },
+    {
+      ids:['save-btn'],
+      text:"Save up top keeps your progress — so if you need to step away and come back, no problem. And feel free to ask me anything as we go. Alright, let us build your brand."
+    }
+  ];
+
+  var stepIdx=0;
+  function runStep(){
+    if(stepIdx>=steps.length){
+      setTimeout(function(){
+        tourHighlight([],0);
+        if(onComplete)onComplete();
+      },800);
+      return;
+    }
+    var step=steps[stepIdx];
+    stepIdx++;
+    // Highlight element 1.5s BEFORE voice starts — user sees & reads it first
+    tourHighlight(step.ids);
+    setTimeout(function(){
+      speakIt(step.text,function(){
+        // Pause between steps, then next
+        setTimeout(runStep,500);
+      });
+    },1500);
+  }
+
+  // Brief pause after dock slides in, then begin
+  setTimeout(runStep,700);
+}
+
+function showSecIntro(){
+  const sec=SECS[cs];
+  setLabel('');
+  document.getElementById('slabel').textContent='Section '+(cs+1)+' of '+SECS.length;
+  document.getElementById('qtext').textContent=''; // cleared during intro — only bot-resp shows
+  document.getElementById('itext').textContent='';
+  document.getElementById('itext').classList.remove('show','fade-out');
+  document.getElementById('ptext').textContent=sec.name;
+  // Show header briefly, then hide as soon as voice starts
+  document.querySelector('header').classList.remove('hidden');
+  updatePills();
+  // Hide header as soon as speech starts (300ms grace to see it)
+  setTimeout(function(){document.querySelector('header').classList.add('hidden');},300);
+  setTimeout(function(){document.querySelector('header').classList.add('hidden');var sb=document.getElementById('save-btn');if(sb)sb.classList.remove('header-shown');},300);
+  // Tour ran in beginSession — all sections go straight to questions
+  speakIt(sec.intro, function(){ askQ(); });
+}
+
+function askQ(){
+  const sec=SECS[cs];
+  if(cq>=sec.qs.length){completeSection();return;}
+  const q=sec.qs[cq];
+  const done=totalDone(),all=totalAll();
+  // Clear previous answer from screen
+  document.getElementById('transcript').textContent='';
+  document.getElementById('bot-resp').innerHTML='';
+  txClear();
+  var _ta=document.getElementById('transcript-area-inner');if(_ta)_ta.classList.remove('scrolled');
+  document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
+  document.getElementById('qtext').textContent=q.k;
+  document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
+
+  // Reset itext state for each new question
+  const itEl=document.getElementById('itext');
+  itEl.classList.remove('show','fade-out');
+  if(q.ins){
+    itEl.textContent=q.ins;
+    // Show after short delay, then auto-fade after 4s
+    setTimeout(function(){
+      itEl.classList.add('show');
+      setTimeout(function(){
+        itEl.classList.remove('show');
+        itEl.classList.add('fade-out');
+      },4000);
+    },600);
+  } else {
+    itEl.textContent='';
+  }
+
+  setLabel(q.req?'Required':'Optional');
+
+  // Slide dock + mic in from bottom on first question (only once)
+  const dock=document.getElementById('bottom-dock');
+  const micWrap=document.getElementById('mic-wrap');
+  if(!dock.classList.contains('visible')){
+    setTimeout(function(){
+      dock.classList.add('visible');
+      micWrap.classList.add('visible');
+      setTimeout(positionMic,100);
+    },300);
+  }
+
+  // Auto-hide header to reclaim screen space
+  setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
+
+  speakIt(q.p,function(){
+    setLabel('Tap to answer');
+    setMicReady();
+    positionMic(); // dynamically centre mic between content and buttons
+  });
+  positionMic(); // also call immediately for layout
+}
+
+function totalDone(){let n=0;for(let i=0;i<cs;i++)n+=SECS[i].qs.length;return n+cq;}
+function totalAll(){return SECS.reduce(function(a,s){return a+s.qs.length;},0);}
+
+const SEC_ICONS=["<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><line x1=\"8\" y1=\"13\" x2=\"22\" y2=\"13\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"8\" y1=\"20\" x2=\"22\" y2=\"20\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"8\" y1=\"27\" x2=\"16\" y2=\"27\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><circle cx=\"32\" cy=\"29\" r=\"7\" stroke=\"#7c6aff\" stroke-width=\"2\"/><line x1=\"37\" y1=\"34\" x2=\"42\" y2=\"39\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><circle cx=\"22\" cy=\"26\" r=\"14\" stroke=\"#7c6aff\" stroke-width=\"2\"/><circle cx=\"22\" cy=\"26\" r=\"8\" stroke=\"#7c6aff\" stroke-width=\"2\"/><circle cx=\"22\" cy=\"26\" r=\"2.5\" stroke=\"#7c6aff\" stroke-width=\"2\"/><path d=\"M32 10l-4 4 2 2-6 6\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M30 10h4v4\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><path d=\"M27 8L14 26h13l-6 14L34 22H21L27 8z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><path d=\"M18 36c0-3.3 2.7-6 6-6s6 2.7 6 6\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M13 31a13 13 0 0 1 0-14\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M35 31a13 13 0 0 0 0-14\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M18 24a6 6 0 0 1 12 0c0 2.5-.8 5-1.5 7\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"M24 18v2\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><path d=\"M10 22v16a2 2 0 0 0 2 2h24a2 2 0 0 0 2-2V22\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M8 16h32l-3 6H11L8 16z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M24 8l1.5 3h3l-2.5 2 1 3-3-2-3 2 1-3-2.5-2h3L24 8z\" stroke=\"#7c6aff\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><path d=\"M24 10a10 10 0 0 1 10 10v8l3 4H11l3-4v-8a10 10 0 0 1 10-10z\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/><path d=\"M21 32a3 3 0 0 0 6 0\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"36\" y1=\"10\" x2=\"38\" y2=\"8\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/><line x1=\"38\" y1=\"16\" x2=\"41\" y2=\"15\" stroke=\"#7c6aff\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>", "<svg width=\"48\" height=\"48\" viewBox=\"0 0 48 48\" fill=\"none\"><circle cx=\"24\" cy=\"24\" r=\"16\" stroke=\"#7c6aff\" stroke-width=\"2\"/><line x1=\"24\" y1=\"22\" x2=\"24\" y2=\"33\" stroke=\"#7c6aff\" stroke-width=\"2.2\" stroke-linecap=\"round\"/><circle cx=\"24\" cy=\"17\" r=\"1.5\" fill=\"#7c6aff\"/></svg>"];
+
+function completeSection(){
+  const msg=COMPLETE_MSGS[cs];
+  speakIt(msg,null);
+  document.getElementById('sec-icon').innerHTML=SEC_ICONS[cs]||'';
+  document.getElementById('sec-title').textContent=SECS[cs].name+' — done!';
+  document.getElementById('sec-msg').textContent=msg;
+  document.getElementById('sec-ov').style.display='flex';
+  document.querySelector('header').classList.remove('hidden');
+  submitSection(cs); // submit each section immediately — fixes Google Sheet cutoff
+  saveProgress(false);
+}
+
+function nextSection(){
+  document.getElementById('sec-ov').style.display='none';
+  cs++;cq=0;
+  if(cs>=SECS.length){showSubmit();return;}
+  showSecIntro();
+}
+
+async function submitSection(idx){
+  const sec=SECS[idx];
+  const fd=new FormData();
+  sec.qs.forEach(function(q){const v=answers[q.k];if(v)fd.append(q.e,v);});
+  try{await fetch(FORM,{method:'POST',mode:'no-cors',body:fd});}catch(e){}
+}
+
+async function submitAllSections(){
+  // Submit every section's answers to the Google Form in one consolidated call
+  const fd=new FormData();
+  SECS.forEach(function(sec){
+    sec.qs.forEach(function(q){const v=answers[q.k];if(v)fd.append(q.e,v);});
+  });
+  try{await fetch(FORM,{method:'POST',mode:'no-cors',body:fd});}catch(e){}
+  // Also backup to localStorage
+  try{localStorage.setItem(SAVE_KEY+'_submitted',JSON.stringify({answers,ts:Date.now()}));}catch(e){}
+}
+
+function showSubmit(){
+  // Trigger final review before submission
+  speakIt("That is everything. Brilliant work. Before I submit, let us do a quick final review so you can approve your answers.", function(){
+    showFinalReview();
+  });
+}
+
+function showFinalReview(){
+  // Reuse the review wheel for final review, but all must be checked to submit
+  window._finalReviewMode=true;
+  showReviewWheel(true);
+}
+
+function doFinalSubmit(){
+  var items=window._rwItems||[];
+  var checked=window._rwChecked||new Set();
+  if(checked.size < items.length){
+    speakIt("Please approve all answers before submitting. Tap any unticked ones to re-do them.", null);
+    return;
+  }
+  document.getElementById('review-ov').classList.remove('open');
+  document.getElementById('submit-confirm-ov').classList.add('open');
+  submitAllSections();
+  speakIt("All done. Your brief is submitted and your strategy report is being generated. Check your Drive folder in about 15 minutes.", null);
+}
+
+async function submitAll(){doFinalSubmit();}
+
+function setupVoice(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){
+    document.getElementById('mic-btn').classList.add('dis');
+    document.getElementById('mic-label').textContent='Voice not available — use text';
+    toggleText();
+    return;
+  }
+  recog=new SR();
+  recog.continuous=false;
+  recog.interimResults=true;
+  recog.lang='en-AU';
+
+  recog.onresult=function(e){
+    let final='';let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal){final+=e.results[i][0].transcript+' ';}
+      else{interim+=e.results[i][0].transcript;}
+    }
+    if(interim){document.getElementById('transcript').textContent=(accumulatedFinal+interim).trim();}
+    if(final.trim()){
+      accumulatedFinal+=final;
+      document.getElementById('transcript').textContent=accumulatedFinal.trim();
+      if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+      speechPauseTimer=setTimeout(function(){
+        speechPauseTimer=null;
+        var captured=accumulatedFinal.trim();
+        if(captured&&listening){
+          listening=false;
+          accumulatedFinal='';
+          if(recog)try{recog.stop();}catch(e2){}
+          var mb=document.getElementById('mic-btn');
+          if(mb){mb.classList.remove('on','ready','idle-pulse');}
+          document.getElementById('mic-label').textContent='Tap to speak';
+          setViz('idle');
+          processAnswer(captured);
+        }
+      },2800);
+    }
+  };
+
+  recog.onend=function(){
+    if(speechPauseTimer){return;}
+    var captured=accumulatedFinal.trim();
+    if(listening&&captured){
+      listening=false;
+      accumulatedFinal='';
+      var mb=document.getElementById('mic-btn');
+      if(mb){mb.classList.remove('on','ready','idle-pulse');}
+      document.getElementById('mic-label').textContent='Tap to speak';
+      setViz('idle');
+      processAnswer(captured);
+    } else if(listening&&!captured){
+      setTimeout(function(){
+        if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}}
+      },200);
+    }
+  };
+
+  recog.onerror=function(e){
+    accumulatedFinal='';
+    if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+    if(e.error==='not-allowed'||e.error==='permission-denied'){
+      stopListen();
+      document.getElementById('bot-resp').textContent='Mic access needed — please allow microphone access and tap the mic again.';
+      setLabel('Tap Allow when prompted');
+      if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
+        navigator.mediaDevices.getUserMedia({audio:true})
+          .then(function(stream){stream.getTracks().forEach(function(t){t.stop();});document.getElementById('bot-resp').textContent='Mic access granted. Tap the mic to try again.';setLabel('Tap to speak');})
+          .catch(function(){document.getElementById('bot-resp').textContent='Mic access denied. Use the Type button below.';setLabel('');toggleText();});
+      }
+    } else if(e.error==='no-speech'){
+      if(listening){setTimeout(function(){if(listening)try{recog.start();}catch(err){}},200);}
+    } else {
+      stopListen();
+      setMicReady();
+    }
+  };
+}
+function toggleMic(){
+  if(speaking){
+    sharedAudio.pause();
+    if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+    stopAudioViz();speaking=false;busy=false;setViz('idle');setLabel('');dockShow();
+    setTimeout(function(){startListen();},300);
+    return;
+  }
+  if(busy)return;
+  if(listening){
+    var captured=accumulatedFinal.trim();
+    if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+    if(captured){
+      listening=false;accumulatedFinal='';
+      if(recog)try{recog.stop();}catch(e){}
+      var mb=document.getElementById('mic-btn');
+      if(mb){mb.classList.remove('on','ready','idle-pulse');}
+      document.getElementById('mic-label').textContent='Tap to speak';
+      setViz('idle');
+      processAnswer(captured);
+    } else {
+      stopListen();setMicReady();
+    }
+    return;
+  }
+  startListen();
+}
+
+function startListen(){
+  if(!recog){setLabel('Voice not available');toggleText();return;}
+  // Echo loop guard — never open mic while TTS is playing
+  if(!sharedAudio.paused){
+    sharedAudio.pause();
+    if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+    stopAudioViz();speaking=false;
+    setTimeout(startListen,300);return;
+  }
+  clearIdleTimer();
+  clearWaiting();
+  if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+  listening=true;accumulatedFinal='';
+  setViz('listening');
+  var mb=document.getElementById('mic-btn');
+  if(mb){mb.classList.remove('ready','idle-pulse','dis');mb.classList.add('on');}
+  document.getElementById('mic-label').textContent='Listening...';
+  document.getElementById('transcript').textContent='';
+  // Keep bot-resp visible but clear transcript line only — question stays in qtext
+  try{recog.abort();}catch(e){}
+  setTimeout(function(){
+    try{recog.start();setLabel('Speak now');}
+    catch(e){setLabel('Mic error — tap to retry');listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}
+  },100);
+}
+
+function stopListen(){
+  listening=false;
+  if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+  if(recog)try{recog.stop();}catch(e){}
+  var mb=document.getElementById('mic-btn');
+  if(mb){mb.classList.remove('on','ready','idle-pulse');}
+  document.getElementById('mic-label').textContent='Tap to speak';
+  setViz('idle');
+}
+
+let idleTimer=null;
+let idleCount=0;
+
+const IDLE_PROMPTS=[
+  "Take your time — no rush at all.",
+  "Hmm, even a rough answer is totally fine here.",
+  "Not sure if you stepped away — still here when you are back.",
+  "No pressure — say whatever comes to mind first.",
+  "This one can be tricky. Just go with your gut.",
+  "Whenever you are ready — I am not going anywhere.",
+  "Feel free to think out loud if that helps.",
+];
+let _lastIdleIdx=-1;
+function _pickIdlePrompt(){
+  var pool=IDLE_PROMPTS.map(function(_,i){return i;}).filter(function(i){return i!==_lastIdleIdx;});
+  var idx=pool[Math.floor(Math.random()*pool.length)];
+  _lastIdleIdx=idx;
+  return IDLE_PROMPTS[idx];
+}
+
+const RETRY_PHRASES=[
+  "No worries — give it another go.",
+  "All good — try again whenever you are ready.",
+  "That is fine — let us hear it.",
+  "No stress — take your time.",
+  "Easy — have another crack at it.",
+  "No problem — whenever you are ready.",
+];
+let _lastRetryIdx=-1;
+function _pickRetryPhrase(){
+  var pool=RETRY_PHRASES.map(function(_,i){return i;}).filter(function(i){return i!==_lastRetryIdx;});
+  var idx=pool[Math.floor(Math.random()*pool.length)];
+  _lastRetryIdx=idx;
+  return RETRY_PHRASES[idx];
+}
+
+function clearIdleTimer(){
+  if(idleTimer){clearTimeout(idleTimer);idleTimer=null;}
+  var mb=document.getElementById('mic-btn');
+  if(mb)mb.classList.remove('idle-pulse');
+}
+
+function setMicReady(){
+  var mb=document.getElementById('mic-btn');
+  if(mb){mb.classList.remove('dis','on','idle-pulse');mb.classList.add('ready');}
+  document.getElementById('mic-label').textContent='Tap to speak';
+  clearIdleTimer();
+  idleCount=0;
+  // 20s: switch viz bars to heartbeat waiting glow — silent, no voice nudge
+  idleTimer=setTimeout(function(){
+    if(!listening&&!busy&&!speaking){
+      setViz('waiting');
+      var mb2=document.getElementById('mic-btn');
+      if(mb2){mb2.classList.remove('ready');mb2.classList.add('idle-pulse');}
+    }
+  },20000);
+}
+
+function setLabel(t){document.getElementById('viz-label').textContent=t;}
+function setViz(m){const v=document.getElementById('viz');v.classList.remove('speaking','listening','waiting');if(m!=='idle')v.classList.add(m);}
+function clearWaiting(){setViz('idle');var mb=document.getElementById('mic-btn');if(mb)mb.classList.remove('idle-pulse');}
+
+let audioCtx=null;let analyser=null;let vizRaf=null;
+let currentAudio=null;
+let audioSource=null; // MediaElementSource — created ONCE, reused every call
+
+function getAudioCtx(){
+  if(!audioCtx){
+    try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}
+  }
+  if(audioCtx.state==='suspended'){audioCtx.resume().catch(function(){});}
+  return audioCtx;
+}
+
+// Called once after first user gesture to wire up the audio graph permanently
+function initAudioGraph(){
+  const ctx=getAudioCtx();
+  if(!ctx||audioSource)return; // already wired
+  try{
+    analyser=ctx.createAnalyser();
+    analyser.fftSize=128;           // 64 bins — good speech resolution
+    analyser.smoothingTimeConstant=0.7;
+    audioSource=ctx.createMediaElementSource(sharedAudio);
+    audioSource.connect(analyser);
+    analyser.connect(ctx.destination);
+  }catch(e){}
+}
+
+function startAudioViz(){
+  if(!analyser)return;
+  const bars=document.querySelectorAll('.bar');
+  const data=new Uint8Array(analyser.frequencyBinCount);
+
+  // Bell-curve shape: centre bar always peaks, falls off each side
+  const bellCurve=[0.35, 0.62, 0.85, 1.0, 0.85, 0.62, 0.35];
+
+  // Per-bar independent noise state — each bar has its own phase and speed
+  // so they animate at different rates relative to each other
+  const noisePhase=[0, 1.1, 2.3, 0.7, 1.8, 0.4, 2.9];
+  const noiseSpeed=[0.08, 0.11, 0.07, 0.13, 0.09, 0.12, 0.06];
+  const noiseAmp  =[0.18, 0.22, 0.15, 0.20, 0.17, 0.21, 0.16];
+
+  // Speech energy band: bins covering ~86Hz–690Hz (voice fundamentals)
+  const speechBins=[1,2,3,4,5,6,7,8];
+
+  document.getElementById('viz').classList.add('live');
+
+  function frame(){
+    if(!analyser){stopAudioViz();return;}
+    analyser.getByteFrequencyData(data);
+
+    // Overall speech energy
+    let peak=0,sum=0;
+    for(let i=0;i<speechBins.length;i++){
+      const v=data[speechBins[i]];
+      if(v>peak)peak=v;
+      sum+=v;
+    }
+    const energy=(peak*0.65+sum/speechBins.length*0.35);
+
+    bars.forEach(function(b,i){
+      // Advance each bar's individual noise phase
+      noisePhase[i]+=noiseSpeed[i];
+      // Noise = sine wave per bar — each bar drifts independently
+      const noise=1.0+(Math.sin(noisePhase[i])*noiseAmp[i]);
+      // Bell-curve × energy × per-bar noise
+      const scaled=energy*bellCurve[i]*noise;
+      const h=Math.max(6,Math.min(100,6+(scaled/255)*94));
+      b.style.height=h+'px';
+    });
+    vizRaf=requestAnimationFrame(frame);
+  }
+  if(vizRaf){cancelAnimationFrame(vizRaf);vizRaf=null;}
+  frame();
+}
+
+function stopAudioViz(){
+  if(vizRaf){cancelAnimationFrame(vizRaf);vizRaf=null;}
+  // Don't null analyser — keep the graph wired for next call
+  document.getElementById('viz').classList.remove('live');
+  document.querySelectorAll('.bar').forEach(function(b){b.style.height='';});
+}
+
+// Single reusable audio element - mobile requires this for autoplay after first gesture
+const sharedAudio = new Audio();
+sharedAudio.preload = 'auto';
+let currentBlobUrl = null;
+
+// Dynamic mic positioning — centres mic between panel content bottom and alts top on desktop
+function positionMic(){
+  const micWrap=document.getElementById('mic-wrap');
+  const panel=document.getElementById('panel');
+  const dock=document.getElementById('bottom-dock');
+  if(!micWrap||!panel||!dock)return;
+
+  // Mic height including label
+  const micH=micWrap.offsetHeight||90;
+
+  // Bottom of panel content in viewport coords
+  const panelRect=panel.getBoundingClientRect();
+  const contentBottom=Math.min(panelRect.bottom, window.innerHeight - dock.offsetHeight - micH - 20);
+
+  // Top of action buttons in viewport coords
+  const dockRect=dock.getBoundingClientRect();
+  const buttonsTop=dockRect.top;
+
+  // Centre of the gap between content and buttons
+  const gap=buttonsTop - contentBottom;
+  const minGap=micH + 24;
+
+  let targetBottom; // bottom edge position from viewport bottom
+  if(gap >= minGap){
+    // Enough space — centre mic exactly in the gap
+    const centreY=contentBottom + gap/2; // viewport y of mic centre
+    targetBottom=window.innerHeight - centreY - micH/2;
+  } else {
+    // Not enough space — sit just above the dock with a buffer
+    targetBottom=dock.offsetHeight + 16;
+  }
+
+  // Clamp: never below dock, never above 70% of screen
+  const minBottom=dock.offsetHeight + 8;
+  const maxBottom=window.innerHeight * 0.55;
+  targetBottom=Math.max(minBottom, Math.min(maxBottom, targetBottom));
+
+  micWrap.style.bottom=targetBottom+'px';
+}
+
+function speakIt(text,cb){
+  speaking=true;
+  setViz('speaking');
+  setLabel('Speaking...');
+  dockHide(); // hide dock while AI speaks — show again when done
+
+  const ttsText=text
+    .replace(/ANSWER:[\s\S]*$/m,'')
+    .replace(/READY_NEXT/g,'')
+    .replace(/[\u200b-\u200d\ufeff]/g,'')
+    .replace(/[\u2014\u2013]/g,' — ')  // normalise em/en dashes
+    .replace(/\.{2,}/g,'.')             // collapse ellipses to single period
+    .replace(/[*#`~^]/g,'')             // strip markdown artifacts
+    .replace(/\s+/g,' ')
+    .trim();
+
+  const botEl=document.getElementById('bot-resp');
+  botEl.innerHTML='';
+  const words=ttsText.split(' ');
+  words.forEach(function(w,i){
+    const span=document.createElement('span');
+    span.className='bot-word';
+    span.textContent=(i>0?' ':'')+w;
+    botEl.appendChild(span);
+  });
+  // Auto-scroll transcript area
+  const inner=document.getElementById('transcript-area-inner');
+  if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},50);
+
+  sharedAudio.pause();
+  sharedAudio.onended=null;sharedAudio.onerror=null;
+  if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+  stopAudioViz();
+
+  const estimatedMs=Math.max(2000,(ttsText.length/14)*1000);
+  let cbFired=false;
+  function done(){
+    if(cbFired)return;
+    cbFired=true;
+    stopAudioViz();
+    speaking=false;
+    setViz('idle');
+    setLabel('');
+    dockShow(); // show dock again when AI finishes
+    if(cb)cb();
+  }
+
+  fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:ttsText,voiceId:'UgBBYS2sOqTuMpoF3BR0'})})
+  .then(function(r){if(!r.ok)throw new Error('TTS '+r.status);return r.json();})
+  .then(function(data){
+    if(!data.audio)throw new Error('no audio');
+    wordTimings=data.alignment||null;
+    const bytes=atob(data.audio);const buf=new Uint8Array(bytes.length);
+    for(let i=0;i<bytes.length;i++)buf[i]=bytes.charCodeAt(i);
+    const blob=new Blob([buf],{type:'audio/mpeg'});
+    const url=URL.createObjectURL(blob);currentBlobUrl=url;
+    sharedAudio.src=url;
+    sharedAudio.onplay=function(){
+      var spans=botEl.querySelectorAll('.bot-word');
+      if(wordTimings&&wordTimings.length>=spans.length){
+        spans.forEach(function(s,i){var startMs=wordTimings[i]?wordTimings[i].startMs:0;setTimeout(function(){s.classList.add('reveal');},startMs);});
+      } else {
+        var audioDur=(sharedAudio.duration>0?sharedAudio.duration*1000:estimatedMs);
+        var msPerWord=Math.max(60,audioDur/Math.max(spans.length,1));
+        spans.forEach(function(s,i){setTimeout(function(){s.classList.add('reveal');},i*msPerWord);});
+      }
+    };
+    sharedAudio.onended=function(){if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}done();};
+    sharedAudio.onerror=function(){if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}done();};
+    initAudioGraph();try{startAudioViz();}catch(e){}
+    var actx=getAudioCtx();
+    var playP=(actx&&actx.state==='suspended')?actx.resume().then(function(){return sharedAudio.play();}):Promise.resolve(sharedAudio.play());
+    playP.then(function(){setTimeout(done,estimatedMs+6000);}).catch(function(err){
+      botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
+      setTimeout(done,400);
+    });
+  })
+  .catch(function(err){
+    // TTS failed — reveal subtitles so user can read, show status, still advance
+    botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
+    var errMsg=err&&err.message?err.message:'unknown';
+    var isQuota=errMsg.includes('401')||errMsg.includes('402')||errMsg.includes('429');
+    setLabel(isQuota?'Voice credits exhausted — reading subtitles':'Voice unavailable — reading subtitles');
+    setTimeout(function(){
+      setLabel('');
+      done();
+    }, isQuota?4000:2000); // longer pause on quota so user can read the status
+  });
+}
+
+
+async function processAnswer(text){
+  clearIdleTimer();
+  if(!text||text.trim()==='')return;
+  if(window._resumeChoiceMode){_handleResumeChoice(text);return;}
+  if(busy)return;
+
+  // UI / interface meta-questions — answer without consuming an answer slot
+  var lower=text.toLowerCase();
+  var isMetaQ=(lower.includes('how do i')||lower.includes('what does')||lower.includes('how does')||lower.includes('what button')||lower.includes('where is the')||lower.includes('how do you work')||lower.includes('can i type')||lower.includes('can i upload')||lower.includes('what are the buttons'))
+    &&(lower.includes('button')||lower.includes('upload')||lower.includes('download')||lower.includes('save')||lower.includes('skip')||lower.includes('type')||lower.includes('mic')||lower.includes('interface')||lower.includes('reference'));
+  if(isMetaQ){
+    speakIt('Sure — the mic button in the middle is your main control. Tap to speak, tap again when you are done. You also have Type, Download, Upload doc, and Add Reference buttons at the bottom. Add Reference is great for existing strategy docs or brand guidelines — I will draw on them throughout. Save icon is top right. What else?',function(){setMicReady();});
+    return;
+  }
+
+  busy=true;speaking=false;
+  sharedAudio.pause();stopAudioViz();
+  const sec=SECS[cs];
+  if(cq>=sec.qs.length){busy=false;return;}
+  const q=sec.qs[cq];
+  history.push({role:'user',content:text});
+  if(history.length>40)history.splice(0,history.length-40);
+  setLabel('Thinking...');setViz('speaking');
+  document.getElementById('transcript').textContent=text;
+  document.getElementById('bot-resp').innerHTML='';
+  var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
+  positionMic();
+
+  const safetyTimer=setTimeout(function(){
+    var td2=document.getElementById('thinking-dots');if(td2)td2.classList.remove('visible');
+    busy=false;
+    // Safety timer fired — save answer and move on gracefully
+    answers[q.k]=text;cq++;
+    speakIt('Sorry, that took too long — I have saved your answer and we will keep going.',function(){advanceWithReaskQueue();});
+  },12000);
+
+  const answersSummary=Object.entries(answers)
+    .filter(function(_ref){var v=_ref[1];return v&&v.trim();})
+    .map(function(_ref2){var k=_ref2[0],v=_ref2[1];return k+': '+v.substring(0,80)+(v.length>80?'...':'');})
+    .join('\n');
+
+  const refContext=_buildRefContext();
+
+  const sys='You are Cass — a warm, sharp, genuinely human brand strategy consultant. 20 years expertise across Brand Strategy, Creative Direction, Marketing, and Consumer Insights.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n\nANSWERS SO FAR:\n'+(answersSummary||'None yet.')+refContext+'\n\nCRITICAL — CROSS-REFERENCE RULE: Before responding to ANY question, scan ALL of ANSWERS SO FAR. If a previous answer already fully or partially covers the current field, DO NOT ask again. Instead say something like "You actually covered this earlier when you mentioned X — does that still stand?" then output ANSWER: [that earlier answer] and READY_NEXT. Only ask if genuinely not covered.\n\nFOR EACH QUESTION:\n1. Acknowledge their answer warmly in 1 sentence.\n2. If sufficient: output ANSWER: [captured answer] then READY_NEXT on next line.\n3. If vague: ask ONE specific follow-up under 20 words. Do NOT auto-advance.\n4. After up to 2 follow-ups: synthesise, present starting "So your answer is:" — if they confirm, output ANSWER and READY_NEXT.\n\nCurrent question: \''+q.p+'\' Field: '+q.k+' Required: '+q.req+'\n\nRULES: Spoken response MAX 35 words. Natural contractions. Never mention being AI. ANSWER: and READY_NEXT on their own lines only.';
+
+  try{
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:350,system:sys,messages:history.slice(-12)})});
+    const data=await res.json();
+    clearTimeout(safetyTimer);
+    var td3=document.getElementById('thinking-dots');if(td3)td3.classList.remove('visible');
+    // Check for API error response
+    if(data.error||!data.content){
+      clearTimeout(safetyTimer);
+      var td5=document.getElementById('thinking-dots');if(td5)td5.classList.remove('visible');
+      busy=false;setLabel('');setViz('idle');
+      var errMsg=data.error?data.error.message||JSON.stringify(data.error):'No response';
+      console.error('API error:',errMsg,data);
+      answers[q.k]=text;cq++;
+      speakIt('Got a connection issue — saved your answer and moving on.',function(){advanceWithReaskQueue();});
+      return;
+    }
+    const reply=(data.content&&data.content[0])?data.content[0].text:'';
+    history.push({role:'assistant',content:reply});
+    const am=reply.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
+    const ready=reply.includes('READY_NEXT');
+    let disp=reply.replace(/ANSWER:[\s\S]*$/m,'').replace(/READY_NEXT/g,'').replace(/\s+$/,'').trim();
+    if(disp){
+      busy=false;
+      speakIt(disp,function(){
+        if(ready&&am){
+          const captured=am[1].trim();
+          answers[q.k]=captured;
+          cq++;
+          saveProgress(false);
+          advanceWithReaskQueue();
+        } else {
+          // Cass responded but didn't capture answer — reopen mic so user can continue
+          setMicReady();
+          setTimeout(startListen,400);
+        }
+      });
+    } else if(ready&&am){
+      busy=false;
+      const captured=am[1].trim();
+      answers[q.k]=captured;
+      cq++;
+      saveProgress(false);
+      advanceWithReaskQueue();
+    } else {
+      // Unexpected empty response — reopen mic, never stall
+      busy=false;
+      setMicReady();
+      setTimeout(startListen,400);
+    }
+  }catch(e){
+    clearTimeout(safetyTimer);
+    var td4=document.getElementById('thinking-dots');if(td4)td4.classList.remove('visible');
+    busy=false;setLabel('');setViz('idle');
+    answers[q.k]=text;cq++;
+    speakIt('Got a connection hiccup there — saved your answer and moving on.',function(){advanceWithReaskQueue();});
+  }
+}
+// ── REFERENCE ARCHIVE ─────────────────────────────────────────────
+function openRefUpload(){document.getElementById('ref-input').click();}
+
+async function handleRefUpload(input){
+  var files=Array.from(input.files);if(!files.length)return;input.value='';
+  speakIt('Got it — reading '+(files.length===1?'that document':'those documents')+' now.',null);
+  var loaded=0;
+  for(var i=0;i<files.length;i++){
+    var file=files[i];var ext=file.name.toLowerCase().split('.').pop();
+    try{
+      var content=await _readRefFile(file,ext);
+      if(content){refDocs=refDocs.filter(function(d){return d.name!==file.name;});refDocs.push({name:file.name,content:content.substring(0,5000)});loaded++;}
+    }catch(e){console.warn('Ref read error:',file.name,e);}
+  }
+  _updateRefBadge();
+  if(loaded>0){
+    speakIt(loaded===1?'Loaded "'+refDocs[refDocs.length-1].name+'" as background context. I will draw on it throughout.':'Loaded '+loaded+' reference docs — I will draw on all of them as we go.',function(){if(!speaking&&!busy)setMicReady();});
+  } else {speakIt('Could not read that file. Try a PDF, Word doc, or plain text file.',null);}
+}
+
+function _readRefFile(file,ext){
+  return new Promise(function(resolve,reject){
+    var reader=new FileReader();
+    if(ext==='txt'||ext==='md'){
+      reader.onload=function(e){resolve(e.target.result);};reader.onerror=reject;reader.readAsText(file);
+    } else if(ext==='pdf'||ext==='docx'){
+      reader.onload=async function(e){
+        var base64=e.target.result.split(',')[1];
+        var mt=ext==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        try{
+          var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:mt,data:base64}},{type:'text',text:'Extract all meaningful text from this document. Plain text only, no commentary.'}]}]})});
+          var data=await res.json();
+          resolve((data.content&&data.content[0])?data.content[0].text:null);
+        }catch(err){reject(err);}
+      };
+      reader.onerror=reject;reader.readAsDataURL(file);
+    } else {resolve(null);}
+  });
+}
+
+function _updateRefBadge(){
+  var badge=document.getElementById('ref-badge');
+  var btn=document.getElementById('ref-btn');
+  if(!badge||!btn)return;
+  if(refDocs.length>0){
+    badge.textContent=refDocs.length;badge.style.display='inline-flex';
+    btn.style.borderColor='rgba(124,106,255,0.5)';btn.style.color='var(--acc2)';
+    btn.title=refDocs.length+' doc'+(refDocs.length>1?'s':'')+' loaded: '+refDocs.map(function(d){return d.name;}).join(', ');
+  } else {
+    badge.style.display='none';btn.style.borderColor='';btn.style.color='';
+    btn.title='Add reference documents — Claude uses these as background context';
+  }
+}
+
+function _buildRefContext(){
+  if(!refDocs.length)return '';
+  return '\n\nREFERENCE DOCUMENTS (use as background context — do not quote directly):\n'+
+    refDocs.map(function(d){return '--- '+d.name+' ---\n'+d.content;}).join('\n\n');
+}
+
+
+function goBackSection(){
+  clearIdleTimer();
+  if(speaking){sharedAudio.pause();if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}stopAudioViz();speaking=false;busy=false;}
+  // Clear answers for current section and restart it from question 0
+  var sec=SECS[cs];
+  sec.qs.forEach(function(q){delete answers[q.k];});
+  cq=0;
+  saveProgress(false);
+  speakIt('No worries — taking you back to the start of '+sec.name+'.',function(){askQ();});
+}
+
+
+  clearIdleTimer();
+  const sec=SECS[cs];
+  if(cq>=sec.qs.length)return;
+  if(sec.qs[cq].req){speakIt("This one is required — give it your best shot. Even a rough answer works.",null);return;}
+  answers[sec.qs[cq].k]='';cq++;askQ();
+}
+
+function toggleText(){
+  textActive=!textActive;
+  const textMode=document.getElementById('text-mode');
+  const btn=document.getElementById('toggle-text-btn');
+  if(textActive){
+    textMode.style.display='flex';
+    if(btn){
+      btn.innerHTML='<svg width="12" height="12" viewBox="0 0 28 28" fill="none"><rect x="9" y="2" width="10" height="16" rx="5" fill="currentColor" opacity="0.9"/><path d="M5 14a9 9 0 0 0 18 0" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/><line x1="14" y1="23" x2="14" y2="27" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="10" y1="27" x2="18" y2="27" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>Back to voice';
+    }
+    setTimeout(function(){
+      var inp=document.getElementById('tinput');
+      inp.focus();
+      inp.scrollIntoView({behavior:'smooth',block:'center'});
+    },100);
+  } else {
+    textMode.style.display='none';
+    if(btn){
+      btn.innerHTML='<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>Type instead';
+    }
+    document.getElementById('tinput').value='';
+    var mwt=document.getElementById('mic-wrap');if(mwt)mwt.classList.add('visible');
+    dockShow();positionMic();if(!speaking&&!busy)setMicReady();
+  }
+}
+
+function sendText(){
+  const inp=document.getElementById('tinput');
+  const t=inp.value.trim();
+  if(!t)return;
+  inp.value='';
+  inp.style.height='auto';
+  if(textActive){
+    textActive=false;
+    document.getElementById('text-mode').style.display='none';
+    const btn=document.getElementById('toggle-text-btn');
+    if(btn){
+      btn.innerHTML='<svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>Type instead';
+    }
+  }
+  document.getElementById('transcript').textContent=t;
+  processAnswer(t);
+}
+
+
+
+function openForm(){
+  var hasAnswers=Object.values(answers).some(function(v){return v&&v.trim();});
+  if(!hasAnswers){
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');
+    return;
+  }
+  var lines=['StratIQ Brand Strategy Brief','='.repeat(40)];
+  SECS.forEach(function(sec){
+    lines.push('\n── '+sec.name.toUpperCase()+' ──');
+    sec.qs.forEach(function(q){
+      lines.push('\nQ: '+q.p);
+      lines.push('A: '+(answers[q.k]||'(no answer)'));
+    });
+  });
+  var blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='StratIQ_Brief.txt';a.click();
+  URL.revokeObjectURL(url);
+  showSaveToast();
+}
+
+function uploadForm(){document.getElementById('upload-input').click();}
+
+function handleUpload(input){
+  var file=input.files[0];if(!file)return;input.value='';
+  var ext=file.name.toLowerCase().split('.').pop();
+  speakIt('Got it — reading your document now.',null);
+  var reader=new FileReader();
+  if(ext==='txt'||ext==='md'){
+    reader.onload=function(e){
+      var text=e.target.result;
+      // Try Q:/A: format first (re-upload of downloaded brief)
+      var pairs=text.match(/Q:\s*(.+?)\nA:\s*([\s\S]+?)(?=\nQ:|$)/g);
+      if(pairs&&pairs.length>0){
+        var loaded=0;
+        pairs.forEach(function(pair){
+          var qm=pair.match(/Q:\s*(.+)/);var am=pair.match(/A:\s*([\s\S]+)/);
+          if(qm&&am){
+            var qtext=qm[1].trim();var atext=am[1].replace(/\(no answer\)/,'').trim();
+            SECS.forEach(function(sec){sec.qs.forEach(function(q){
+              if(q.p.toLowerCase().includes(qtext.toLowerCase().substring(0,30))||qtext.toLowerCase().includes(q.k.toLowerCase().substring(0,20))){
+                if(atext){answers[q.k]=atext;loaded++;}
+              }
+            });});
+          }
+        });
+        if(loaded>0){_afterUploadPreFill(loaded);}
+        else{_extractAnswersWithClaude(text);}
+      } else {_extractAnswersWithClaude(text);}
+    };
+    reader.readAsText(file);
+  } else if(ext==='pdf'||ext==='docx'){
+    reader.onload=function(e){
+      var base64=e.target.result.split(',')[1];
+      var mediaType=ext==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      _extractAnswersFromDoc(base64,mediaType);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    speakIt('Please upload a PDF, Word doc, or plain text file.',null);
+  }
+}
+
+async function _extractAnswersFromDoc(base64,mediaType){
+  var qList=[];SECS.forEach(function(sec){sec.qs.forEach(function(q){qList.push(q.k);});});
+  try{
+    var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:'Extract answers to these brand strategy fields. For each found, output:\nFIELD: [field name]\nANSWER: [answer]\n\nFields:\n'+qList.join('\n')}]}]})});
+    var data=await res.json();
+    var reply=(data.content&&data.content[0])?data.content[0].text:'';
+    _parseClaudeExtraction(reply);
+  }catch(e){speakIt('Could not read that file. Try a plain text version.',null);}
+}
+
+async function _extractAnswersWithClaude(text){
+  var qList=[];SECS.forEach(function(sec){sec.qs.forEach(function(q){qList.push(q.k);});});
+  try{
+    var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:'Extract answers to these brand strategy fields from the document below. For each found output:\nFIELD: [field name]\nANSWER: [answer]\n\nFields:\n'+qList.join('\n')+'\n\nDocument:\n'+text.substring(0,6000)}]})});
+    var data=await res.json();
+    var reply=(data.content&&data.content[0])?data.content[0].text:'';
+    _parseClaudeExtraction(reply);
+  }catch(e){speakIt('Could not read that document. Let us go through the questions together.',function(){askQ();});}
+}
+
+function _parseClaudeExtraction(reply){
+  var loaded=0;
+  var blocks=reply.match(/FIELD:\s*(.+?)\nANSWER:\s*([\s\S]+?)(?=\nFIELD:|$)/g)||[];
+  blocks.forEach(function(block){
+    var fm=block.match(/FIELD:\s*(.+)/);var am=block.match(/ANSWER:\s*([\s\S]+)/);
+    if(!fm||!am)return;
+    var fieldName=fm[1].trim();var answerText=am[1].trim();
+    if(!answerText)return;
+    SECS.forEach(function(sec){sec.qs.forEach(function(q){
+      if(q.k.toLowerCase()===fieldName.toLowerCase()||q.k.toLowerCase().includes(fieldName.toLowerCase().substring(0,15))||fieldName.toLowerCase().includes(q.k.toLowerCase().substring(0,15))){
+        if(!answers[q.k]){answers[q.k]=answerText;loaded++;}
+      }
+    });});
+  });
+  if(loaded>0){_afterUploadPreFill(loaded);}
+  else{speakIt('Could not match answers to fields. Let us go through them together.',function(){askQ();});}
+}
+
+function _afterUploadPreFill(loaded){
+  saveProgress(false);
+  var totalAnswered=Object.keys(answers).filter(function(k){return answers[k]&&answers[k].trim();}).length;
+  var totalQs=SECS.reduce(function(a,s){return a+s.qs.length;},0);
+  var secSummary=SECS.map(function(sec){
+    var answered=sec.qs.filter(function(q){return answers[q.k]&&answers[q.k].trim();}).length;
+    return sec.name+': '+answered+'/'+sec.qs.length;
+  }).join(', ');
+  var msg='I pulled '+loaded+' answers from your document. Here is where things stand — '+secSummary+'. Would you like to skip to the gaps, review what I found, or start fresh from the beginning?';
+  window._resumeChoiceMode=true;window._resumeChoiceContext='upload';
+  speakIt(msg,function(){setLabel('Skip to gaps · Review · Start fresh');setMicReady();});
+}
+
+// FIX 5: Hide browser URL bar for immersive full-screen feel
+function tryHideURLBar(){
+  if(window.scrollY===0){
+    window.scrollTo(0,1);
+    setTimeout(function(){window.scrollTo(0,0);},100);
+  }
+}
+window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);});
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden)setTimeout(tryHideURLBar,300);
+});
+window.addEventListener('resize',function(){positionMic();txSetMaxHeight();});
+
+// Swipe gesture handler for header show/hide
+// IMPORTANT: passive:false on touchstart so we can call preventDefault()
+// to block the browser's native pull-to-refresh gesture
+(function(){
+  var startY=0;
+  var startX=0;
+  var blockScroll=false;
+
+  document.addEventListener('touchstart',function(e){
+    startY=e.touches[0].clientY;
+    startX=e.touches[0].clientX;
+    blockScroll=false;
+  },{passive:true}); // passive:true here is fine — we act on touchmove
+
+  document.addEventListener('touchmove',function(e){
+    var dy=e.touches[0].clientY-startY;
+    var dx=e.touches[0].clientX-startX;
+    // ONLY block pull-to-refresh if the touch STARTED in the top 60px
+    // and is a genuine downward drag. Never block taps or gestures elsewhere.
+    if(startY<60 && dy>8 && Math.abs(dy)>Math.abs(dx) && window.scrollY<=0){
+      e.preventDefault();
+    }
+  },{passive:false});
+
+  document.addEventListener('touchend',function(e){
+    var endY=e.changedTouches[0].clientY;
+    var endX=e.changedTouches[0].clientX;
+    var dy=endY-startY;
+    var dx=endX-startX;
+    // Only act on predominantly vertical swipes
+    if(Math.abs(dy)<Math.abs(dx)*0.8)return;
+    var hdr=document.querySelector('header');
+    if(!hdr)return;
+    if(dy>50&&startY<80){
+      // Swiped down from near top edge — reveal header
+      hdr.classList.remove('hidden');
+    } else if(dy<-40&&!hdr.classList.contains('hidden')){
+      // Swiped up — hide header
+      hdr.classList.add('hidden');
+    }
+  },{passive:true});
+})();
+
+// Mobile keyboard handling — when keyboard opens, adjust bottom dock
+// so text input stays visible above keyboard, not hidden behind it
+// Mobile keyboard: dock and mic stay fixed at bottom.
+// Panel content scrolls up naturally. #app padding ensures input visible.
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',function(){
+    const keyboardH=window.innerHeight-window.visualViewport.height;
+    if(keyboardH>80&&textActive){
+      // Add bottom padding to app so input scrolls above keyboard
+      document.getElementById('app').style.paddingBottom=(keyboardH+20)+'px';
+      setTimeout(function(){
+        var inp=document.getElementById('tinput');
+        if(inp)inp.scrollIntoView({behavior:'smooth',block:'center'});
+      },80);
+    } else {
+      document.getElementById('app').style.paddingBottom='';
+    }
+    positionMic();
+  });
+}
+// ── DYNAMIC ADVANCE PHRASES ──────────────────────────────────────
+const ADVANCE_PHRASES=["Got it.","Noted, moving on.","Perfect, let us keep going.","Solid. Next one.","Good stuff.","Logged. Moving forward.","Yep, got that.","All good — next question.","Nice one.","Captured. Let us continue."];
+function advancePhrase(){return ADVANCE_PHRASES[Math.floor(Math.random()*ADVANCE_PHRASES.length)];}
+
+// ── SAVE / AUTOSAVE ──────────────────────────────────────────────
+function saveProgress(feedback){
+  const payload={cs,cq,answers,ts:Date.now()};
+  try{localStorage.setItem(SAVE_KEY,JSON.stringify(payload));}catch(e){}
+  const btn=document.getElementById('save-btn');
+  if(btn){btn.classList.add('saving');setTimeout(function(){btn.classList.remove('saving');},600);}
+  if(feedback!==false)showSaveToast();
+}
+function showSaveToast(){
+  let t=document.getElementById('save-toast');
+  if(!t){t=document.createElement('div');t.id='save-toast';t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(124,106,255,0.9);color:white;padding:8px 20px;border-radius:20px;font-size:12px;font-weight:500;z-index:200;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap';t.textContent='Progress saved ✓';document.body.appendChild(t);}
+  t.style.opacity='1';setTimeout(function(){t.style.opacity='0';},1800);
+}
+function checkForSavedProgress(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return false;
+    const p=JSON.parse(raw);
+    const ansCount=Object.keys(p.answers||{}).length;
+    if(ansCount<1)return false;
+    const contBtn=document.getElementById('cont-btn');
+    const contInfo=document.getElementById('cont-info');
+    if(contBtn)contBtn.style.display='block';
+    if(contInfo){
+      const mins=Math.round((Date.now()-p.ts)/60000);
+      const ago=mins<2?'just now':mins<60?mins+'m ago':Math.round(mins/60)+'h ago';
+      const secName=p.cs<7?['Brand Overview','Audience & Market','Competition','Brand Identity','Products & Pricing','Marketing & Channels','Final Details'][p.cs]:'';
+      contInfo.style.display='block';
+      contInfo.textContent=ansCount+' question'+(ansCount>1?'s':'')+' answered · '+secName+' · saved '+ago;
+    }
+    return true;
+  }catch(e){return false;}
+}
+setInterval(function(){if(cs>0||cq>0)saveProgress(false);},30000);
+document.addEventListener('visibilitychange',function(){if(document.hidden&&(cs>0||cq>0))saveProgress(false);});
+window.addEventListener('pagehide',function(){if(cs>0||cq>0)saveProgress(false);});
+
+// ── CONTINUE SESSION ─────────────────────────────────────────────
+function continueSession(){window._resumeChoiceContext=null;
+  try{const p=JSON.parse(localStorage.getItem(SAVE_KEY));cs=p.cs||0;cq=p.cq||0;answers=p.answers||{};}catch(e){cs=0;cq=0;answers={};}
+  document.getElementById('start-ov').style.display='none';
+  try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){navigator.mediaDevices.getUserMedia({audio:true}).then(function(s){s.getTracks().forEach(function(t){t.stop();});}).catch(function(){});}
+  initAudioGraph();setupVoice();buildPills();
+  document.getElementById('save-btn').style.display='flex';
+  setTimeout(function(){
+    const dock=document.getElementById('bottom-dock');const micWrap=document.getElementById('mic-wrap');
+    dock.classList.add('visible');micWrap.classList.add('visible');setTimeout(positionMic,100);
+  },300);
+  const ansCount=Object.keys(answers).length;
+  const secNames=['Brand Overview','Audience & Market','Competition','Brand Identity','Products & Pricing','Marketing & Channels','Final Details'];
+  const secName=cs<7?secNames[cs]:'';
+  const qName=SECS[cs]&&SECS[cs].qs[cq]?SECS[cs].qs[cq].k:'';
+  const welcomeText='Welcome back! You have covered '+ansCount+' question'+(ansCount!==1?'s':'')+' and you are up to '+secName+(qName?' — '+qName:'')+'. What would you like to do? Say "start over" to begin fresh, "review" to check your answers so far, or "continue" to pick up where you left off.';
+  speakIt(welcomeText,function(){setLabel('Start over · Review · Continue');setMicReady();window._resumeChoiceMode=true;});
+}
+function _handleResumeChoice(text){
+  if(window._resumeChoiceContext==='upload'){_handleUploadChoice(text);return;}
+  if(window._resumeChoiceContext==='confirm_delete'){
+    window._resumeChoiceMode=false;window._resumeChoiceContext=null;
+    var tc=text.toLowerCase();
+    if(tc.includes('yes')||tc.includes('yeah')||tc.includes('confirm')||tc.includes('sure')||tc.includes('go ahead')){
+      answers={};cs=0;cq=0;saveProgress(false);
+      speakIt('Done — all cleared. Starting from the top.',function(){showSecIntro();});
+    } else {
+      speakIt('No problem — keeping your answers. Picking up from the first gap.',function(){
+        for(var si=0;si<SECS.length;si++){for(var qi=0;qi<SECS[si].qs.length;qi++){if(!answers[SECS[si].qs[qi].k]){cs=si;cq=qi;askQ();return;}}}showSubmit();
+      });
+    }
+    return;
+  }
+  window._resumeChoiceMode=false;
+  var t=text.toLowerCase();
+  if(t.includes('start')||t.includes('fresh')||t.includes('over')||t.includes('begin')||t.includes('reset')){startFresh();}
+  else if(t.includes('review')||t.includes('overview')||t.includes('summary')||t.includes('answers')){reviewAnswers();}
+  else{var qName=SECS[cs]&&SECS[cs].qs[cq]?SECS[cs].qs[cq].k:'';speakIt('Perfect — picking up right from '+qName+'.',function(){askQ();});}
+}
+
+function _handleUploadChoice(text){
+  window._resumeChoiceMode=false;window._resumeChoiceContext=null;
+  var t=text.toLowerCase();
+  if(t.includes('fresh')||t.includes('scratch')||t.includes('start over')||t.includes('delete')||t.includes('clear')){
+    speakIt('Just to confirm — this clears all pre-filled answers and starts from the top. Say yes to confirm.',function(){
+      window._resumeChoiceMode=true;window._resumeChoiceContext='confirm_delete';setMicReady();
+    });
+  } else if(t.includes('review')||t.includes('check')||t.includes('see')||t.includes('look')){
+    showReviewWheel(false);
+  } else {
+    // Default: skip to gaps
+    for(var si=0;si<SECS.length;si++){
+      for(var qi=0;qi<SECS[si].qs.length;qi++){
+        if(!answers[SECS[si].qs[qi].k]){
+          cs=si;cq=qi;
+          speakIt('Great — picking up from '+SECS[si].name+'.',function(){askQ();});
+          return;
+        }
+      }
+    }
+    showSubmit();
+  }
+}
+function startFresh(){localStorage.removeItem(SAVE_KEY);cs=0;cq=0;answers={};speakIt('Starting fresh. Let us kick things off from the top.',function(){showSecIntro();});}
+function reviewAnswers(){showReviewWheel(false);}
+function advanceWithReaskQueue(){
+  if(window._reaskQueue&&window._reaskQueue.length>0){const next=window._reaskQueue.shift();cs=next.sIdx;cq=next.qIdx;}
+  setTimeout(askQ,400);
+}
+
+
+// ── DOCK BEHAVIOUR (while AI is speaking) ────────────────────────
+
+function dockHide(){
+  // Dock stays visible — mic always accessible so user can interrupt
+  // Just update mic label to signal interruptibility
+  var ml=document.getElementById('mic-label');
+  if(ml)ml.textContent='Tap to interrupt';
+  var mb=document.getElementById('mic-btn');
+  if(mb){mb.classList.remove('ready','idle-pulse','on');}
+}
+function dockShow(){
+  var dock=document.getElementById('bottom-dock');
+  var mic=document.getElementById('mic-wrap');
+  if(dock)dock.classList.remove('autohide');
+  if(mic)mic.classList.remove('autohide');
+  var ml=document.getElementById('mic-label');
+  if(ml&&!listening)ml.textContent='Tap to speak';
+}
+
+// ── REVIEW WHEEL ─────────────────────────────────────────────────
+function showReviewWheel(isFinal){
+  var items=[];
+  SECS.forEach(function(sec,si){sec.qs.forEach(function(q,qi){if(answers[q.k]){items.push({k:q.k,p:q.p,answer:answers[q.k],sIdx:si,qIdx:qi});}});});
+  if(items.length===0){speakIt('You have not answered any questions yet. Let us get started!',function(){askQ();});return;}
+  var inner=document.getElementById('review-wheel-inner');
+  inner.innerHTML='';
+  window._rwItems=items;window._rwChecked=new Set();
+  items.forEach(function(item,i){window._rwChecked.add(i);});
+  var spacer=document.createElement('div');spacer.className='rw-spacer-top';inner.appendChild(spacer);
+  items.forEach(function(item,i){
+    var card=document.createElement('div');card.className='rw-card';card.id='rw-card-'+i;
+    card.innerHTML='<div class="rw-card-text"><div class="rw-q"><span class="rw-q-num">'+(i+1)+'</span>'+escHtml(item.k)+'</div><div class="rw-a">'+escHtml(item.answer)+'</div></div><button class="rw-tick checked" id="rw-tick-'+i+'" onclick="rwToggle('+i+')"><svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7.5l3.5 3.5 6-6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+    inner.appendChild(card);
+  });
+  var spacerB=document.createElement('div');spacerB.className='rw-spacer-bot';inner.appendChild(spacerB);
+  // Update done button for final mode
+  var doneBtn=document.getElementById('review-done-btn');
+  if(doneBtn){doneBtn.textContent=isFinal?'Submit my strategy report →':"Done, let's dive back in →";doneBtn.onclick=isFinal?doFinalSubmit:finishReview;}
+  var ov=document.getElementById('review-ov');ov.classList.add('open');
+  window._rwActive=0;
+  setTimeout(function(){rwSizeSpacers();rwScrollTo(0,false);rwUpdateStats(isFinal);},60);
+  rwBindScroll();
+}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function rwSizeSpacers(){
+  var wheel=document.getElementById('review-wheel');var wheelH=wheel.offsetHeight;
+  var firstCard=document.querySelector('.rw-card');var cardH=firstCard?firstCard.offsetHeight:80;
+  var spacerH=Math.floor(wheelH/2-cardH/2);
+  var tops=document.querySelector('.rw-spacer-top');var bots=document.querySelector('.rw-spacer-bot');
+  if(tops)tops.style.height=spacerH+'px';if(bots)bots.style.height=spacerH+'px';
+}
+function rwScrollTo(idx,animate){
+  var items=window._rwItems||[];
+  if(idx<0)idx=0;if(idx>=items.length)idx=items.length-1;
+  window._rwActive=idx;
+  var inner=document.getElementById('review-wheel-inner');
+  var cards=inner.querySelectorAll('.rw-card');
+  var target=cards[idx];if(!target)return;
+  var wheel=document.getElementById('review-wheel');
+  var wheelCentre=wheel.offsetHeight/2;
+  var cardTop=target.offsetTop;var cardH=target.offsetHeight;
+  var offset=-(cardTop-wheelCentre+cardH/2);
+  inner.style.transition=animate===false?'none':'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+  inner.style.transform='translateY('+offset+'px)';
+  window._rwOffset=offset;window._rwTargetOffset=offset;
+  cards.forEach(function(card,i){
+    card.classList.toggle('rw-active',i===idx);
+    var dist=Math.abs(i-idx);
+    card.style.opacity=dist===0?'1':dist===1?'0.45':'0.18';
+    card.style.transform=dist===0?'scale(1)':'scale(0.95)';
+  });
+}
+function rwToggle(i){
+  var tick=document.getElementById('rw-tick-'+i);
+  if(window._rwChecked.has(i)){window._rwChecked.delete(i);tick.classList.remove('checked');}
+  else{window._rwChecked.add(i);tick.classList.add('checked');}
+  rwUpdateStats(window._finalReviewMode);
+}
+function rwUpdateStats(isFinal){
+  var items=window._rwItems||[];var checked=window._rwChecked?window._rwChecked.size:0;var unchecked=items.length-checked;
+  var el=document.getElementById('review-stats');
+  var doneBtn=document.getElementById('review-done-btn');
+  if(el){el.textContent=unchecked===0?checked+' answer'+(checked!==1?'s':'')+' approved — all good to go!':checked+' approved · '+unchecked+' will be re-asked';}
+  if(isFinal&&doneBtn){doneBtn.style.opacity=unchecked===0?'1':'0.4';doneBtn.style.pointerEvents=unchecked===0?'all':'none';}
+}
+function rwBindScroll(){
+  var wheel=document.getElementById('review-wheel');
+  if(!wheel||wheel._rwBound)return;
+  wheel._rwBound=true;
+  function getActive(offset){
+    var inner=document.getElementById('review-wheel-inner');var cards=inner.querySelectorAll('.rw-card');
+    var wheelCentre=wheel.offsetHeight/2;var bestIdx=0,bestDist=Infinity;
+    cards.forEach(function(card,i){var cardMid=card.offsetTop+card.offsetHeight/2+offset;var dist=Math.abs(cardMid-wheelCentre);if(dist<bestDist){bestDist=dist;bestIdx=i;}});
+    return bestIdx;
+  }
+  var startY=0,lastY=0;
+  wheel.addEventListener('touchstart',function(e){startY=e.touches[0].clientY;lastY=e.touches[0].clientY;},{passive:true});
+  wheel.addEventListener('touchmove',function(e){
+    var dy=e.touches[0].clientY-lastY;lastY=e.touches[0].clientY;
+    var inner=document.getElementById('review-wheel-inner');
+    var cur=parseFloat(inner.style.transform.replace('translateY(',''))||0;
+    inner.style.transition='none';inner.style.transform='translateY('+(cur+dy)+'px)';
+    var idx=getActive(cur+dy);if(idx!==window._rwActive)rwScrollTo(idx,false);
+    e.preventDefault();
+  },{passive:false});
+  wheel.addEventListener('touchend',function(){rwScrollTo(window._rwActive,true);},{passive:true});
+  wheel.addEventListener('mousedown',function(e){
+    startY=e.clientY;lastY=e.clientY;
+    function mm(e2){
+      var dy=e2.clientY-lastY;lastY=e2.clientY;
+      var inner=document.getElementById('review-wheel-inner');
+      var cur=parseFloat(inner.style.transform.replace('translateY(',''))||0;
+      inner.style.transition='none';inner.style.transform='translateY('+(cur+dy)+'px)';
+      var idx=getActive(cur+dy);if(idx!==window._rwActive)rwScrollTo(idx,false);
+    }
+    function mu(){rwScrollTo(window._rwActive,true);document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);}
+    document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);
+  });
+  wheel.addEventListener('wheel',function(e){e.preventDefault();var idx=window._rwActive+(e.deltaY>0?1:-1);rwScrollTo(idx,true);},{passive:false});
+}
+function finishReview(){
+  var items=window._rwItems||[];var checked=window._rwChecked||new Set();
+  var toReask=[];
+  items.forEach(function(item,i){if(!checked.has(i)){delete answers[item.k];toReask.push({sIdx:item.sIdx,qIdx:item.qIdx});}});
+  document.getElementById('review-ov').classList.remove('open');
+  window._rwBound=false;
+  if(toReask.length===0){speakIt('All answers approved — picking up where we left off.',function(){askQ();});return;}
+  toReask.sort(function(a,b){return a.sIdx!==b.sIdx?a.sIdx-b.sIdx:a.qIdx-b.qIdx;});
+  var first=toReask[0];cs=first.sIdx;cq=first.qIdx;
+  window._reaskQueue=toReask.slice(1);
+  var count=toReask.length;
+  speakIt('Re-asking '+count+' question'+(count!==1?'s':'')+'. Let us go.',function(){askQ();});
+}
+
+// ── POSITION MIC ─────────────────────────────────────────────────
+
+
+// ── PULL-TO-REFRESH BLOCK + SWIPE-TO-SHOW-HEADER ─────────────────;
+
+// ── MOBILE KEYBOARD HANDLER ───────────────────────────────────────
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',function(){
+    const keyboardH=window.innerHeight-window.visualViewport.height;
+    if(keyboardH>80&&textActive){
+      document.getElementById('app').style.paddingBottom=(keyboardH+20)+'px';
+      setTimeout(function(){var inp=document.getElementById('tinput');if(inp)inp.scrollIntoView({behavior:'smooth',block:'center'});},80);
+    } else {
+      document.getElementById('app').style.paddingBottom='';
+    }
+    positionMic();
+  });
+}
+
+// ── URL BAR HIDE ──────────────────────────────────────────────────
+function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(function(){window.scrollTo(0,0);},100);}}
+
+// ── TRANSCRIPT SCROLL FADE ─────────────────────────────────────
+var _txAutoScroll = true;
+
+function txGetMaxHeight() {
+  // Calculate available space between transcript area top and mic button
+  var area = document.getElementById('transcript-area');
+  var micWrap = document.getElementById('mic-wrap');
+  if (!area || !micWrap) return null;
+  if (!micWrap.classList.contains('visible')) return null;
+
+  var areaRect = area.getBoundingClientRect();
+  var micRect = micWrap.getBoundingClientRect();
+
+  // Mic must be below area and on screen
+  if (micRect.top <= areaRect.top || micRect.top > window.innerHeight) return null;
+
+  var available = micRect.top - areaRect.top;
+  // Mobile gets tighter buffer (40px), desktop stays generous (80px)
+  var buffer = window.innerWidth >= 768 ? 80 : 40;
+  var maxH = Math.max(60, available - buffer);
+
+  // Desktop: generous minimum so short answers are never constrained
+  if (window.innerWidth >= 768) {
+    maxH = Math.max(300, maxH);
+  }
+  return maxH;
+}
+
+function txSetMaxHeight() {
+  var inner = document.getElementById('transcript-area-inner');
+  if (!inner) return;
+  var maxH = txGetMaxHeight();
+  if (maxH === null) {
+    // Mic not visible yet — no constraint
+    inner.style.maxHeight = 'none';
+  } else {
+    inner.style.maxHeight = maxH + 'px';
+  }
+}
+
+function txScrollToBottom() {
+  var inner = document.getElementById('transcript-area-inner');
+  if (!inner) return;
+  _txAutoScroll = true;
+  txSetMaxHeight();
+  inner.scrollTop = inner.scrollHeight;
+  txUpdateFade(inner);
+}
+
+function txUpdateFade(inner) {
+  var lineH = 24;
+  var overflows = (inner.scrollHeight > inner.clientHeight + lineH);
+  var hiddenAbove = (inner.scrollTop > lineH);
+  var hiddenBelow = (inner.scrollHeight - inner.scrollTop - inner.clientHeight) > lineH;
+
+  // Remove all fade classes first
+  inner.classList.remove('tx-top', 'tx-both');
+
+  if (!overflows) return; // no overflow = no fade at all
+
+  if (hiddenAbove && hiddenBelow) {
+    // User scrolled to middle — fade both ends
+    inner.classList.add('tx-both');
+  } else if (hiddenAbove) {
+    // At bottom (auto-scroll) with content above — top fade only
+    inner.classList.add('tx-top');
+  }
+  // hiddenBelow only (scrolled to very top) = no fade needed
+}
+
+function txClear() {
+  // Called when moving to next question — reset scroll and fade
+  var inner = document.getElementById('transcript-area-inner');
+  if (!inner) return;
+  inner.classList.remove('tx-top');
+  inner.classList.remove('tx-both');
+  inner.style.maxHeight = 'none';
+  _txAutoScroll = true;
+}
+
+function txInit() {
+  var inner = document.getElementById('transcript-area-inner');
+  if (!inner || inner._txBound) return;
+  inner._txBound = true;
+
+  inner.addEventListener('scroll', function() {
+    txUpdateFade(inner);
+    // Re-enable auto-scroll if user scrolls to bottom
+    var atBottom = (inner.scrollHeight - inner.scrollTop - inner.clientHeight) < 10;
+    _txAutoScroll = atBottom;
+  }, {passive: true});
+
+  // Watch for content height changes — auto-scroll if enabled
+  if (window.ResizeObserver) {
+    var ro = new ResizeObserver(function() {
+      txSetMaxHeight();
+      if (_txAutoScroll) txScrollToBottom();
+    });
+    var t = document.getElementById('transcript');
+    var b = document.getElementById('bot-resp');
+    if (t) ro.observe(t);
+    if (b) ro.observe(b);
+  }
+}
+
+
+
+</script>
+<!-- SAVE BUTTON -->
+<button id="save-btn" onclick="saveProgress()" title="Save progress">
+  <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+    <path d="M3 16h12a1 1 0 0 0 1-1V5.5L12.5 2H3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1Z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M6 2v4h6V2" stroke="white" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="5" y="10" width="8" height="5" rx="0.5" stroke="white" stroke-width="1.4"/>
+  </svg>
+</button>
+
+<!-- REVIEW WHEEL OVERLAY -->
+<div id="review-ov">
+  <div id="review-header">
+    <h2>Review your answers</h2>
+    <p>Scroll through — tick the ones you are happy with. Unticked answers will be re-asked.</p>
+  </div>
+  <div id="review-wheel">
+    <div id="review-wheel-inner"></div>
+  </div>
+  <div id="review-done-wrap">
+    <div id="review-stats"></div>
+    <button id="review-done-btn" onclick="finishReview()">Done, let's dive back in →</button>
+  </div>
+</div>
+
+<!-- FINAL REVIEW OVERLAY (pre-submit) -->
+<div id="final-review-ov">
+  <div id="final-review-header">
+    <h2>Final review</h2>
+    <p>Approve all answers before submitting. Any unticked answers will be re-asked.</p>
+  </div>
+  <div id="review-wheel" style="display:none" id="final-review-wheel">
+    <div id="final-review-wheel-inner"></div>
+  </div>
+  <div id="final-submit-wrap">
+    <div id="final-review-stats"></div>
+    <button id="final-submit-btn" onclick="doFinalSubmit()">Submit my strategy report →</button>
+  </div>
+</div>
+
+<!-- SUBMISSION CONFIRMATION -->
+<div id="submit-confirm-ov">
+  <div class="submit-confirm-card">
+    <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+      <circle cx="26" cy="26" r="24" stroke="#7c6aff" stroke-width="1.5"/>
+      <path d="M16 26l7 7 13-13" stroke="#7c6aff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <h3>You are all done!</h3>
+    <p>Your brand brief has been submitted. Your strategy report is being generated now — it will land in your Drive folder within 15 minutes.</p>
+    <p style="font-size:12px;color:rgba(240,238,255,0.3);margin-top:8px">You can close this tab. We will take it from here.</p>
+  </div>
+</div>
+
+</body>
+</html>
