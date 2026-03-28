@@ -10,13 +10,16 @@
 <title>StratIQ — AI Brand Strategy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script>
-// Vapi SDK — loaded inline as module, exposes window.Vapi
-</script>
 <script type="module">
-  import { Vapi } from 'https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.js';
-  window.Vapi = Vapi;
-  window.dispatchEvent(new Event('vapiReady'));
+  // Vapi Web SDK via esm.sh which correctly re-exports the package
+  try {
+    const mod = await import('https://esm.sh/@vapi-ai/web');
+    window.Vapi = mod.default || mod.Vapi || Object.values(mod)[0];
+    if(window.Vapi){ window.dispatchEvent(new Event('vapiReady')); }
+    else { console.error('Vapi: could not find export in module', Object.keys(mod)); }
+  } catch(e) {
+    console.error('Vapi SDK load error:', e);
+  }
 </script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -615,6 +618,7 @@ let audioSource = null;
 
 // ── SESSION STATE ─────────────────────────────────────────────────
 let cs = 0, cq = 0, answers = {}, busy = false, speaking = false, textActive = false;
+let listening = false;
 let refDocs = [];
 
 const SECS=[
