@@ -372,11 +372,13 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   background:radial-gradient(ellipse at center, rgba(124,106,255,0.35) 0%, rgba(124,106,255,0.12) 50%, transparent 70%);
 }
 
-/* Bottom dock — wide horizontal */
-#bottom-dock.tour-highlight::after{
-  inset:-6px -20px;
+/* Bottom dock — REMOVED: was covering whole area. Individual buttons highlighted instead */
+/* Download and Upload buttons — same pill bloom as ref-btn */
+#download-btn.tour-highlight::after,
+#upload-btn.tour-highlight::after{
+  inset:-12px -10px;
   border-radius:24px;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.22) 0%, rgba(124,106,255,0.07) 60%, transparent 80%);
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.30) 0%, rgba(124,106,255,0.10) 55%, transparent 74%);
 }
 
 /* Ref button — pill */
@@ -567,11 +569,11 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
         Type instead
       </button>
-      <button class="abtn" onclick="openForm()">
+      <button class="abtn" id="download-btn" onclick="openForm()">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4 6l3 3.5 3-3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12.5" x2="12" y2="12.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
         Download form
       </button>
-      <button class="abtn" onclick="uploadForm()">
+      <button class="abtn" id="upload-btn" onclick="uploadForm()">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 9.5v-7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4 5l3-3.5 3 3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12.5" x2="12" y2="12.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
         Upload doc
       </button>
@@ -778,6 +780,7 @@ function _buildSystemPrompt(){
 // ── START VAPI SESSION ────────────────────────────────────────────
 async function _startVapiSession(){
   if(vapiActive||vapiStarting)return;
+  if(!vapi){console.error('Vapi not initialised');setLabel('Connection error — refresh and try again');return;}
   vapiStarting = true;
   try{
     await vapi.start(VAPI_ASSISTANT_ID, {
@@ -785,7 +788,9 @@ async function _startVapiSession(){
         model: {
           provider: 'anthropic',
           model: 'claude-sonnet-4-6',
-          systemPrompt: _buildSystemPrompt(),
+          messages: [
+            {role: 'system', content: _buildSystemPrompt()}
+          ],
           maxTokens: 350,
           temperature: 0.4
         }
@@ -1032,8 +1037,12 @@ function runUITour(onComplete){
       text:"Add Reference is a handy one — if you have existing brand docs, strategy files, or guidelines, drop them in here and I will draw on them throughout our whole conversation."
     },
     {
-      ids:['bottom-dock'],
-      text:"Down here you can also download your answers as a file any time, or upload a pre-filled brief if you have one ready."
+      ids:['download-btn'],
+      text:"Download grabs all your answers as a file any time — handy if you want to keep a copy."
+    },
+    {
+      ids:['upload-btn'],
+      text:"Upload lets you drop in a pre-filled brief if you have one ready to go."
     },
     {
       ids:['save-btn'],
@@ -1510,11 +1519,15 @@ function goBackSection(){
 }
 
 function skipQ(){
+  // Don't allow skip during intro or before first question is active
+  if(!vapiActive&&!vapiStarting)return;
   clearIdleTimer();
   const sec=SECS[cs];
-  if(cq>=sec.qs.length)return;
+  if(!sec||cq>=sec.qs.length)return;
   if(sec.qs[cq].req){speakIt("This one is required — give it your best shot. Even a rough answer works.",null);return;}
-  answers[sec.qs[cq].k]='';cq++;askQ();
+  answers[sec.qs[cq].k]='';cq++;
+  _stopVapiSession();
+  setTimeout(_startVapiSession,400);
 }
 
 function toggleText(){
