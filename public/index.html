@@ -1314,92 +1314,103 @@ function positionMic(){
 }
 
 function speakIt(text,cb){
+  if(!text||!text.trim()){if(cb)cb();return;}
   speaking=true;
   setViz('speaking');
   setLabel('Speaking...');
-  dockHide(); // hide dock while AI speaks — show again when done
+  dockHide();
 
   const ttsText=text
     .replace(/ANSWER:[\s\S]*$/m,'')
     .replace(/READY_NEXT/g,'')
     .replace(/[\u200b-\u200d\ufeff]/g,'')
-    .replace(/[\u2014\u2013]/g,' — ')  // normalise em/en dashes
-    .replace(/\.{2,}/g,'.')             // collapse ellipses to single period
-    .replace(/[*#`~^]/g,'')             // strip markdown artifacts
+    .replace(/[\u2014\u2013]/g,' — ')
+    .replace(/\.{2,}/g,'.')
+    .replace(/[*#`~^]/g,'')
     .replace(/\s+/g,' ')
     .trim();
 
+  if(!ttsText){if(cb)cb();return;}
+
   const botEl=document.getElementById('bot-resp');
-  botEl.innerHTML='';
-  const words=ttsText.split(' ');
-  words.forEach(function(w,i){
-    const span=document.createElement('span');
-    span.className='bot-word';
-    span.textContent=(i>0?' ':'')+w;
-    botEl.appendChild(span);
-  });
-  // Auto-scroll transcript area
+  if(botEl){
+    botEl.innerHTML='';
+    ttsText.split(' ').forEach(function(w,i){
+      var span=document.createElement('span');
+      span.className='bot-word';
+      span.textContent=(i>0?' ':'')+w;
+      botEl.appendChild(span);
+    });
+  }
   const inner=document.getElementById('transcript-area-inner');
   if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},50);
 
-  sharedAudio.pause();
-  sharedAudio.onended=null;sharedAudio.onerror=null;
+  if(sharedAudio){
+    sharedAudio.pause();
+    sharedAudio.onended=null;
+    sharedAudio.onerror=null;
+  }
   if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
-  stopAudioViz();
+  try{stopAudioViz();}catch(e){}
 
   const estimatedMs=Math.max(2000,(ttsText.length/14)*1000);
   let cbFired=false;
   function done(){
     if(cbFired)return;
     cbFired=true;
-    stopAudioViz();
+    try{stopAudioViz();}catch(e){}
     speaking=false;
     setViz('idle');
     setLabel('');
-    dockShow(); // show dock again when AI finishes
+    dockShow();
     if(cb)cb();
   }
 
   fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:ttsText,voiceId:'UgBBYS2sOqTuMpoF3BR0'})})
-  .then(function(r){if(!r.ok)throw new Error('TTS '+r.status);return r.json();})
+  .then(function(r){
+    if(!r.ok)throw new Error('TTS HTTP '+r.status);
+    return r.json();
+  })
   .then(function(data){
-    if(!data.audio)throw new Error('no audio');
+    if(!data.audio)throw new Error('TTS no audio in response');
     wordTimings=data.alignment||null;
-    const bytes=atob(data.audio);const buf=new Uint8Array(bytes.length);
+    const bytes=atob(data.audio);
+    const buf=new Uint8Array(bytes.length);
     for(let i=0;i<bytes.length;i++)buf[i]=bytes.charCodeAt(i);
     const blob=new Blob([buf],{type:'audio/mpeg'});
-    const url=URL.createObjectURL(blob);currentBlobUrl=url;
+    const url=URL.createObjectURL(blob);
+    currentBlobUrl=url;
     sharedAudio.src=url;
     sharedAudio.onplay=function(){
-      var spans=botEl.querySelectorAll('.bot-word');
-      if(wordTimings&&wordTimings.length>=spans.length){
-        spans.forEach(function(s,i){var startMs=wordTimings[i]?wordTimings[i].startMs:0;setTimeout(function(){s.classList.add('reveal');},startMs);});
-      } else {
-        var audioDur=(sharedAudio.duration>0?sharedAudio.duration*1000:estimatedMs);
-        var msPerWord=Math.max(60,audioDur/Math.max(spans.length,1));
-        spans.forEach(function(s,i){setTimeout(function(){s.classList.add('reveal');},i*msPerWord);});
+      if(botEl){
+        var spans=botEl.querySelectorAll('.bot-word');
+        if(wordTimings&&wordTimings.length>=spans.length){
+          spans.forEach(function(s,i){var startMs=wordTimings[i]?wordTimings[i].startMs:0;setTimeout(function(){s.classList.add('reveal');},startMs);});
+        } else {
+          var audioDur=(sharedAudio.duration>0?sharedAudio.duration*1000:estimatedMs);
+          var msPerWord=Math.max(60,audioDur/Math.max(spans.length,1));
+          spans.forEach(function(s,i){setTimeout(function(){s.classList.add('reveal');},i*msPerWord);});
+        }
       }
     };
     sharedAudio.onended=function(){if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}done();};
-    sharedAudio.onerror=function(){if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}done();};
-    initAudioGraph();try{startAudioViz();}catch(e){}
+    sharedAudio.onerror=function(e){console.error('Audio playback error:',e);if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}done();};
+    try{initAudioGraph();startAudioViz();}catch(e){}
     var actx=getAudioCtx();
-    var playP=(actx&&actx.state==='suspended')?actx.resume().then(function(){return sharedAudio.play();}):Promise.resolve(sharedAudio.play());
+    var playP=(actx&&actx.state==='suspended')?actx.resume().then(function(){return sharedAudio.play();}):sharedAudio.play();
     playP.then(function(){setTimeout(done,estimatedMs+6000);}).catch(function(err){
-      botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
+      console.error('Audio play() failed:',err);
+      if(botEl)botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
       setTimeout(done,400);
     });
   })
   .catch(function(err){
-    // TTS failed — reveal subtitles so user can read, show status, still advance
-    botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
+    console.error('speakIt TTS error:',err);
+    if(botEl)botEl.querySelectorAll('.bot-word').forEach(function(s){s.classList.add('reveal');});
     var errMsg=err&&err.message?err.message:'unknown';
     var isQuota=errMsg.includes('401')||errMsg.includes('402')||errMsg.includes('429');
-    setLabel(isQuota?'Voice credits exhausted — reading subtitles':'Voice unavailable — reading subtitles');
-    setTimeout(function(){
-      setLabel('');
-      done();
-    }, isQuota?4000:2000); // longer pause on quota so user can read the status
+    setLabel(isQuota?'Voice credits exhausted':'Voice unavailable');
+    setTimeout(function(){setLabel('');done();},isQuota?4000:2000);
   });
 }
 
