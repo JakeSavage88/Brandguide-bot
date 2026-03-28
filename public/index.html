@@ -112,7 +112,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* TEXT INPUT */
 #text-mode{display:none;width:100%;max-width:540px;flex-direction:column;gap:8px;margin-top:8px}
 #trow{display:flex;gap:8px}
-#tinput{flex:1;background:rgba(255,255,255,0.05);border:0.5px solid var(--gb);color:var(--text);padding:11px 15px;border-radius:12px;font-size:14px;font-family:var(--font);outline:none;transition:border-color 0.2s}
+#tinput{flex:1;background:rgba(255,255,255,0.05);border:0.5px solid var(--gb);color:var(--text);padding:11px 15px;border-radius:12px;font-size:14px;font-family:var(--font);outline:none;transition:border-color 0.2s;resize:none;line-height:1.5;min-height:44px;max-height:160px;overflow-y:auto;}
 #tinput:focus{border-color:rgba(124,106,255,0.5)}
 #tinput::placeholder{color:var(--muted)}
 .sbtn{padding:0 18px;height:44px;background:linear-gradient(135deg,#7c6aff,#6054cc);border:none;border-radius:12px;color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)}
@@ -149,6 +149,10 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #mic-btn:hover{transform:scale(1.06);box-shadow:0 0 44px rgba(124,106,255,0.6)}
 #mic-btn.on{background:linear-gradient(135deg,#06b6d4,#0891b2);box-shadow:0 0 40px rgba(6,182,212,0.5);animation:pring 1.5s ease-in-out infinite}
 #mic-btn.dis{opacity:0.4;cursor:not-allowed}
+#mic-btn.ready{animation:readyPulse 2.4s ease-in-out infinite}
+@keyframes readyPulse{0%,100%{box-shadow:0 0 28px rgba(124,106,255,0.35),0 0 0 0px rgba(124,106,255,0)}55%{box-shadow:0 0 44px rgba(124,106,255,0.6),0 0 0 6px rgba(124,106,255,0.12)}}
+#mic-btn.idle-pulse{animation:idlePulse 2s ease-in-out infinite}
+@keyframes idlePulse{0%,100%{box-shadow:0 0 30px rgba(124,106,255,0.4)}50%{box-shadow:0 0 52px rgba(124,106,255,0.8),0 0 0 8px rgba(124,106,255,0.15)}}
 @keyframes pring{0%,100%{box-shadow:0 0 28px rgba(6,182,212,0.35)}50%{box-shadow:0 0 52px rgba(6,182,212,0.65)}}
 #mic-label{font-size:12px;color:var(--muted);text-align:center;letter-spacing:0.3px}
 /* TWO-ROW BOTTOM BUTTONS */
@@ -313,6 +317,40 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 .submit-confirm-card h3{font-size:22px;font-weight:700;color:var(--text);}
 .submit-confirm-card p{font-size:14px;color:var(--muted);line-height:1.6;max-width:360px;}
 
+
+/* ── UI TOUR HIGHLIGHTS ── */
+.tour-highlight{
+  position:relative;
+  transition:box-shadow 0.4s ease,transform 0.3s ease,border-color 0.4s ease;
+  z-index:25;
+}
+.tour-highlight::after{
+  content:'';
+  position:absolute;inset:-4px;
+  border-radius:inherit;
+  border:2px solid var(--acc);
+  box-shadow:0 0 20px rgba(124,106,255,0.5),0 0 40px rgba(124,106,255,0.25);
+  pointer-events:none;
+  animation:tourPulse 1.5s ease-in-out infinite;
+  border-radius:14px;
+}
+@keyframes tourPulse{
+  0%,100%{box-shadow:0 0 12px rgba(124,106,255,0.4),0 0 28px rgba(124,106,255,0.15);}
+  50%{box-shadow:0 0 24px rgba(124,106,255,0.7),0 0 48px rgba(124,106,255,0.3);}
+}
+#mic-wrap.tour-highlight::after{border-radius:50%;inset:-8px;}
+#bottom-dock.tour-highlight::after{border-radius:20px;}
+#save-btn.tour-highlight::after{border-radius:50%;}
+
+/* ── THINKING DOTS ── */
+#thinking-dots{display:none;align-items:center;gap:5px;justify-content:center;margin-top:8px;height:20px}
+#thinking-dots.visible{display:flex}
+.t-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);opacity:0.35;animation:tdot 1.2s ease-in-out infinite}
+.t-dot:nth-child(1){animation-delay:0s}.t-dot:nth-child(2){animation-delay:0.2s}.t-dot:nth-child(3){animation-delay:0.4s}
+@keyframes tdot{0%,80%,100%{opacity:0.35;transform:scale(1)}40%{opacity:1;transform:scale(1.3)}}
+/* ── REFERENCE BADGE ── */
+.abtn-ref{position:relative}
+#ref-badge{display:none;position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 3px;background:var(--acc);border-radius:8px;font-size:9px;font-weight:700;color:white;align-items:center;justify-content:center;line-height:1;}
 /* ── TRANSCRIPT SCROLL FADE ── */
 #transcript-area{position:relative;}
 #transcript-area-inner{
@@ -339,7 +377,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #bottom-dock{transition:transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
 #bottom-dock.autohide{transform:translateY(110%);opacity:0;pointer-events:none;}
 #mic-wrap{transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1),transform 0.6s cubic-bezier(0.34,1.2,0.64,1),opacity 0.4s ease;}
-#mic-wrap.autohide{opacity:0;pointer-events:none;}
+#mic-wrap.autohide{opacity:1;pointer-events:all;} /* mic always visible */
 
 </style>
 </head>
@@ -426,6 +464,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
       <div id="itext"></div>
     </div>
 
+    <div id="thinking-dots"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
     <div id="transcript-area">
       <div id="transcript-area-inner">
         <div id="transcript"></div>
@@ -435,7 +474,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 
     <div id="text-mode">
       <div id="trow">
-        <input type="text" id="tinput" placeholder="Type your answer..." onkeydown="if(event.key==='Enter')sendText()"/>
+        <textarea id="tinput" placeholder="Type your answer..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendText();}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,160)+'px'"></textarea>
         <button class="sbtn" onclick="sendText()">Send</button>
       </div>
       <button class="skipbtn" onclick="skipQ()">Skip this question →</button>
@@ -469,7 +508,18 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
       </button>
       <button class="abtn" onclick="uploadForm()">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 9.5v-7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4 5l3-3.5 3 3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12.5" x2="12" y2="12.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
-        Upload form
+        Upload doc
+      </button>
+      <button class="abtn abtn-ref" id="ref-btn" onclick="openRefUpload()" title="Add reference docs — Claude uses these as background context throughout">
+        <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
+          <rect x="2" y="1.5" width="7" height="9" rx="1" stroke="currentColor" stroke-width="1.25"/>
+          <line x1="4" y1="4.5" x2="7" y2="4.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          <line x1="4" y1="6.5" x2="7" y2="6.5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+          <circle cx="10.5" cy="10.5" r="2.5" fill="currentColor" opacity="0.9"/>
+          <path d="M10.5 9.3v2.4M9.3 10.5h2.4" stroke="white" stroke-width="1.1" stroke-linecap="round"/>
+        </svg>
+        Add reference
+        <span class="ref-badge" id="ref-badge"></span>
       </button>
     </div>
     <!-- Row 2: Skip — plain text, no pill, visually distinct -->
@@ -480,7 +530,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
       </button>
     </div>
   </div>
-  <input type="file" id="upload-input" accept=".txt,.pdf,.doc,.docx" style="display:none" onchange="handleUpload(this)"/>
+  <input type="file" id="upload-input" accept=".txt,.md,.pdf,.docx" style="display:none" onchange="handleUpload(this)"/>
+  <input type="file" id="ref-input" accept=".txt,.md,.pdf,.docx" multiple style="display:none" onchange="handleRefUpload(this)"/>
 </div>
 
 
@@ -527,7 +578,7 @@ const SECS=[
    intro:"Let us dig into what you are actually selling and why people should choose you. This is the commercial heart of the strategy.",
    qs:[
     {k:'Key Products or Services',e:'entry.528379571',p:"What are your main products or services? Give me a clear picture of your core offering.",req:true},
-    {k:'Product / Service Differentiators',e:'entry.569842307',p:"What specifically makes your product or service better or different — features, approach, experience?",req:true},
+    {k:'Product / Service Unique Mechanics',e:'entry.569842307',p:"How does your product or service actually work — what is the specific method, process, or delivery that makes it distinctive?",req:true,ins:"This is the how not the what — the mechanism behind your offering that no one else does quite like you."},
     {k:'Features & Benefits',e:'entry.575306966',p:"Key features and the real benefit behind each one. What does each feature actually mean for the customer?",req:false,ins:"Features tell, benefits sell. This is where most brands leave serious money on the table."},
     {k:'Pricing Strategy',e:'entry.1425749582',p:"How are you priced — premium, mid-market, freemium? What is the logic behind it?",req:false},
     {k:'Customer Experience Overview',e:'entry.1836847594',p:"Walk me through the customer experience — from first contact through to long-term relationship.",req:false}
@@ -569,6 +620,8 @@ let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaki
 let pendingAnswer=null;
 let wordTimings=null;
 let accumulatedFinal='';
+let speechPauseTimer=null;
+let refDocs=[];
 const synth=window.speechSynthesis;
 
 function beginSession(){
@@ -591,13 +644,24 @@ function beginSession(){
   document.getElementById('save-btn').style.display='flex';
   sharedAudio.load();
   var actxInit=getAudioCtx();if(actxInit&&actxInit.state==='suspended'){actxInit.resume().catch(function(){});}
-  // Dock is always in DOM but off-screen — slides in when first question fires
   tryHideURLBar();
   initAudioGraph();
   setupVoice();
   buildPills();
   txInit();
-  showSecIntro();
+
+  // ── PART 1: Cass intro ───────────────────────────────────────────
+  speakIt("Hey, I'm Cass — I'll be your brand strategy consultant today. Before we dive in, let me quickly show you around.", function(){
+
+    // ── PART 2: UX orientation tour ──────────────────────────────────
+    runUITour(function(){
+      tourHighlight([],0);
+
+      // ── PART 3: Fire into first section + questions ───────────────
+      setTimeout(showSecIntro, 400);
+    });
+
+  });
 }
 
 function buildPills(){
@@ -615,6 +679,81 @@ function updatePills(){
   });
 }
 
+// ── UI TOUR HIGHLIGHT SYSTEM ─────────────────────────────────────
+function tourHighlight(ids, durationMs){
+  // Remove any existing highlights
+  document.querySelectorAll('.tour-highlight').forEach(function(el){
+    el.classList.remove('tour-highlight');
+  });
+  if(!ids||ids.length===0)return;
+  ids.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.classList.add('tour-highlight');
+  });
+  if(durationMs){
+    setTimeout(function(){
+      ids.forEach(function(id){
+        var el=document.getElementById(id);
+        if(el)el.classList.remove('tour-highlight');
+      });
+    },durationMs);
+  }
+}
+
+function runUITour(onComplete){
+  // Make sure dock is visible before tour
+  var dock=document.getElementById('bottom-dock');
+  var micWrap=document.getElementById('mic-wrap');
+  var saveBtn=document.getElementById('save-btn');
+  if(dock&&!dock.classList.contains('visible')){
+    dock.classList.add('visible');
+    if(micWrap)micWrap.classList.add('visible');
+    setTimeout(positionMic,100);
+  }
+
+  // Sequence of [highlight IDs, speech, delay before next highlight]
+  var steps=[
+    {
+      ids:['mic-wrap'],
+      text:"The mic button here in the middle is your main control — tap to speak, tap again when you are done. You can also switch to typing any time using the Type button.",
+      duration:4500
+    },
+    {
+      ids:['ref-btn'],
+      text:"Add Reference is a handy one — if you have existing brand docs, strategy files, or guidelines, drop them in here and I will draw on them throughout our whole conversation.",
+      duration:4500
+    },
+    {
+      ids:['bottom-dock'],
+      text:"Down here you can also download your answers as a file any time, or upload a pre-filled brief if you have one ready.",
+      duration:3800
+    },
+    {
+      ids:['save-btn'],
+      text:"Save up top keeps your progress — so if you need to step away and come back, no problem. And feel free to ask me anything as we go. Alright, let us build your brand.",
+      duration:4500
+    }
+  ];
+
+  var stepIdx=0;
+  function runStep(){
+    if(stepIdx>=steps.length){
+      // Clear all highlights
+      tourHighlight([],0);
+      if(onComplete)onComplete();
+      return;
+    }
+    var step=steps[stepIdx];
+    stepIdx++;
+    tourHighlight(step.ids);
+    speakIt(step.text,function(){
+      // Brief pause between steps
+      setTimeout(runStep,300);
+    });
+  }
+  runStep();
+}
+
 function showSecIntro(){
   const sec=SECS[cs];
   setLabel('');
@@ -629,7 +768,8 @@ function showSecIntro(){
   // Hide header as soon as speech starts (300ms grace to see it)
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},300);
   setTimeout(function(){document.querySelector('header').classList.add('hidden');var sb=document.getElementById('save-btn');if(sb)sb.classList.remove('header-shown');},300);
-  speakIt(sec.intro,function(){askQ();});
+  // Tour already ran in beginSession — all sections go straight to questions
+  speakIt(sec.intro, function(){ askQ(); });
 }
 
 function askQ(){
@@ -699,9 +839,8 @@ function completeSection(){
   document.getElementById('sec-title').textContent=SECS[cs].name+' — done!';
   document.getElementById('sec-msg').textContent=msg;
   document.getElementById('sec-ov').style.display='flex';
-  // Reveal header again between sections
   document.querySelector('header').classList.remove('hidden');
-  // Auto-save progress but don't submit to form yet — waits for final review
+  submitSection(cs); // submit each section immediately — fixes Google Sheet cutoff
   saveProgress(false);
 }
 
@@ -766,15 +905,11 @@ function setupVoice(){
     toggleText();
     return;
   }
-  // Detect mobile for non-continuous mode
-  const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
   recog=new SR();
   recog.continuous=false;
   recog.interimResults=true;
   recog.lang='en-AU';
 
-  var pauseTimer=null;
   recog.onresult=function(e){
     let final='';let interim='';
     for(let i=e.resultIndex;i<e.results.length;i++){
@@ -785,103 +920,123 @@ function setupVoice(){
     if(final.trim()){
       accumulatedFinal+=final;
       document.getElementById('transcript').textContent=accumulatedFinal.trim();
-      if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
-      pauseTimer=setTimeout(function(){
-        if(accumulatedFinal.trim()&&listening){
-          const text=accumulatedFinal.trim();accumulatedFinal='';
-          stopListen();showAnswerActions(text);
+      if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+      speechPauseTimer=setTimeout(function(){
+        speechPauseTimer=null;
+        var captured=accumulatedFinal.trim();
+        if(captured&&listening){
+          listening=false;
+          accumulatedFinal='';
+          if(recog)try{recog.stop();}catch(e2){}
+          var mb=document.getElementById('mic-btn');
+          if(mb){mb.classList.remove('on','ready','idle-pulse');}
+          document.getElementById('mic-label').textContent='Tap to speak';
+          setViz('idle');
+          showAnswerActions(captured);
           setTimeout(function(){speakIt(approvePrompt(),null);},150);
         }
-      },1200);
+      },2200);
     }
   };
+
   recog.onend=function(){
-    if(pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
-    if(listening&&accumulatedFinal.trim()){
-      const text=accumulatedFinal.trim();accumulatedFinal='';
-      stopListen();showAnswerActions(text);
+    if(speechPauseTimer){return;} // timer pending — let it fire
+    var captured=accumulatedFinal.trim();
+    if(listening&&captured){
+      listening=false;
+      accumulatedFinal='';
+      var mb=document.getElementById('mic-btn');
+      if(mb){mb.classList.remove('on','ready','idle-pulse');}
+      document.getElementById('mic-label').textContent='Tap to speak';
+      setViz('idle');
+      showAnswerActions(captured);
       setTimeout(function(){speakIt(approvePrompt(),null);},150);
-    } else if(listening&&!accumulatedFinal.trim()){
+    } else if(listening&&!captured){
       setTimeout(function(){
-        if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');}}
+        if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}}
       },200);
     }
   };
+
   recog.onerror=function(e){
     accumulatedFinal='';
+    if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
     if(e.error==='not-allowed'||e.error==='permission-denied'){
       stopListen();
-      // Show permission instructions in the UI
-      document.getElementById('transcript').textContent='';
-      document.getElementById('bot-resp').textContent='Mic access is needed for voice mode. Please tap the mic button, then allow microphone access when your browser asks.';
+      document.getElementById('bot-resp').textContent='Mic access needed — please allow microphone access and tap the mic again.';
       setLabel('Tap Allow when prompted');
-      // Try requesting permission explicitly
       if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
         navigator.mediaDevices.getUserMedia({audio:true})
-          .then(function(stream){
-            stream.getTracks().forEach(function(t){t.stop();});
-            document.getElementById('bot-resp').textContent='Mic access granted. Tap the mic button to try again.';
-            setLabel('Tap to speak');
-          })
-          .catch(function(){
-            document.getElementById('bot-resp').textContent='Mic access was denied. To use voice, please enable microphone permission in your browser settings, or use text mode below.';
-            setLabel('');
-            toggleText();
-          });
+          .then(function(stream){stream.getTracks().forEach(function(t){t.stop();});document.getElementById('bot-resp').textContent='Mic access granted. Tap the mic to try again.';setLabel('Tap to speak');})
+          .catch(function(){document.getElementById('bot-resp').textContent='Mic access denied. Use the Type button below.';setLabel('');toggleText();});
       }
     } else if(e.error==='no-speech'){
-      // Just restart quietly
-      if(listening){
-        setTimeout(function(){
-          if(listening) try{recog.start();}catch(err){}
-        },200);
-      }
+      if(listening){setTimeout(function(){if(listening)try{recog.start();}catch(err){}},200);}
     } else {
       stopListen();
-      setLabel('Voice error — tap mic to retry or use text');
+      setMicReady();
     }
   };
 }
-
 function toggleMic(){
-  if(busy||speaking)return;
-  if(listening){stopListen();}else{startListen();}
+  if(speaking){
+    sharedAudio.pause();
+    if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+    stopAudioViz();speaking=false;busy=false;setViz('idle');setLabel('');dockShow();
+    setTimeout(function(){startListen();},250);
+    return;
+  }
+  if(busy)return;
+  if(listening){
+    var captured=accumulatedFinal.trim();
+    if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+    if(captured){
+      listening=false;accumulatedFinal='';
+      if(recog)try{recog.stop();}catch(e){}
+      var mb=document.getElementById('mic-btn');
+      if(mb){mb.classList.remove('on','ready','idle-pulse');}
+      document.getElementById('mic-label').textContent='Tap to speak';
+      setViz('idle');
+      showAnswerActions(captured);
+      setTimeout(function(){speakIt(approvePrompt(),null);},150);
+    } else {
+      stopListen();setMicReady();
+    }
+    return;
+  }
+  startListen();
 }
 
 function startListen(){
-  if(!recog){
-    setLabel('Voice not available');
-    toggleText();
-    return;
+  if(!recog){setLabel('Voice not available');toggleText();return;}
+  if(!sharedAudio.paused&&sharedAudio.currentTime>0){
+    sharedAudio.pause();
+    if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+    stopAudioViz();speaking=false;
+    setTimeout(startListen,250);return;
   }
   clearIdleTimer();
-  listening=true;
-  accumulatedFinal='';
+  if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+  listening=true;accumulatedFinal='';
   setViz('listening');
-  document.getElementById('mic-btn').classList.add('on');
+  var mb=document.getElementById('mic-btn');
+  if(mb){mb.classList.remove('ready','idle-pulse','dis');mb.classList.add('on');}
   document.getElementById('mic-label').textContent='Listening...';
   document.getElementById('transcript').textContent='';
   document.getElementById('bot-resp').textContent='';
   try{recog.abort();}catch(e){}
   setTimeout(function(){
-    try{
-      recog.start();
-      setLabel('Speak now');
-    }catch(e){
-      setLabel('Mic error: '+e.message);
-      listening=false;
-      setViz('idle');
-      document.getElementById('mic-btn').classList.remove('on');
-    }
+    try{recog.start();setLabel('Speak now');}
+    catch(e){setLabel('Mic error — tap to retry');listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}
   },100);
 }
 
 function stopListen(){
   listening=false;
-  if(typeof pauseTimer!=='undefined'&&pauseTimer){clearTimeout(pauseTimer);pauseTimer=null;}
-  if(typeof accumulatedFinal!=='undefined')accumulatedFinal='';
+  if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
   if(recog)try{recog.stop();}catch(e){}
-  document.getElementById('mic-btn').classList.remove('on');
+  var mb=document.getElementById('mic-btn');
+  if(mb){mb.classList.remove('on','ready','idle-pulse');}
   document.getElementById('mic-label').textContent='Tap to speak';
   setViz('idle');
 }
@@ -890,39 +1045,76 @@ let idleTimer=null;
 let idleCount=0;
 
 const IDLE_PROMPTS=[
-  "No rush at all — take your time. Tap the mic whenever you are ready.",
-  "Hmm, not sure if you are still there — want to have a go or skip this one for now?",
-  "Totally fine if this one is tricky. Even a rough answer works — we can always refine it.",
-  "Still here whenever you are ready. Just tap the mic and say whatever comes to mind."
+  "Take your time — no rush at all.",
+  "Hmm, even a rough answer is totally fine here.",
+  "Not sure if you stepped away — still here when you are back.",
+  "No pressure — say whatever comes to mind first.",
+  "This one can be tricky. Just go with your gut.",
+  "Whenever you are ready — I am not going anywhere.",
+  "Feel free to think out loud if that helps.",
 ];
+let _lastIdleIdx=-1;
+function _pickIdlePrompt(){
+  var pool=IDLE_PROMPTS.map(function(_,i){return i;}).filter(function(i){return i!==_lastIdleIdx;});
+  var idx=pool[Math.floor(Math.random()*pool.length)];
+  _lastIdleIdx=idx;
+  return IDLE_PROMPTS[idx];
+}
+
+const RETRY_PHRASES=[
+  "No worries — give it another go.",
+  "All good — try again whenever you are ready.",
+  "That is fine — let us hear it.",
+  "No stress — take your time.",
+  "Easy — have another crack at it.",
+  "No problem — whenever you are ready.",
+];
+let _lastRetryIdx=-1;
+function _pickRetryPhrase(){
+  var pool=RETRY_PHRASES.map(function(_,i){return i;}).filter(function(i){return i!==_lastRetryIdx;});
+  var idx=pool[Math.floor(Math.random()*pool.length)];
+  _lastRetryIdx=idx;
+  return RETRY_PHRASES[idx];
+}
 
 function clearIdleTimer(){
   if(idleTimer){clearTimeout(idleTimer);idleTimer=null;}
+  var mb=document.getElementById('mic-btn');
+  if(mb)mb.classList.remove('idle-pulse');
 }
 
 function setMicReady(){
-  document.getElementById('mic-btn').classList.remove('dis');
+  var mb=document.getElementById('mic-btn');
+  if(mb){mb.classList.remove('dis','on','idle-pulse');mb.classList.add('ready');}
   document.getElementById('mic-label').textContent='Tap to speak';
   clearIdleTimer();
   idleCount=0;
-  // Start idle detection - prompt after 10s, again at 25s
+  // 30s: visual idle pulse only — no audio interruption
   idleTimer=setTimeout(function(){
     if(!listening&&!busy&&!speaking&&!pendingAnswer){
-      const prompt=IDLE_PROMPTS[Math.min(idleCount,IDLE_PROMPTS.length-1)];
+      var mb2=document.getElementById('mic-btn');
+      if(mb2){mb2.classList.remove('ready');mb2.classList.add('idle-pulse');}
       idleCount++;
-      speakIt(prompt,function(){
-        // After prompt, check again in 20s
-        if(!listening&&!busy){
-          idleTimer=setTimeout(function(){
-            if(!listening&&!busy&&!speaking&&!pendingAnswer){
-              idleCount++;
-              speakIt("Whenever you are ready — I am here.",function(){});
+      // 45s later: one brief spoken nudge
+      idleTimer=setTimeout(function(){
+        if(!listening&&!busy&&!speaking&&!pendingAnswer){
+          var mb3=document.getElementById('mic-btn');
+          if(mb3){mb3.classList.remove('idle-pulse');mb3.classList.add('ready');}
+          speakIt(_pickIdlePrompt(),function(){
+            idleCount++;
+            // 60s later: one final nudge, then silence
+            if(!listening&&!busy){
+              idleTimer=setTimeout(function(){
+                if(!listening&&!busy&&!speaking&&!pendingAnswer){
+                  speakIt(_pickIdlePrompt(),function(){idleCount++;});
+                }
+              },60000);
             }
-          },20000);
+          });
         }
-      });
+      },45000);
     }
-  },10000);
+  },30000);
 }
 
 function setLabel(t){document.getElementById('viz-label').textContent=t;}
@@ -1150,71 +1342,152 @@ async function processAnswer(text){
   if(!text||text.trim()==='')return;
   if(window._resumeChoiceMode){_handleResumeChoice(text);return;}
   if(busy)return;
-  busy=true;
-  speaking=false;
-  sharedAudio.pause();
-  stopAudioViz();
+
+  // UI / interface meta-questions — answer without consuming an answer slot
+  var lower=text.toLowerCase();
+  var isMetaQ=(lower.includes('how do i')||lower.includes('what does')||lower.includes('how does')||lower.includes('what button')||lower.includes('where is the')||lower.includes('how do you work')||lower.includes('can i type')||lower.includes('can i upload')||lower.includes('what are the buttons'))
+    &&(lower.includes('button')||lower.includes('upload')||lower.includes('download')||lower.includes('save')||lower.includes('skip')||lower.includes('type')||lower.includes('mic')||lower.includes('interface')||lower.includes('reference'));
+  if(isMetaQ){
+    speakIt('Sure — the mic button in the middle is your main control. Tap to speak, tap again when you are done. You also have Type, Download, Upload doc, and Add Reference buttons at the bottom. Add Reference is great for existing strategy docs or brand guidelines — I will draw on them throughout. Save icon is top right. What else?',function(){setMicReady();});
+    return;
+  }
+
+  busy=true;speaking=false;
+  sharedAudio.pause();stopAudioViz();
   const sec=SECS[cs];
   if(cq>=sec.qs.length){busy=false;return;}
   const q=sec.qs[cq];
   history.push({role:'user',content:text});
-  setLabel('Thinking...');
-  setViz('speaking');
+  if(history.length>40)history.splice(0,history.length-40);
+  setLabel('Thinking...');setViz('speaking');
   document.getElementById('transcript').textContent=text;
   document.getElementById('bot-resp').innerHTML='';
+  var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
   positionMic();
 
-  // Safety timeout - if API takes too long, move on
   const safetyTimer=setTimeout(function(){
-    busy=false;answers[q.k]=text;cq++;speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
-  }, 18000);
+    var td2=document.getElementById('thinking-dots');if(td2)td2.classList.remove('visible');
+    busy=false;
+    // Safety timer fired — save answer and move on gracefully
+    answers[q.k]=text;cq++;
+    speakIt('Sorry, that took too long — I have saved your answer and we will keep going.',function(){advanceWithReaskQueue();});
+  },12000);
 
-  const sys='You are a warm, patient, genuinely human-like brand strategy consultant guiding someone through a brand questionnaire. 20 years of expertise across Creative Direction, Brand Strategy, Marketing, Consumer Insights, and Competitive Analysis.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n- Progress nudges occasionally.\n\nFOR EACH QUESTION:\n1. Review the FULL conversation history for anything relevant to this field.\n2. If a prior answer partially covers this question, say: You mentioned X earlier — does that apply here? and offer to incorporate it.\n3. Acknowledge their answer warmly in 1 sentence.\n4. If answer is sufficient: output ANSWER: then READY_NEXT on the next line.\n5. If incomplete or vague: ask ONE specific follow-up under 25 words. Do NOT auto-advance. Wait for response.\n6. After up to 3 follow-ups: synthesise all parts into a complete answer, present it starting with So your answer is: and ask if they are happy with it. If yes — output ANSWER and READY_NEXT. If no — ask what to change.\n7. ALWAYS synthesise partial answers across the full conversation for this field before outputting ANSWER.\n\nCurrent question: \''+q.p+'\'\nField: '+q.k+'\nRequired: '+q.req+'\nConversation so far: '+history.length+' exchanges\n\nRULES:\n1. Spoken response MAX 25 words. Brevity is everything — this is voice.\n2. Use natural contractions. Sound human.\n3. Never mention being an AI or bot.\n4. CRITICAL: Spoken text ends cleanly. ANSWER: and READY_NEXT appear ONLY on their own lines after spoken text, never mid-sentence.'
+  const answersSummary=Object.entries(answers)
+    .filter(function(_ref){var v=_ref[1];return v&&v.trim();})
+    .map(function(_ref2){var k=_ref2[0],v=_ref2[1];return k+': '+v.substring(0,80)+(v.length>80?'...':'');})
+    .join('\n');
+
+  const refContext=_buildRefContext();
+
+  const sys='You are a warm, patient, genuinely human-like brand strategy consultant. 20 years expertise across Brand Strategy, Creative Direction, Marketing, and Consumer Insights.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n\nANSWERS SO FAR:\n'+(answersSummary||'None yet.')+refContext+'\n\nCRITICAL: Check ANSWERS SO FAR before every question. If a prior answer already covers this field, say so and confirm rather than asking again. Example: \"You touched on this earlier — does that cover it here too?\"\n\nFOR EACH QUESTION:\n1. Acknowledge their answer warmly in 1 sentence.\n2. If sufficient: output ANSWER: [captured answer] then READY_NEXT on next line.\n3. If vague: ask ONE specific follow-up under 20 words. Do NOT auto-advance.\n4. After up to 2 follow-ups: synthesise, present starting \"So your answer is:\" confirm. If yes — ANSWER and READY_NEXT.\n\nCurrent question: \''+q.p+'\' Field: '+q.k+' Required: '+q.req+'\n\nRULES: Spoken response MAX 35 words. Natural contractions. Never mention being AI. ANSWER: and READY_NEXT on their own lines only.';
 
   try{
-    const res=await fetch('/api/claude',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:200,
-        system:sys,
-        messages:history.slice(-6)
-      })
-    });
+    const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:350,system:sys,messages:history.slice(-12)})});
     const data=await res.json();
     clearTimeout(safetyTimer);
+    var td3=document.getElementById('thinking-dots');if(td3)td3.classList.remove('visible');
+    // Check for API error response
+    if(data.error||!data.content){
+      clearTimeout(safetyTimer);
+      var td5=document.getElementById('thinking-dots');if(td5)td5.classList.remove('visible');
+      busy=false;setLabel('');setViz('idle');
+      var errMsg=data.error?data.error.message||JSON.stringify(data.error):'No response';
+      console.error('API error:',errMsg,data);
+      answers[q.k]=text;cq++;
+      speakIt('Got a connection issue — saved your answer and moving on.',function(){advanceWithReaskQueue();});
+      return;
+    }
     const reply=(data.content&&data.content[0])?data.content[0].text:'';
     history.push({role:'assistant',content:reply});
     const am=reply.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
     const ready=reply.includes('READY_NEXT');
-    // Strip all protocol tokens and clean up trailing whitespace/punctuation artifacts
-    let disp=reply
-      .replace(/ANSWER:[\s\S]*$/m,'')
-      .replace(/READY_NEXT/g,'')
-      .replace(/\s+$/,'')
-      .trim();
+    let disp=reply.replace(/ANSWER:[\s\S]*$/m,'').replace(/READY_NEXT/g,'').replace(/\s+$/,'').trim();
     if(disp){
       busy=false;
       speakIt(disp,function(){
-        if(ready&&am){answers[q.k]=am[1].trim();cq++;advanceWithReaskQueue();}
-        else{setMicReady();}
+        if(ready&&am){
+          const captured=am[1].trim();
+          answers[q.k]=captured;
+          if(!q.req){cq++;advanceWithReaskQueue();}
+          else{showAnswerActions(captured);window._pendingConfirmedAnswer={key:q.k,val:captured};}
+        } else {setMicReady();}
       });
     } else if(ready&&am){
       busy=false;
-      answers[q.k]=am[1].trim();cq++;advanceWithReaskQueue();
-    } else {
-      busy=false;
-      setMicReady();
-    }
+      const captured=am[1].trim();
+      answers[q.k]=captured;
+      if(!q.req){cq++;advanceWithReaskQueue();}
+      else{showAnswerActions(captured);window._pendingConfirmedAnswer={key:q.k,val:captured};}
+    } else {busy=false;setMicReady();}
   }catch(e){
     clearTimeout(safetyTimer);
-    busy=false;
-    setLabel('');setViz('idle');
+    var td4=document.getElementById('thinking-dots');if(td4)td4.classList.remove('visible');
+    busy=false;setLabel('');setViz('idle');
     answers[q.k]=text;cq++;
-    speakIt(advancePhrase(),function(){advanceWithReaskQueue();});
+    speakIt('Got a connection hiccup there — saved your answer and moving on.',function(){advanceWithReaskQueue();});
   }
 }
+// ── REFERENCE ARCHIVE ─────────────────────────────────────────────
+function openRefUpload(){document.getElementById('ref-input').click();}
+
+async function handleRefUpload(input){
+  var files=Array.from(input.files);if(!files.length)return;input.value='';
+  speakIt('Got it — reading '+(files.length===1?'that document':'those documents')+' now.',null);
+  var loaded=0;
+  for(var i=0;i<files.length;i++){
+    var file=files[i];var ext=file.name.toLowerCase().split('.').pop();
+    try{
+      var content=await _readRefFile(file,ext);
+      if(content){refDocs=refDocs.filter(function(d){return d.name!==file.name;});refDocs.push({name:file.name,content:content.substring(0,5000)});loaded++;}
+    }catch(e){console.warn('Ref read error:',file.name,e);}
+  }
+  _updateRefBadge();
+  if(loaded>0){
+    speakIt(loaded===1?'Loaded "'+refDocs[refDocs.length-1].name+'" as background context. I will draw on it throughout.':'Loaded '+loaded+' reference docs — I will draw on all of them as we go.',function(){if(!speaking&&!busy)setMicReady();});
+  } else {speakIt('Could not read that file. Try a PDF, Word doc, or plain text file.',null);}
+}
+
+function _readRefFile(file,ext){
+  return new Promise(function(resolve,reject){
+    var reader=new FileReader();
+    if(ext==='txt'||ext==='md'){
+      reader.onload=function(e){resolve(e.target.result);};reader.onerror=reject;reader.readAsText(file);
+    } else if(ext==='pdf'||ext==='docx'){
+      reader.onload=async function(e){
+        var base64=e.target.result.split(',')[1];
+        var mt=ext==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        try{
+          var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:mt,data:base64}},{type:'text',text:'Extract all meaningful text from this document. Plain text only, no commentary.'}]}]})});
+          var data=await res.json();
+          resolve((data.content&&data.content[0])?data.content[0].text:null);
+        }catch(err){reject(err);}
+      };
+      reader.onerror=reject;reader.readAsDataURL(file);
+    } else {resolve(null);}
+  });
+}
+
+function _updateRefBadge(){
+  var badge=document.getElementById('ref-badge');
+  var btn=document.getElementById('ref-btn');
+  if(!badge||!btn)return;
+  if(refDocs.length>0){
+    badge.textContent=refDocs.length;badge.style.display='inline-flex';
+    btn.style.borderColor='rgba(124,106,255,0.5)';btn.style.color='var(--acc2)';
+    btn.title=refDocs.length+' doc'+(refDocs.length>1?'s':'')+' loaded: '+refDocs.map(function(d){return d.name;}).join(', ');
+  } else {
+    badge.style.display='none';btn.style.borderColor='';btn.style.color='';
+    btn.title='Add reference documents — Claude uses these as background context';
+  }
+}
+
+function _buildRefContext(){
+  if(!refDocs.length)return '';
+  return '\n\nREFERENCE DOCUMENTS (use as background context — do not quote directly):\n'+
+    refDocs.map(function(d){return '--- '+d.name+' ---\n'+d.content;}).join('\n\n');
+}
+
 
 function skipQ(){
   clearIdleTimer();
@@ -1249,7 +1522,7 @@ function toggleText(){
   }
 }
 
-const APPROVE_PROMPTS=["Got it. Tap approve if you are happy with that.","Noted. Hit the tick if that looks good to you.","Nice one. Approve it below if you are happy to move on.","Got that down. Tap approve when you are ready.","Okay. If that answer looks right, go ahead and approve it.","Good stuff. Tick it off below when you are ready to continue."];
+const APPROVE_PROMPTS=["Got it. Tap the tick to confirm and move on.","Noted — confirm that below when you are ready.","Nice one. Tick it off to continue.","Got that. Confirm below when you are happy with it."];
 function approvePrompt(){return APPROVE_PROMPTS[Math.floor(Math.random()*APPROVE_PROMPTS.length)];}
 
 function sendText(){
@@ -1257,6 +1530,7 @@ function sendText(){
   const t=inp.value.trim();
   if(!t)return;
   inp.value='';
+  inp.style.height='auto';
   if(textActive){
     textActive=false;
     document.getElementById('text-mode').style.display='none';
@@ -1272,50 +1546,118 @@ function sendText(){
 
 
 
-function openForm(){window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');}
-
-// Upload prefilled form — reads text file and pre-populates answers
-function uploadForm(){
-  document.getElementById('upload-input').click();
+function openForm(){
+  var hasAnswers=Object.values(answers).some(function(v){return v&&v.trim();});
+  if(!hasAnswers){
+    window.open('https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO0l9HGh7ps4DGAqTYetSkdA/viewform','_blank');
+    return;
+  }
+  var lines=['StratIQ Brand Strategy Brief','='.repeat(40)];
+  SECS.forEach(function(sec){
+    lines.push('\n── '+sec.name.toUpperCase()+' ──');
+    sec.qs.forEach(function(q){
+      lines.push('\nQ: '+q.p);
+      lines.push('A: '+(answers[q.k]||'(no answer)'));
+    });
+  });
+  var blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='StratIQ_Brief.txt';a.click();
+  URL.revokeObjectURL(url);
+  showSaveToast();
 }
 
+function uploadForm(){document.getElementById('upload-input').click();}
+
 function handleUpload(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const text=e.target.result;
-    // Parse Q: / A: format from downloaded form
-    const pairs=text.match(/Q:\s*(.+?)\nA:\s*([\s\S]+?)(?=\nQ:|$)/g);
-    if(pairs&&pairs.length>0){
-      let loaded=0;
-      pairs.forEach(function(pair){
-        const qm=pair.match(/Q:\s*(.+)/);
-        const am=pair.match(/A:\s*([\s\S]+)/);
-        if(qm&&am){
-          const qtext=qm[1].trim();
-          const atext=am[1].trim();
-          // Match against known question keys
-          SECS.forEach(function(sec){
-            sec.qs.forEach(function(q){
+  var file=input.files[0];if(!file)return;input.value='';
+  var ext=file.name.toLowerCase().split('.').pop();
+  speakIt('Got it — reading your document now.',null);
+  var reader=new FileReader();
+  if(ext==='txt'||ext==='md'){
+    reader.onload=function(e){
+      var text=e.target.result;
+      // Try Q:/A: format first (re-upload of downloaded brief)
+      var pairs=text.match(/Q:\s*(.+?)\nA:\s*([\s\S]+?)(?=\nQ:|$)/g);
+      if(pairs&&pairs.length>0){
+        var loaded=0;
+        pairs.forEach(function(pair){
+          var qm=pair.match(/Q:\s*(.+)/);var am=pair.match(/A:\s*([\s\S]+)/);
+          if(qm&&am){
+            var qtext=qm[1].trim();var atext=am[1].replace(/\(no answer\)/,'').trim();
+            SECS.forEach(function(sec){sec.qs.forEach(function(q){
               if(q.p.toLowerCase().includes(qtext.toLowerCase().substring(0,30))||qtext.toLowerCase().includes(q.k.toLowerCase().substring(0,20))){
-                if(atext&&atext!=='(no answer)'){answers[q.k]=atext;loaded++;}
+                if(atext){answers[q.k]=atext;loaded++;}
               }
-            });
-          });
-        }
-      });
-      if(loaded>0){
-        speakIt('Awesome — I have loaded '+loaded+' answers from your form. Let us pick up from where you left off.',function(){askQ();});
-      } else {
-        speakIt('I could not read that file format. Try downloading a fresh form, filling it in, and uploading the text file.',null);
+            });});
+          }
+        });
+        if(loaded>0){_afterUploadPreFill(loaded);}
+        else{_extractAnswersWithClaude(text);}
+      } else {_extractAnswersWithClaude(text);}
+    };
+    reader.readAsText(file);
+  } else if(ext==='pdf'||ext==='docx'){
+    reader.onload=function(e){
+      var base64=e.target.result.split(',')[1];
+      var mediaType=ext==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      _extractAnswersFromDoc(base64,mediaType);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    speakIt('Please upload a PDF, Word doc, or plain text file.',null);
+  }
+}
+
+async function _extractAnswersFromDoc(base64,mediaType){
+  var qList=[];SECS.forEach(function(sec){sec.qs.forEach(function(q){qList.push(q.k);});});
+  try{
+    var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:[{type:'document',source:{type:'base64',media_type:mediaType,data:base64}},{type:'text',text:'Extract answers to these brand strategy fields. For each found, output:\nFIELD: [field name]\nANSWER: [answer]\n\nFields:\n'+qList.join('\n')}]}]})});
+    var data=await res.json();
+    var reply=(data.content&&data.content[0])?data.content[0].text:'';
+    _parseClaudeExtraction(reply);
+  }catch(e){speakIt('Could not read that file. Try a plain text version.',null);}
+}
+
+async function _extractAnswersWithClaude(text){
+  var qList=[];SECS.forEach(function(sec){sec.qs.forEach(function(q){qList.push(q.k);});});
+  try{
+    var res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:'Extract answers to these brand strategy fields from the document below. For each found output:\nFIELD: [field name]\nANSWER: [answer]\n\nFields:\n'+qList.join('\n')+'\n\nDocument:\n'+text.substring(0,6000)}]})});
+    var data=await res.json();
+    var reply=(data.content&&data.content[0])?data.content[0].text:'';
+    _parseClaudeExtraction(reply);
+  }catch(e){speakIt('Could not read that document. Let us go through the questions together.',function(){askQ();});}
+}
+
+function _parseClaudeExtraction(reply){
+  var loaded=0;
+  var blocks=reply.match(/FIELD:\s*(.+?)\nANSWER:\s*([\s\S]+?)(?=\nFIELD:|$)/g)||[];
+  blocks.forEach(function(block){
+    var fm=block.match(/FIELD:\s*(.+)/);var am=block.match(/ANSWER:\s*([\s\S]+)/);
+    if(!fm||!am)return;
+    var fieldName=fm[1].trim();var answerText=am[1].trim();
+    if(!answerText)return;
+    SECS.forEach(function(sec){sec.qs.forEach(function(q){
+      if(q.k.toLowerCase()===fieldName.toLowerCase()||q.k.toLowerCase().includes(fieldName.toLowerCase().substring(0,15))||fieldName.toLowerCase().includes(q.k.toLowerCase().substring(0,15))){
+        if(!answers[q.k]){answers[q.k]=answerText;loaded++;}
       }
-    } else {
-      speakIt('That file does not look like a StratIQ form. Download the form first, fill it in, then upload it here.',null);
-    }
-  };
-  reader.readAsText(file);
-  input.value='';
+    });});
+  });
+  if(loaded>0){_afterUploadPreFill(loaded);}
+  else{speakIt('Could not match answers to fields. Let us go through them together.',function(){askQ();});}
+}
+
+function _afterUploadPreFill(loaded){
+  saveProgress(false);
+  var totalAnswered=Object.keys(answers).filter(function(k){return answers[k]&&answers[k].trim();}).length;
+  var totalQs=SECS.reduce(function(a,s){return a+s.qs.length;},0);
+  var secSummary=SECS.map(function(sec){
+    var answered=sec.qs.filter(function(q){return answers[q.k]&&answers[q.k].trim();}).length;
+    return sec.name+': '+answered+'/'+sec.qs.length;
+  }).join(', ');
+  var msg='I pulled '+loaded+' answers from your document. Here is where things stand — '+secSummary+'. Would you like to skip to the gaps, review what I found, or start fresh from the beginning?';
+  window._resumeChoiceMode=true;window._resumeChoiceContext='upload';
+  speakIt(msg,function(){setLabel('Skip to gaps · Review · Start fresh');setMicReady();});
 }
 
 // FIX 5: Hide browser URL bar for immersive full-screen feel
@@ -1436,7 +1778,7 @@ document.addEventListener('visibilitychange',function(){if(document.hidden&&(cs>
 window.addEventListener('pagehide',function(){if(cs>0||cq>0)saveProgress(false);});
 
 // ── CONTINUE SESSION ─────────────────────────────────────────────
-function continueSession(){
+function continueSession(){window._resumeChoiceContext=null;
   try{const p=JSON.parse(localStorage.getItem(SAVE_KEY));cs=p.cs||0;cq=p.cq||0;answers=p.answers||{};}catch(e){cs=0;cq=0;answers={};}
   document.getElementById('start-ov').style.display='none';
   try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
@@ -1455,11 +1797,49 @@ function continueSession(){
   speakIt(welcomeText,function(){setLabel('Start over · Review · Continue');setMicReady();window._resumeChoiceMode=true;});
 }
 function _handleResumeChoice(text){
+  if(window._resumeChoiceContext==='upload'){_handleUploadChoice(text);return;}
+  if(window._resumeChoiceContext==='confirm_delete'){
+    window._resumeChoiceMode=false;window._resumeChoiceContext=null;
+    var tc=text.toLowerCase();
+    if(tc.includes('yes')||tc.includes('yeah')||tc.includes('confirm')||tc.includes('sure')||tc.includes('go ahead')){
+      answers={};cs=0;cq=0;saveProgress(false);
+      speakIt('Done — all cleared. Starting from the top.',function(){showSecIntro();});
+    } else {
+      speakIt('No problem — keeping your answers. Picking up from the first gap.',function(){
+        for(var si=0;si<SECS.length;si++){for(var qi=0;qi<SECS[si].qs.length;qi++){if(!answers[SECS[si].qs[qi].k]){cs=si;cq=qi;askQ();return;}}}showSubmit();
+      });
+    }
+    return;
+  }
   window._resumeChoiceMode=false;
-  const t=text.toLowerCase();
+  var t=text.toLowerCase();
   if(t.includes('start')||t.includes('fresh')||t.includes('over')||t.includes('begin')||t.includes('reset')){startFresh();}
   else if(t.includes('review')||t.includes('overview')||t.includes('summary')||t.includes('answers')){reviewAnswers();}
-  else{const qName=SECS[cs]&&SECS[cs].qs[cq]?SECS[cs].qs[cq].k:'';speakIt('Perfect — picking up right from '+qName+'.',function(){askQ();});}
+  else{var qName=SECS[cs]&&SECS[cs].qs[cq]?SECS[cs].qs[cq].k:'';speakIt('Perfect — picking up right from '+qName+'.',function(){askQ();});}
+}
+
+function _handleUploadChoice(text){
+  window._resumeChoiceMode=false;window._resumeChoiceContext=null;
+  var t=text.toLowerCase();
+  if(t.includes('fresh')||t.includes('scratch')||t.includes('start over')||t.includes('delete')||t.includes('clear')){
+    speakIt('Just to confirm — this clears all pre-filled answers and starts from the top. Say yes to confirm.',function(){
+      window._resumeChoiceMode=true;window._resumeChoiceContext='confirm_delete';setMicReady();
+    });
+  } else if(t.includes('review')||t.includes('check')||t.includes('see')||t.includes('look')){
+    showReviewWheel(false);
+  } else {
+    // Default: skip to gaps
+    for(var si=0;si<SECS.length;si++){
+      for(var qi=0;qi<SECS[si].qs.length;qi++){
+        if(!answers[SECS[si].qs[qi].k]){
+          cs=si;cq=qi;
+          speakIt('Great — picking up from '+SECS[si].name+'.',function(){askQ();});
+          return;
+        }
+      }
+    }
+    showSubmit();
+  }
 }
 function startFresh(){localStorage.removeItem(SAVE_KEY);cs=0;cq=0;answers={};speakIt('Starting fresh. Let us kick things off from the top.',function(){showSecIntro();});}
 function reviewAnswers(){showReviewWheel(false);}
@@ -1512,36 +1892,49 @@ function hideAnswerActions(cb){
   setTimeout(function(){aa.classList.remove('visible');aa.style.display='none';if(cb)cb();},250);
 }
 function confirmAnswer(){
-  if(!pendingAnswer)return;
-  const ans=pendingAnswer;pendingAnswer=null;
-  // Stop audio immediately on tap — don't wait for hideAnswerActions animation
+  if(!pendingAnswer&&!window._pendingConfirmedAnswer)return;
   sharedAudio.pause();
   if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
-  setLabel('Thinking...');setViz('speaking');
-  hideAnswerActions(function(){processAnswer(ans);});
+  if(window._pendingConfirmedAnswer){
+    var pca=window._pendingConfirmedAnswer;
+    window._pendingConfirmedAnswer=null;pendingAnswer=null;
+    hideAnswerActions(function(){cq++;advanceWithReaskQueue();});
+  } else {
+    const ans=pendingAnswer;pendingAnswer=null;
+    setLabel('Thinking...');setViz('speaking');
+    hideAnswerActions(function(){processAnswer(ans);});
+  }
 }
 function retryAnswer(){
   pendingAnswer=null;
+  window._pendingConfirmedAnswer=null;
   hideAnswerActions(function(){
     document.getElementById('transcript').textContent='';
     document.getElementById('bot-resp').innerHTML='';
-    speakIt(advancePhrase(),function(){setMicReady();startListen();});
+    speakIt(_pickRetryPhrase(),function(){setMicReady();startListen();});
   });
 }
 
 // ── DOCK AUTO-HIDE (while AI is speaking) ────────────────────────
 function dockHide(){
   if(pendingAnswer)return;
-  const dock=document.getElementById('bottom-dock');
-  const mic=document.getElementById('mic-wrap');
+  var dock=document.getElementById('bottom-dock');
   if(dock)dock.classList.add('autohide');
-  if(mic)mic.classList.add('autohide');
+  // Mic stays visible — changes to "Tap to interrupt"
+  var mb=document.getElementById('mic-btn');
+  var ml=document.getElementById('mic-label');
+  var mw=document.getElementById('mic-wrap');
+  if(mb){mb.classList.remove('ready','idle-pulse','on');}
+  if(ml)ml.textContent='Tap to interrupt';
+  if(mw){mw.classList.add('visible');mw.classList.remove('autohide');}
 }
 function dockShow(){
-  const dock=document.getElementById('bottom-dock');
-  const mic=document.getElementById('mic-wrap');
+  var dock=document.getElementById('bottom-dock');
+  var mic=document.getElementById('mic-wrap');
   if(dock)dock.classList.remove('autohide');
   if(mic)mic.classList.remove('autohide');
+  var ml=document.getElementById('mic-label');
+  if(ml&&!listening)ml.textContent='Tap to speak';
 }
 
 // ── REVIEW WHEEL ─────────────────────────────────────────────────
@@ -1660,54 +2053,26 @@ function finishReview(){
 }
 
 // ── POSITION MIC ─────────────────────────────────────────────────
-function positionMic(){
-  const micWrap=document.getElementById('mic-wrap');const panel=document.getElementById('panel');const dock=document.getElementById('bottom-dock');
-  if(!micWrap||!panel||!dock)return;
-  const micH=micWrap.offsetHeight||90;
-  const panelRect=panel.getBoundingClientRect();
-  const contentBottom=Math.min(panelRect.bottom,window.innerHeight-dock.offsetHeight-micH-20);
-  const dockRect=dock.getBoundingClientRect();const buttonsTop=dockRect.top;
-  const gap=buttonsTop-contentBottom;const minGap=micH+24;
-  let targetBottom;
-  if(gap>=minGap){const centreY=contentBottom+gap/2;targetBottom=window.innerHeight-centreY-micH/2;}
-  else{targetBottom=dock.offsetHeight+16;}
-  const minBottom=dock.offsetHeight+8;const maxBottom=window.innerHeight*0.55;
-  targetBottom=Math.max(minBottom,Math.min(maxBottom,targetBottom));
-  micWrap.style.bottom=targetBottom+'px';
-}
 
-// ── PULL-TO-REFRESH BLOCK + SWIPE-TO-SHOW-HEADER ─────────────────
-(function(){
-  var startY=0,startX=0;
-  document.addEventListener('touchstart',function(e){startY=e.touches[0].clientY;startX=e.touches[0].clientX;},{passive:true});
-  document.addEventListener('touchmove',function(e){
-    var dy=e.touches[0].clientY-startY;var dx=e.touches[0].clientX-startX;
-    if(startY<60&&dy>8&&Math.abs(dy)>Math.abs(dx)&&window.scrollY<=0){e.preventDefault();}
-  },{passive:false});
-  document.addEventListener('touchend',function(e){
-    var endY=e.changedTouches[0].clientY;var dy=endY-startY;var dx=e.changedTouches[0].clientX-startX;
-    if(Math.abs(dy)<Math.abs(dx)*0.8)return;
-    var hdr=document.querySelector('header');if(!hdr)return;
-    if(dy>50&&startY<80){hdr.classList.remove('hidden');var sb=document.getElementById('save-btn');if(sb)sb.classList.add('header-shown');}
-    else if(dy<-40&&!hdr.classList.contains('hidden')){hdr.classList.add('hidden');var sb=document.getElementById('save-btn');if(sb)sb.classList.remove('header-shown');}
-  },{passive:true});
-})();
+
+// ── PULL-TO-REFRESH BLOCK + SWIPE-TO-SHOW-HEADER ─────────────────;
 
 // ── MOBILE KEYBOARD HANDLER ───────────────────────────────────────
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',function(){
     const keyboardH=window.innerHeight-window.visualViewport.height;
-    if(keyboardH>80&&textActive){document.getElementById('app').style.paddingBottom=(keyboardH+20)+'px';setTimeout(function(){var inp=document.getElementById('tinput');if(inp)inp.scrollIntoView({behavior:'smooth',block:'center'});},80);}
-    else{document.getElementById('app').style.paddingBottom='';}
+    if(keyboardH>80&&textActive){
+      document.getElementById('app').style.paddingBottom=(keyboardH+20)+'px';
+      setTimeout(function(){var inp=document.getElementById('tinput');if(inp)inp.scrollIntoView({behavior:'smooth',block:'center'});},80);
+    } else {
+      document.getElementById('app').style.paddingBottom='';
+    }
     positionMic();
   });
 }
 
 // ── URL BAR HIDE ──────────────────────────────────────────────────
 function tryHideURLBar(){if(window.scrollY===0){window.scrollTo(0,1);setTimeout(function(){window.scrollTo(0,0);},100);}}
-window.addEventListener('load',function(){setTimeout(tryHideURLBar,500);setTimeout(function(){checkForSavedProgress();},200);});
-document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(tryHideURLBar,300);});
-window.addEventListener('resize',function(){positionMic();txSetMaxHeight();});
 
 // ── TRANSCRIPT SCROLL FADE ─────────────────────────────────────
 var _txAutoScroll = true;
