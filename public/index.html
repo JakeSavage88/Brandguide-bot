@@ -704,20 +704,31 @@ const SAVE_KEY='stratiq_progress';
 const API='/api/claude';
 
 // ── VAPI CONFIG ──────────────────────────────────────────────────
-const VAPI_PUBLIC_KEY = '513efab2-1838-40ce-a7c5-3072ed7b5dda';
-const VAPI_ASSISTANT_ID = '66a225b1-1a0d-4d47-8cbf-22261036cf95';
+const VAPI_PUBLIC_KEY = window.__VAPI_KEY__;
+const VAPI_ASSISTANT_ID = window.__VAPI_ASSISTANT__;
 
-// ── VAPI INSTANCE — initialised after SDK module loads ────────────
+// ── VAPI INSTANCE — initialised after config fetched and SDK loaded ──
 let vapi = null;
 function _initVapi(){
   if(vapi)return;
   if(!window.Vapi){console.error('Vapi SDK not loaded');return;}
-  vapi = new window.Vapi(VAPI_PUBLIC_KEY);
+  if(!window.__VAPI_KEY__){console.error('Vapi config not loaded yet');return;}
+  vapi = new window.Vapi(window.__VAPI_KEY__);
   _attachVapiEvents();
 }
 window.addEventListener('vapiReady', _initVapi);
-// Also try immediately in case module already loaded
-if(window.Vapi) _initVapi();
+if(window.Vapi&&window.__VAPI_KEY__) _initVapi();
+
+// Fetch Vapi config securely from serverless function
+fetch('/api/vapi-config')
+  .then(function(r){return r.json();})
+  .then(function(cfg){
+    window.__VAPI_KEY__ = cfg.publicKey;
+    window.__VAPI_ASSISTANT__ = cfg.assistantId;
+    // If SDK already loaded, init now
+    if(window.Vapi) _initVapi();
+  })
+  .catch(function(err){console.error('Failed to load Vapi config:',err);});
 let vapiActive = false;
 let vapiStarting = false;
 
@@ -780,19 +791,33 @@ function _buildSystemPrompt(){
 // ── START VAPI SESSION ────────────────────────────────────────────
 async function _startVapiSession(){
   if(vapiActive||vapiStarting)return;
-  if(!vapi){console.error('Vapi not initialised');setLabel('Connection error — refresh and try again');return;}
+  if(!vapi){
+    // Vapi SDK not loaded yet — retry after short delay
+    setTimeout(_startVapiSession, 500);
+    return;
+  }
   vapiStarting = true;
+  setLabel('Connecting...');
+
+  // Build dynamic system prompt with current answers context
+  const answersSummary = Object.entries(answers)
+    .filter(function(_ref){return _ref[1]&&_ref[1].trim();})
+    .map(function(_ref2){return _ref2[0]+': '+_ref2[1].substring(0,80)+(_ref2[1].length>80?'...':'');})
+    .join('\n');
+  const refContext = _buildRefContext();
+  const sec = SECS[cs];
+  const q = sec ? sec.qs[cq] : null;
+  const currentQ = q ? 'Current question: \''+q.p+'\' Field: '+q.k+' Required: '+q.req : '';
+
   try{
-    await vapi.start(VAPI_ASSISTANT_ID, {
+    await vapi.start(window.__VAPI_ASSISTANT__, {
       assistantOverrides: {
-        model: {
-          provider: 'anthropic',
-          model: 'claude-sonnet-4-6',
-          messages: [
-            {role: 'system', content: _buildSystemPrompt()}
-          ],
-          maxTokens: 350,
-          temperature: 0.4
+        variableValues: {
+          answersSummary: answersSummary || 'None yet.',
+          refContext: refContext || '',
+          questionPrompt: q ? q.p : '',
+          fieldKey: q ? q.k : '',
+          required: q ? String(q.req) : 'false'
         }
       }
     });
