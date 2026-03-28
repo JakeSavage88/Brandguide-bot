@@ -14,7 +14,7 @@
 // Vapi SDK — loaded inline as module, exposes window.Vapi
 </script>
 <script type="module">
-  import Vapi from 'https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.js';
+  import { Vapi } from 'https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.js';
   window.Vapi = Vapi;
   window.dispatchEvent(new Event('vapiReady'));
 </script>
@@ -612,6 +612,10 @@ let analyser = null;
 let vizRaf = null;
 let currentAudio = null;
 let audioSource = null;
+
+// ── SESSION STATE ─────────────────────────────────────────────────
+let cs = 0, cq = 0, answers = {}, busy = false, speaking = false, textActive = false;
+let refDocs = [];
 
 const SECS=[
   {name:'Brand Overview',emoji:'🏛',
