@@ -10,7 +10,14 @@
 <title>StratIQ — AI Brand Strategy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.iife.js"></script>
+<script>
+// Vapi SDK — loaded inline as module, exposes window.Vapi
+</script>
+<script type="module">
+  import Vapi from 'https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.js';
+  window.Vapi = Vapi;
+  window.dispatchEvent(new Event('vapiReady'));
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -600,6 +607,11 @@ const sharedAudio = new Audio();
 sharedAudio.preload = 'auto';
 let currentBlobUrl = null;
 let wordTimings = null;
+let audioCtx = null;
+let analyser = null;
+let vizRaf = null;
+let currentAudio = null;
+let audioSource = null;
 
 const SECS=[
   {name:'Brand Overview',emoji:'🏛',
@@ -685,8 +697,17 @@ const API='/api/claude';
 const VAPI_PUBLIC_KEY = '513efab2-1838-40ce-a7c5-3072ed7b5dda';
 const VAPI_ASSISTANT_ID = '66a225b1-1a0d-4d47-8cbf-22261036cf95';
 
-// ── VAPI INSTANCE ─────────────────────────────────────────────────
-const vapi = new Vapi(VAPI_PUBLIC_KEY);
+// ── VAPI INSTANCE — initialised after SDK module loads ────────────
+let vapi = null;
+function _initVapi(){
+  if(vapi)return;
+  if(!window.Vapi){console.error('Vapi SDK not loaded');return;}
+  vapi = new window.Vapi(VAPI_PUBLIC_KEY);
+  _attachVapiEvents();
+}
+window.addEventListener('vapiReady', _initVapi);
+// Also try immediately in case module already loaded
+if(window.Vapi) _initVapi();
 let vapiActive = false;
 let vapiStarting = false;
 
@@ -779,6 +800,7 @@ function _stopVapiSession(){
 }
 
 // ── VAPI EVENT LISTENERS ──────────────────────────────────────────
+function _attachVapiEvents(){
 vapi.on('call-start', function(){
   vapiActive = true;
   vapiStarting = false;
@@ -796,20 +818,17 @@ vapi.on('call-end', function(){
 });
 
 vapi.on('speech-start', function(){
-  // User started speaking
   setViz('listening');
   clearWaiting();
 });
 
 vapi.on('speech-end', function(){
-  // User finished — Vapi is processing
   setViz('speaking');
   setLabel('Thinking...');
   var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
 });
 
 vapi.on('message', function(message){
-  // Handle transcript events
   if(message.type === 'transcript'){
     if(message.role === 'user' && message.transcriptType === 'final'){
       document.getElementById('transcript').textContent = message.transcript;
@@ -818,7 +837,6 @@ vapi.on('message', function(message){
       var td=document.getElementById('thinking-dots');if(td)td.classList.remove('visible');
       setViz('speaking');
       setLabel('');
-      // Display Cass response as subtitles
       var cleaned = message.transcript
         .replace(/ANSWER:[\s\S]*$/m,'')
         .replace(/READY_NEXT/g,'')
@@ -833,7 +851,6 @@ vapi.on('message', function(message){
           botEl.appendChild(span);
         });
       }
-      // Parse ANSWER / READY_NEXT from final assistant transcript
       if(message.transcriptType === 'final'){
         _handleVapiReply(message.transcript);
       }
@@ -849,6 +866,7 @@ vapi.on('error', function(err){
   setLabel('');
   var td=document.getElementById('thinking-dots');if(td)td.classList.remove('visible');
 });
+} // end _attachVapiEvents
 
 // ── PARSE VAPI ASSISTANT REPLY ────────────────────────────────────
 function _handleVapiReply(text){
@@ -1191,10 +1209,6 @@ function clearIdleTimer(){
 function setLabel(t){document.getElementById('viz-label').textContent=t;}
 function setViz(m){const v=document.getElementById('viz');v.classList.remove('speaking','listening','waiting');if(m!=='idle')v.classList.add(m);}
 function clearWaiting(){setViz('idle');var mb=document.getElementById('mic-btn');if(mb)mb.classList.remove('idle-pulse');}
-
-let audioCtx=null;let analyser=null;let vizRaf=null;
-let currentAudio=null;
-let audioSource=null; // MediaElementSource — created ONCE, reused every call
 
 function getAudioCtx(){
   if(!audioCtx){
