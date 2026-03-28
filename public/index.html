@@ -10,7 +10,7 @@
 <title>StratIQ — AI Brand Strategy</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi.iife.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -595,6 +595,12 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 
 
 <script>
+// ── AUDIO GLOBALS — declared first so all functions can reference them ──
+const sharedAudio = new Audio();
+sharedAudio.preload = 'auto';
+let currentBlobUrl = null;
+let wordTimings = null;
+
 const SECS=[
   {name:'Brand Overview',emoji:'🏛',
    intro:"Let's kick things off with the big picture — who you are and what you stand for. This is the foundation everything else gets built on. Let's make it count.",
@@ -1266,12 +1272,6 @@ function stopAudioViz(){
   document.getElementById('viz').classList.remove('live');
   document.querySelectorAll('.bar').forEach(function(b){b.style.height='';});
 }
-
-// Single reusable audio element - mobile requires this for autoplay after first gesture
-const sharedAudio = new Audio();
-sharedAudio.preload = 'auto';
-let currentBlobUrl = null;
-let wordTimings = null;
 
 // Dynamic mic positioning — centres mic between panel content bottom and alts top on desktop
 function positionMic(){
