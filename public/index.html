@@ -1500,7 +1500,7 @@ function goBackSection(){
   speakIt('No worries — taking you back to the start of '+sec.name+'.',function(){askQ();});
 }
 
-
+function skipQ(){
   clearIdleTimer();
   const sec=SECS[cs];
   if(cq>=sec.qs.length)return;
