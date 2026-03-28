@@ -917,6 +917,8 @@ let idleTimer=null;
 let idleCount=0;
 
 function beginSession(){
+  // Init AudioContext on user gesture — required for audio playback on mobile
+  try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}
   // Request mic permission on user gesture
   if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){
     navigator.mediaDevices.getUserMedia({audio:true})
@@ -925,6 +927,8 @@ function beginSession(){
   }
   document.getElementById('start-ov').style.display='none';
   document.getElementById('save-btn').style.display='flex';
+  sharedAudio.load();
+  var actxInit=getAudioCtx();if(actxInit&&actxInit.state==='suspended'){actxInit.resume().catch(function(){});}
   tryHideURLBar();
   buildPills();
   txInit();
@@ -1267,6 +1271,7 @@ function stopAudioViz(){
 const sharedAudio = new Audio();
 sharedAudio.preload = 'auto';
 let currentBlobUrl = null;
+let wordTimings = null;
 
 // Dynamic mic positioning — centres mic between panel content bottom and alts top on desktop
 function positionMic(){
