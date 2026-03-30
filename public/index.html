@@ -870,8 +870,10 @@ vapi.on('call-start', function(){
     .map(function(r){return r[0]+': '+r[1].substring(0,120);})
     .join('\n') || 'None yet.';
 
-  // Step 1: inject system context so Cass knows answers + current field
+  // Step 1: inject system context — answers, ref docs, and current field
+  var refContext = _buildRefContext();
   var systemCtx = 'ANSWERS SO FAR:\n' + answersSoFar +
+    (refContext ? '\n\nREFERENCE DOCUMENTS (use as background context throughout — draw on these when relevant, do not quote directly):\n' + refContext : '') +
     '\n\nCurrent question field: ' + (q ? q.k : '') +
     ' | Required: ' + (q ? q.req : false) +
     ' | Section: ' + (sec ? sec.name : '') +
@@ -983,11 +985,13 @@ function _handleVapiReply(text){
   // Match "ready next" or "ready_next" as the advance signal
   var lc = text.toLowerCase();
 
-  // Detect advance signal — "ready next" spoken aloud by Cass
-  var hasReadyNext = /ready.?next/i.test(text) || lc.includes('ready next');
+  // Detect advance signal — any natural closing phrase Cass uses
+  var hasReadyNext = /ready.?next|moving on|let.?s continue|next one|let.?s keep going|moving forward|next up/i.test(text);
 
-  // Extract answer — text after "answer" up to "ready" or end
-  var am = text.match(/answer[,.]?\s*([^.]+?)(?:\s*ready|$)/i);
+  // Extract answer — text after "answer" up to the closing signal or end
+  var am = text.match(/answer[,.]?\s*(.+?)(?:\s*(?:got it|perfect|noted|solid|good stuff|logged|nice one|moving on|next one|let.?s continue|moving forward|next up|ready))/i);
+  // Fallback: everything after "answer" if no closing phrase caught it
+  if(!am) am = text.match(/answer[,.]?\s*(.+?)[\.!]?\s*$/i);
 
   console.log('hasReadyNext:', hasReadyNext, '| answer capture:', am ? am[1].substring(0,60) : 'none');
 
@@ -1018,7 +1022,9 @@ function _injectQuestionContext(){
     .filter(function(r){return r[1]&&r[1].trim();})
     .map(function(r){return r[0]+': '+r[1].substring(0,120);})
     .join('\n') || 'None yet.';
+  var refContext = _buildRefContext();
   var systemCtx = 'ANSWERS SO FAR:\n' + answersSoFar +
+    (refContext ? '\n\nREFERENCE DOCUMENTS (use as background context throughout):\n' + refContext : '') +
     '\n\nNEXT question field: ' + q.k +
     ' | Required: ' + q.req +
     ' | Section: ' + sec.name +
