@@ -812,9 +812,23 @@ async function _startVapiSession(){
   }
   vapiStarting = true;
   setLabel('Connecting...');
-  console.log('Starting Vapi session, assistant:', window.__VAPI_ASSISTANT__);
+  const sec = SECS[cs];
+  const q = sec ? sec.qs[cq] : null;
+  console.log('Starting Vapi session, assistant:', window.__VAPI_ASSISTANT__, '| Q:', q ? q.k : 'none');
   try{
-    await vapi.start(window.__VAPI_ASSISTANT__);
+    await vapi.start(window.__VAPI_ASSISTANT__, {
+      assistantOverrides: {
+        variableValues: {
+          currentQuestion: q ? q.p : '',
+          fieldName:       q ? q.k  : '',
+          isRequired:      q ? String(q.req) : 'false',
+          answersSoFar:    Object.entries(answers).filter(function(r){return r[1]&&r[1].trim();}).map(function(r){return r[0]+': '+r[1].substring(0,120);}).join('\n') || 'None yet.',
+          sectionName:     sec ? sec.name : '',
+          questionNumber:  String(totalDone() + 1),
+          totalQuestions:  String(totalAll())
+        }
+      }
+    });
   } catch(err){
     console.error('Vapi start error full:', JSON.stringify(err, null, 2));
     vapiStarting = false;
@@ -1081,10 +1095,15 @@ function runUITour(onComplete){
   if(skipTourBtn) skipTourBtn.style.display='inline-flex';
 
   var stepIdx=0;
+  // Reset abort flag when tour starts
+  window._tourAborted = false;
+
   function runStep(){
+    if(window._tourAborted) return;
     if(stepIdx>=steps.length){
       if(skipTourBtn) skipTourBtn.style.display='none';
       setTimeout(function(){
+        if(window._tourAborted) return;
         tourHighlight([],0);
         if(onComplete)onComplete();
       },800);
@@ -1092,10 +1111,11 @@ function runUITour(onComplete){
     }
     var step=steps[stepIdx];
     stepIdx++;
-    // Highlight element 600ms before voice starts — snappier flow
     tourHighlight(step.ids);
     setTimeout(function(){
+      if(window._tourAborted) return;
       speakIt(step.text,function(){
+        if(window._tourAborted) return;
         setTimeout(runStep,200);
       });
     },600);
@@ -1548,27 +1568,31 @@ function _buildRefContext(){
 var _tourSkipFn = null; // holds the onComplete callback for tour
 
 function skipIntro(){
-  // Stop current TTS, hide skip intro button, run tour immediately
+  // Stop TTS, skip intro + tour entirely, go straight to questions
   sharedAudio.pause();
   if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+  stopAudioViz();
   speaking=false;
+  busy=false;
+  window._tourAborted=true;
+  tourHighlight([],0);
   document.getElementById('skip-intro-btn').style.display='none';
-  // Trigger tour directly
-  runUITour(function(){
-    tourHighlight([],0);
-    setTimeout(showSecIntro, 400);
-  });
+  document.getElementById('skip-tour-btn').style.display='none';
+  setTimeout(showSecIntro, 300);
 }
 
 function skipTour(){
-  // Stop current TTS, clear highlights, jump to questions
+  // Stop TTS, clear highlights, go straight to questions
   sharedAudio.pause();
   if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+  stopAudioViz();
   speaking=false;
+  busy=false;
+  window._tourAborted=true;
   tourHighlight([],0);
   document.getElementById('skip-tour-btn').style.display='none';
   document.getElementById('skip-intro-btn').style.display='none';
-  setTimeout(showSecIntro, 400);
+  setTimeout(showSecIntro, 300);
 }
 
 function goBackSection(){
