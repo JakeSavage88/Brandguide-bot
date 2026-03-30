@@ -1170,19 +1170,16 @@ function askQ(){
   // Auto-hide header
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
 
-  // Wait for any lingering TTS to fully stop before starting Vapi
-  // Then start Vapi — it speaks the question and handles mic automatically
-  setTimeout(function(){
-    if(sharedAudio && !sharedAudio.paused){
-      // TTS still playing — wait for it to finish then start
-      sharedAudio.addEventListener('ended', function onEnd(){
-        sharedAudio.removeEventListener('ended', onEnd);
-        setTimeout(_startVapiSession, 200);
-      });
-    } else {
-      _startVapiSession();
+  // Guard: only start Vapi when all local TTS has fully finished
+  // speaking flag is set by speakIt and cleared in done() callback
+  function _waitForTTSThenStartVapi(){
+    if(speaking){
+      setTimeout(_waitForTTSThenStartVapi, 200);
+      return;
     }
-  }, 500);
+    _startVapiSession();
+  }
+  setTimeout(_waitForTTSThenStartVapi, 300);
   positionMic();
 }
 
