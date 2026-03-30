@@ -827,7 +827,7 @@ async function _startVapiSession(){
       setLabel('');
       setTimeout(_startVapiSession, 1500);
     }
-  }, 8000);
+  }, 15000);
 
   try{
     await vapi.start(window.__VAPI_ASSISTANT__);
@@ -853,23 +853,46 @@ vapi.on('call-start', function(){
   vapiActive = true;
   vapiStarting = false;
   clearTimeout(window._vapiWatchdog);
-  setViz('listening');
-  setLabel('Listening...');
+  setViz('speaking');
+  setLabel('');
   _startSessionTimer();
-  // Inject current question context as a background system message
-  // This is the reliable way to pass dynamic data after connection
+  console.log('Vapi call-start fired');
+
+  // Build context for Cass
   var sec = SECS[cs];
   var q = sec ? sec.qs[cq] : null;
-  var answersSoFar = Object.entries(answers).filter(function(r){return r[1]&&r[1].trim();}).map(function(r){return r[0]+': '+r[1].substring(0,120);}).join('\n') || 'None yet.';
-  var contextMsg = 'CONTEXT UPDATE:\nCurrent question: ' + (q ? q.p : '') + '\nField: ' + (q ? q.k : '') + '\nRequired: ' + (q ? q.req : false) + '\nSection: ' + (sec ? sec.name : '') + ' (Q' + (totalDone()+1) + ' of ' + totalAll() + ')\n\nAnswers so far:\n' + answersSoFar;
+  var answersSoFar = Object.entries(answers)
+    .filter(function(r){return r[1]&&r[1].trim();})
+    .map(function(r){return r[0]+': '+r[1].substring(0,120);})
+    .join('\n') || 'None yet.';
+
+  // Step 1: inject system context so Cass knows answers + current field
+  var systemCtx = 'ANSWERS SO FAR:\n' + answersSoFar +
+    '\n\nCurrent question field: ' + (q ? q.k : '') +
+    ' | Required: ' + (q ? q.req : false) +
+    ' | Section: ' + (sec ? sec.name : '') +
+    ' (Q' + (totalDone()+1) + ' of ' + totalAll() + ')';
+
+  // Step 2: inject as user message — this triggers Cass to speak immediately
+  // The user message is the question prompt, Cass responds by asking it conversationally
+  var userPrompt = q ? q.p : 'Please ask the next question.';
+
   setTimeout(function(){
-    if(vapiActive){
+    if(!vapiActive) return;
+    try{
+      // First send system context
+      vapi.send({ type: 'add-message', message: { role: 'system', content: systemCtx } });
+    }catch(e){ console.warn('vapi.send system failed:', e); }
+
+    setTimeout(function(){
+      if(!vapiActive) return;
       try{
-        vapi.send({ type: 'add-message', message: { role: 'system', content: contextMsg } });
-        console.log('Vapi context injected via send()');
-      }catch(e){ console.warn('vapi.send context failed:', e); }
-    }
-  }, 500);
+        // Then trigger Cass to speak by sending the question as a user message
+        vapi.send({ type: 'add-message', message: { role: 'user', content: userPrompt } });
+        console.log('Vapi question triggered:', q ? q.k : 'none');
+      }catch(e){ console.warn('vapi.send user failed:', e); }
+    }, 300);
+  }, 600);
 });
 
 vapi.on('call-end', function(){
