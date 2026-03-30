@@ -915,6 +915,10 @@ vapi.on('speech-end', function(){
   var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
 });
 
+// Accumulate assistant transcript fragments into a full turn buffer
+var _vapiTurnBuffer = '';
+var _vapiTurnTimer = null;
+
 vapi.on('message', function(message){
   if(message.type === 'transcript'){
     if(message.role === 'user' && message.transcriptType === 'final'){
@@ -924,22 +928,37 @@ vapi.on('message', function(message){
       var td=document.getElementById('thinking-dots');if(td)td.classList.remove('visible');
       setViz('speaking');
       setLabel('');
-      var cleaned = message.transcript
-        .replace(/ANSWER:[\s\S]*$/m,'')
-        .replace(/READY_NEXT/g,'')
+
+      // Accumulate fragments
+      var frag = message.transcript || '';
+      _vapiTurnBuffer += ' ' + frag;
+
+      // Show cleaned text in UI (strip token noise)
+      var cleaned = frag
+        .replace(/answer[,.]?\s*/gi,'')
+        .replace(/ready\s*next\.?/gi,'')
         .trim();
       if(cleaned){
         var botEl=document.getElementById('bot-resp');
-        botEl.innerHTML='';
-        cleaned.split(' ').forEach(function(w,i){
+        var words = cleaned.split(' ');
+        words.forEach(function(w){
+          if(!w.trim()) return;
           var span=document.createElement('span');
           span.className='bot-word reveal';
-          span.textContent=(i>0?' ':'')+w;
+          span.textContent=' '+w;
           botEl.appendChild(span);
         });
       }
+
+      // On final transcript fragment, process the full accumulated turn
       if(message.transcriptType === 'final'){
-        _handleVapiReply(message.transcript);
+        clearTimeout(_vapiTurnTimer);
+        _vapiTurnTimer = setTimeout(function(){
+          var fullTurn = _vapiTurnBuffer.trim();
+          console.log('Full turn:', JSON.stringify(fullTurn.substring(0,200)));
+          _vapiTurnBuffer = '';
+          _handleVapiReply(fullTurn);
+        }, 800);
       }
     }
   }
@@ -957,23 +976,37 @@ vapi.on('error', function(err){
 
 // ── PARSE VAPI ASSISTANT REPLY ────────────────────────────────────
 function _handleVapiReply(text){
-  console.log('Vapi reply raw:', JSON.stringify(text.substring(0,200)));
-  const am = text.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
-  const ready = text.includes('READY_NEXT');
-  console.log('ANSWER match:', am ? am[1].substring(0,60) : 'none', '| READY_NEXT:', ready);
+  console.log('Full turn text:', JSON.stringify(text.substring(0,300)));
 
-  if(am && ready){
-    const sec = SECS[cs];
-    const q = sec ? sec.qs[cq] : null;
-    if(q){
-      answers[q.k] = am[1].trim();
-      saveProgress(false);
+  // Loose match: Deepgram mangles ANSWER:/READY_NEXT into spoken fragments
+  // Match "answer" (case-insensitive) followed by the captured value
+  // Match "ready next" or "ready_next" as the advance signal
+  var lc = text.toLowerCase();
+
+  // Detect advance signal — "ready next" spoken aloud by Cass
+  var hasReadyNext = /ready.?next/i.test(text) || lc.includes('ready next');
+
+  // Extract answer — text after "answer" up to "ready" or end
+  var am = text.match(/answer[,.]?\s*([^.]+?)(?:\s*ready|$)/i);
+
+  console.log('hasReadyNext:', hasReadyNext, '| answer capture:', am ? am[1].substring(0,60) : 'none');
+
+  if(hasReadyNext && am){
+    var captured = am[1].trim();
+    // Sanity check — don't capture empty or token-only strings
+    if(captured && captured.length > 1){
+      const sec = SECS[cs];
+      const q = sec ? sec.qs[cq] : null;
+      if(q){
+        answers[q.k] = captured;
+        saveProgress(false);
+        console.log('Answer saved:', q.k, '->', captured.substring(0,60));
+      }
+      cq++;
+      setTimeout(function(){
+        _advanceVapi();
+      }, 400);
     }
-    cq++;
-    // Advance to next question — restart Vapi with updated context
-    setTimeout(function(){
-      _advanceVapi();
-    }, 600);
   }
 }
 
