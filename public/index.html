@@ -884,19 +884,16 @@ vapi.on('call-start', function(){
   setTimeout(function(){
     if(!vapiActive) return;
     try{
-      // First send system context
       vapi.send({ type: 'add-message', message: { role: 'system', content: systemCtx } });
     }catch(e){ console.warn('vapi.send system failed:', e); }
-
     setTimeout(function(){
       if(!vapiActive) return;
       try{
-        // Then trigger Cass to speak by sending the question as a user message
         vapi.send({ type: 'add-message', message: { role: 'user', content: userPrompt } });
         console.log('Vapi question triggered:', q ? q.k : 'none');
       }catch(e){ console.warn('vapi.send user failed:', e); }
-    }, 300);
-  }, 600);
+    }, 150);
+  }, 300);
 });
 
 vapi.on('call-end', function(){
@@ -978,17 +975,41 @@ function _handleVapiReply(text){
   }
 }
 
+function _injectQuestionContext(){
+  var sec = SECS[cs];
+  var q = sec ? sec.qs[cq] : null;
+  if(!q || !vapiActive) return;
+  var answersSoFar = Object.entries(answers)
+    .filter(function(r){return r[1]&&r[1].trim();})
+    .map(function(r){return r[0]+': '+r[1].substring(0,120);})
+    .join('\n') || 'None yet.';
+  var systemCtx = 'ANSWERS SO FAR:\n' + answersSoFar +
+    '\n\nNEXT question field: ' + q.k +
+    ' | Required: ' + q.req +
+    ' | Section: ' + sec.name +
+    ' (Q' + (totalDone()+1) + ' of ' + totalAll() + ')';
+  try{
+    vapi.send({ type: 'add-message', message: { role: 'system', content: systemCtx } });
+  }catch(e){ console.warn('inject system failed:', e); }
+  setTimeout(function(){
+    if(!vapiActive) return;
+    try{
+      vapi.send({ type: 'add-message', message: { role: 'user', content: q.p } });
+      console.log('Next question injected:', q.k);
+    }catch(e){ console.warn('inject user failed:', e); }
+  }, 200);
+}
+
 function _advanceVapi(){
-  _stopVapiSession();
   const sec = SECS[cs];
   if(!sec || cq >= sec.qs.length){
+    // Section done — stop Vapi, show section complete screen
+    _stopVapiSession();
     completeSection();
     return;
   }
-  // Speak next question via local TTS, then wait for mic tap
-  setTimeout(function(){
-    askQ();
-  }, 400);
+  // Stay in the same Vapi session — just update UI and inject new question context
+  askQ();
 }
 
 // ── MIC BUTTON — with Vapi, mic is always live during a session ──
@@ -1247,8 +1268,12 @@ function askQ(){
   // Auto-hide header
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
 
-  // Guard: wait for local TTS to finish, then start Vapi once
-  // Skip entirely if Vapi is already active or starting
+  // If Vapi already active — just inject updated question context, don't restart
+  if(vapiActive){
+    _injectQuestionContext();
+    return;
+  }
+  // Otherwise wait for local TTS to finish then start Vapi
   function _waitForTTSThenStartVapi(){
     if(vapiActive||vapiStarting){
       console.log('askQ: Vapi already active — skipping start');
