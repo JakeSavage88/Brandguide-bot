@@ -817,16 +817,14 @@ async function _startVapiSession(){
   console.log('Starting Vapi session, assistant:', window.__VAPI_ASSISTANT__, '| Q:', q ? q.k : 'none');
   try{
     await vapi.start(window.__VAPI_ASSISTANT__, {
-      assistantOverrides: {
-        variableValues: {
-          currentQuestion: q ? q.p : '',
-          fieldName:       q ? q.k  : '',
-          isRequired:      q ? String(q.req) : 'false',
-          answersSoFar:    Object.entries(answers).filter(function(r){return r[1]&&r[1].trim();}).map(function(r){return r[0]+': '+r[1].substring(0,120);}).join('\n') || 'None yet.',
-          sectionName:     sec ? sec.name : '',
-          questionNumber:  String(totalDone() + 1),
-          totalQuestions:  String(totalAll())
-        }
+      variableValues: {
+        currentQuestion: q ? q.p : '',
+        fieldName:       q ? q.k  : '',
+        isRequired:      q ? String(q.req) : 'false',
+        answersSoFar:    Object.entries(answers).filter(function(r){return r[1]&&r[1].trim();}).map(function(r){return r[0]+': '+r[1].substring(0,120);}).join('\n') || 'None yet.',
+        sectionName:     sec ? sec.name : '',
+        questionNumber:  String(totalDone() + 1),
+        totalQuestions:  String(totalAll())
       }
     });
   } catch(err){
