@@ -815,6 +815,22 @@ async function _startVapiSession(){
   const sec = SECS[cs];
   const q = sec ? sec.qs[cq] : null;
   console.log('Starting Vapi session, assistant:', window.__VAPI_ASSISTANT__, '| Q:', q ? q.k : 'none');
+
+  // Watchdog — if call-start hasn't fired in 8s, reset and retry once
+  var _watchdog = setTimeout(function(){
+    if(vapiStarting && !vapiActive){
+      console.warn('Vapi call-start timeout — resetting and retrying');
+      try{ vapi.stop(); }catch(e){}
+      vapiActive = false;
+      vapiStarting = false;
+      setLabel('');
+      setTimeout(_startVapiSession, 1000);
+    }
+  }, 8000);
+
+  // Clear watchdog on call-start
+  vapi.once('call-start', function(){ clearTimeout(_watchdog); });
+
   try{
     await vapi.start(window.__VAPI_ASSISTANT__, {
       variableValues: {
@@ -1188,14 +1204,15 @@ function askQ(){
   // Auto-hide header
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
 
-  // Guard: only start Vapi when all local TTS has fully finished
-  // speaking flag is set by speakIt and cleared in done() callback
+  // Guard: wait for local TTS to fully finish, then add a hard 800ms
+  // floor so the browser audio context fully releases before Vapi claims it
   function _waitForTTSThenStartVapi(){
     if(speaking){
       setTimeout(_waitForTTSThenStartVapi, 200);
       return;
     }
-    _startVapiSession();
+    // Hard floor — even if speaking=false, give audio context 800ms to release
+    setTimeout(_startVapiSession, 800);
   }
   setTimeout(_waitForTTSThenStartVapi, 300);
   positionMic();
