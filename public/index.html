@@ -911,33 +911,32 @@ function _handleVapiReply(text){
   }
 }
 
-// ── ADVANCE TO NEXT QUESTION ──────────────────────────────────────
 function _advanceVapi(){
+  _stopVapiSession();
   const sec = SECS[cs];
   if(!sec || cq >= sec.qs.length){
-    // Section complete
-    _stopVapiSession();
     completeSection();
     return;
   }
-  // Restart Vapi with updated system prompt for next question
-  _stopVapiSession();
+  // Speak next question via local TTS, then wait for mic tap
   setTimeout(function(){
-    _startVapiSession();
+    askQ();
   }, 400);
 }
 
 // ── MIC BUTTON — toggle Vapi ──────────────────────────────────────
 function toggleMic(){
   if(vapiActive){
-    // User tapping mic while Vapi is active — interrupt
+    // Interrupt Cass mid-speech
     vapi.stop();
     vapiActive = false;
     setViz('idle');
-    setLabel('');
+    setLabel('Tap to answer');
+    setMicReady();
     return;
   }
   if(vapiStarting)return;
+  // User ready to answer — start Vapi now
   _startVapiSession();
 }
 
@@ -1151,12 +1150,16 @@ function askQ(){
     },300);
   }
 
-  // Auto-hide header to reclaim screen space
+  // Auto-hide header
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
 
-  // Start Vapi — it will speak the question and handle the full conversation
-  setLabel('Connecting...');
-  _startVapiSession();
+  // Speak question via local TTS, then wait for user to tap mic
+  // Vapi only starts on mic tap — avoids silence timeout during intro
+  speakIt(q.p, function(){
+    setLabel('Tap to answer');
+    setMicReady();
+    positionMic();
+  });
   positionMic();
 }
 
