@@ -805,12 +805,16 @@ function _buildSystemPrompt(){
 
 // ── START VAPI SESSION ────────────────────────────────────────────
 async function _startVapiSession(){
-  if(vapiActive||vapiStarting)return;
+  if(vapiActive||vapiStarting){
+    console.log('_startVapiSession blocked — already active or starting');
+    return;
+  }
   if(!vapi){
     setTimeout(_startVapiSession, 500);
     return;
   }
   vapiStarting = true;
+  window._vapiSessionLock = Date.now();
   setLabel('Connecting...');
   const sec = SECS[cs];
   const q = sec ? sec.qs[cq] : null;
@@ -987,17 +991,30 @@ function _advanceVapi(){
   }, 400);
 }
 
-// ── MIC BUTTON — toggle Vapi ──────────────────────────────────────
+// ── MIC BUTTON — with Vapi, mic is always live during a session ──
 function toggleMic(){
-  // With Vapi, mic is handled automatically — button only interrupts Cass mid-speech
   if(vapiActive){
-    // Interrupt Cass — stop current Vapi session, restart for fresh response
-    _stopVapiSession();
-    setTimeout(_startVapiSession, 300);
+    // Vapi handles mic automatically — mute/unmute is the only meaningful action
+    // If Cass is speaking, interrupt by stopping the session
+    if(vapi && typeof vapi.isMuted === 'function'){
+      var muted = vapi.isMuted();
+      vapi.setMuted(!muted);
+      var mb = document.getElementById('mic-btn');
+      var ml = document.getElementById('mic-label');
+      if(!muted){
+        if(mb) mb.classList.remove('ready'); 
+        if(ml) ml.textContent = 'Mic muted';
+      } else {
+        if(mb) mb.classList.add('ready');
+        if(ml) ml.textContent = 'Listening...';
+      }
+    }
     return;
   }
-  // If Vapi not active but we're in question flow — start it
-  if(!vapiStarting && cs < SECS.length){
+  // Vapi not active — only restart if we are genuinely in question flow
+  // and nothing is already starting
+  if(!vapiStarting && cs < SECS.length && cq < SECS[cs].qs.length){
+    console.log('toggleMic: restarting Vapi session');
     _startVapiSession();
   }
 }
@@ -1230,14 +1247,17 @@ function askQ(){
   // Auto-hide header
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
 
-  // Guard: wait for local TTS to fully finish, then add a hard 800ms
-  // floor so the browser audio context fully releases before Vapi claims it
+  // Guard: wait for local TTS to finish, then start Vapi once
+  // Skip entirely if Vapi is already active or starting
   function _waitForTTSThenStartVapi(){
+    if(vapiActive||vapiStarting){
+      console.log('askQ: Vapi already active — skipping start');
+      return;
+    }
     if(speaking){
       setTimeout(_waitForTTSThenStartVapi, 200);
       return;
     }
-    // Hard floor — even if speaking=false, give audio context 800ms to release
     setTimeout(_startVapiSession, 800);
   }
   setTimeout(_waitForTTSThenStartVapi, 300);
