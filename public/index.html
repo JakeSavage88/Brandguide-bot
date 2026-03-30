@@ -13,7 +13,7 @@
 <script type="module">
   // Vapi Web SDK via esm.sh which correctly re-exports the package
   try {
-    const mod = await import('https://esm.sh/@vapi-ai/web');
+    const mod = await import('https://esm.sh/@vapi-ai/web@2.0.0');
     window.Vapi = mod.default || mod.Vapi || Object.values(mod)[0];
     if(window.Vapi){ window.dispatchEvent(new Event('vapiReady')); }
     else { console.error('Vapi: could not find export in module', Object.keys(mod)); }
@@ -817,32 +817,20 @@ async function _startVapiSession(){
   console.log('Starting Vapi session, assistant:', window.__VAPI_ASSISTANT__, '| Q:', q ? q.k : 'none');
 
   // Watchdog — if call-start hasn't fired in 8s, reset and retry once
-  var _watchdog = setTimeout(function(){
+  clearTimeout(window._vapiWatchdog);
+  window._vapiWatchdog = setTimeout(function(){
     if(vapiStarting && !vapiActive){
       console.warn('Vapi call-start timeout — resetting and retrying');
       try{ vapi.stop(); }catch(e){}
       vapiActive = false;
       vapiStarting = false;
       setLabel('');
-      setTimeout(_startVapiSession, 1000);
+      setTimeout(_startVapiSession, 1500);
     }
   }, 8000);
 
-  // Clear watchdog on call-start
-  vapi.once('call-start', function(){ clearTimeout(_watchdog); });
-
   try{
-    await vapi.start(window.__VAPI_ASSISTANT__, {
-      variableValues: {
-        currentQuestion: q ? q.p : '',
-        fieldName:       q ? q.k  : '',
-        isRequired:      q ? String(q.req) : 'false',
-        answersSoFar:    Object.entries(answers).filter(function(r){return r[1]&&r[1].trim();}).map(function(r){return r[0]+': '+r[1].substring(0,120);}).join('\n') || 'None yet.',
-        sectionName:     sec ? sec.name : '',
-        questionNumber:  String(totalDone() + 1),
-        totalQuestions:  String(totalAll())
-      }
-    });
+    await vapi.start(window.__VAPI_ASSISTANT__);
   } catch(err){
     console.error('Vapi start error full:', JSON.stringify(err, null, 2));
     vapiStarting = false;
@@ -864,9 +852,24 @@ function _attachVapiEvents(){
 vapi.on('call-start', function(){
   vapiActive = true;
   vapiStarting = false;
+  clearTimeout(window._vapiWatchdog);
   setViz('listening');
   setLabel('Listening...');
   _startSessionTimer();
+  // Inject current question context as a background system message
+  // This is the reliable way to pass dynamic data after connection
+  var sec = SECS[cs];
+  var q = sec ? sec.qs[cq] : null;
+  var answersSoFar = Object.entries(answers).filter(function(r){return r[1]&&r[1].trim();}).map(function(r){return r[0]+': '+r[1].substring(0,120);}).join('\n') || 'None yet.';
+  var contextMsg = 'CONTEXT UPDATE:\nCurrent question: ' + (q ? q.p : '') + '\nField: ' + (q ? q.k : '') + '\nRequired: ' + (q ? q.req : false) + '\nSection: ' + (sec ? sec.name : '') + ' (Q' + (totalDone()+1) + ' of ' + totalAll() + ')\n\nAnswers so far:\n' + answersSoFar;
+  setTimeout(function(){
+    if(vapiActive){
+      try{
+        vapi.send({ type: 'add-message', message: { role: 'system', content: contextMsg } });
+        console.log('Vapi context injected via send()');
+      }catch(e){ console.warn('vapi.send context failed:', e); }
+    }
+  }, 500);
 });
 
 vapi.on('call-end', function(){
