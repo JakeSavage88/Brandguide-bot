@@ -13,7 +13,7 @@
 <script type="module">
   // Vapi Web SDK via esm.sh which correctly re-exports the package
   try {
-    const mod = await import('https://esm.sh/@vapi-ai/web@2.0.0');
+    const mod = await import('https://esm.sh/@vapi-ai/web@2.5.2');
     window.Vapi = mod.default || mod.Vapi || Object.values(mod)[0];
     if(window.Vapi){ window.dispatchEvent(new Event('vapiReady')); }
     else { console.error('Vapi: could not find export in module', Object.keys(mod)); }
