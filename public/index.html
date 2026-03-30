@@ -305,29 +305,42 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 .submit-confirm-card p{font-size:14px;color:var(--muted);line-height:1.6;max-width:360px;}
 
 
-/* ── UI TOUR HIGHLIGHTS — slide up + glow bloom, mic-style ── */
-
-/* Tour element enters: slides up from 12px below, glow builds as it rises */
+/* ── UI TOUR HIGHLIGHTS — slide up + glow bloom + outline stroke ── */
 .tour-highlight{
   position:relative;
   z-index:25;
   animation:tourRise 0.7s cubic-bezier(0.34,1.2,0.64,1) forwards;
 }
 @keyframes tourRise{
-  0%{transform:translateY(12px);filter:brightness(1);}
-  100%{transform:translateY(0px);filter:brightness(1);}
+  0%{transform:translateY(12px);}
+  100%{transform:translateY(0px);}
 }
 
-/* Soft radial glow bloom — builds from 0 to full as element rises */
+/* All pill buttons — glowing outline stroke + radial bloom */
+.abtn.tour-highlight,
+#toggle-text-btn.tour-highlight,
+#download-btn.tour-highlight,
+#upload-btn.tour-highlight,
+#ref-btn.tour-highlight{
+  border-color:rgba(124,106,255,0.9) !important;
+  box-shadow:0 0 0 1.5px rgba(124,106,255,0.9), 0 0 16px rgba(124,106,255,0.7), 0 0 32px rgba(124,106,255,0.3);
+  animation:tourRise 0.7s cubic-bezier(0.34,1.2,0.64,1) forwards, tourBtnPulse 2.4s ease-in-out 0.7s infinite;
+}
+@keyframes tourBtnPulse{
+  0%,100%{box-shadow:0 0 0 1.5px rgba(124,106,255,0.8), 0 0 14px rgba(124,106,255,0.6), 0 0 28px rgba(124,106,255,0.25);}
+  50%{box-shadow:0 0 0 2px rgba(124,106,255,1), 0 0 24px rgba(124,106,255,0.9), 0 0 48px rgba(124,106,255,0.4);}
+}
+
+/* Soft radial bloom behind all highlighted elements */
 .tour-highlight::after{
   content:'';
   position:absolute;
-  inset:-16px;
+  inset:-14px;
   border-radius:28px;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.28) 0%, rgba(124,106,255,0.10) 50%, transparent 72%);
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.25) 0%, rgba(124,106,255,0.08) 55%, transparent 75%);
   pointer-events:none;
   opacity:0;
-  animation:tourGlow 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s forwards, tourPulse 2.6s ease-in-out 0.7s infinite;
+  animation:tourGlow 0.7s ease 0.1s forwards, tourPulse 2.6s ease-in-out 0.7s infinite;
 }
 @keyframes tourGlow{
   0%{opacity:0;transform:scale(0.85);}
@@ -338,10 +351,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   50%{opacity:1;transform:scale(1.05);}
 }
 
-/* Mic button — glow blooms on the button itself, no transform conflict */
-#mic-wrap.tour-highlight{
-  animation:none; /* mic position is JS-controlled, don't override transform */
-}
+/* Mic button — circular glow on button itself, no transform conflict */
+#mic-wrap.tour-highlight{animation:none;}
 #mic-wrap.tour-highlight #mic-btn{
   animation:tourMicGlow 0.7s ease forwards, tourMicPulse 2.6s ease-in-out 0.7s infinite;
 }
@@ -358,43 +369,26 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   border-radius:50%;
   background:radial-gradient(ellipse at center, rgba(124,106,255,0.35) 0%, rgba(124,106,255,0.12) 50%, transparent 70%);
   opacity:0;
-  animation:tourGlow 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s forwards, tourPulseMic 2.6s ease-in-out 0.7s infinite;
+  animation:tourGlow 0.7s ease 0.1s forwards, tourPulseMic 2.6s ease-in-out 0.7s infinite;
 }
 @keyframes tourPulseMic{
   0%,100%{opacity:0.7;transform:scale(1);}
   50%{opacity:1;transform:scale(1.09);}
 }
 
-/* Save button — circular */
+/* Save button — circular outline + bloom */
+#save-btn.tour-highlight{
+  box-shadow:0 0 0 2px rgba(124,106,255,0.9), 0 0 20px rgba(124,106,255,0.7), 0 0 40px rgba(124,106,255,0.3) !important;
+  animation:tourRise 0.7s cubic-bezier(0.34,1.2,0.64,1) forwards, tourSavePulse 2.4s ease-in-out 0.7s infinite;
+}
+@keyframes tourSavePulse{
+  0%,100%{box-shadow:0 0 0 2px rgba(124,106,255,0.8), 0 0 16px rgba(124,106,255,0.6), 0 0 32px rgba(124,106,255,0.25);}
+  50%{box-shadow:0 0 0 3px rgba(124,106,255,1), 0 0 28px rgba(124,106,255,0.9), 0 0 52px rgba(124,106,255,0.4);}
+}
 #save-btn.tour-highlight::after{
-  inset:-18px;
+  inset:-16px;
   border-radius:50%;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.35) 0%, rgba(124,106,255,0.12) 50%, transparent 70%);
-}
-
-/* Bottom dock — REMOVED: was covering whole area. Individual buttons highlighted instead */
-/* Download and Upload buttons — same pill bloom as ref-btn */
-#download-btn.tour-highlight::after,
-#upload-btn.tour-highlight::after{
-  inset:-12px -10px;
-  border-radius:24px;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.30) 0%, rgba(124,106,255,0.10) 55%, transparent 74%);
-}
-
-/* Ref button — pill */
-#ref-btn.tour-highlight::after{
-  inset:-12px -10px;
-  border-radius:24px;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.30) 0%, rgba(124,106,255,0.10) 55%, transparent 74%);
-}
-
-/* Removing highlight — smooth fade out */
-.tour-unhighlight{
-  animation:tourSink 0.5s ease forwards;
-}
-@keyframes tourSink{
-  0%{transform:translateY(0);opacity:1;}
-  100%{transform:translateY(4px);opacity:0.8;}
+  background:radial-gradient(ellipse at center, rgba(124,106,255,0.30) 0%, rgba(124,106,255,0.10) 50%, transparent 70%);
 }
 
 /* ── THINKING DOTS ── */
@@ -703,34 +697,46 @@ const FORM='https://docs.google.com/forms/d/e/1FAIpQLSeESmWSIlP6S5I1psJCwC76w8DO
 const SAVE_KEY='stratiq_progress';
 const API='/api/claude';
 
-// ── VAPI CONFIG ──────────────────────────────────────────────────
-const VAPI_PUBLIC_KEY = window.__VAPI_KEY__;
-const VAPI_ASSISTANT_ID = window.__VAPI_ASSISTANT__;
-
-// ── VAPI INSTANCE — initialised after config fetched and SDK loaded ──
+// ── VAPI INIT — fetch config first, then load SDK, then init ─────
 let vapi = null;
-function _initVapi(){
-  if(vapi)return;
-  if(!window.Vapi){console.error('Vapi SDK not loaded');return;}
-  if(!window.__VAPI_KEY__){console.error('Vapi config not loaded yet');return;}
-  vapi = new window.Vapi(window.__VAPI_KEY__);
-  _attachVapiEvents();
-}
-window.addEventListener('vapiReady', _initVapi);
-if(window.Vapi&&window.__VAPI_KEY__) _initVapi();
+let vapiActive = false;
+let vapiStarting = false;
 
-// Fetch Vapi config securely from serverless function
+// Step 1: fetch keys from secure serverless endpoint
 fetch('/api/vapi-config')
-  .then(function(r){return r.json();})
+  .then(function(r){
+    if(!r.ok)throw new Error('vapi-config HTTP '+r.status);
+    return r.json();
+  })
   .then(function(cfg){
     window.__VAPI_KEY__ = cfg.publicKey;
     window.__VAPI_ASSISTANT__ = cfg.assistantId;
-    // If SDK already loaded, init now
-    if(window.Vapi) _initVapi();
+    console.log('Vapi config loaded OK');
+    // Step 2: if SDK already loaded, init immediately
+    if(window.Vapi){
+      _initVapi();
+    }
+    // Otherwise wait for vapiReady event fired by the module script
   })
-  .catch(function(err){console.error('Failed to load Vapi config:',err);});
-let vapiActive = false;
-let vapiStarting = false;
+  .catch(function(err){
+    console.error('Failed to load Vapi config:',err);
+  });
+
+function _initVapi(){
+  if(vapi)return;
+  if(!window.Vapi){console.error('Vapi SDK not loaded yet');return;}
+  if(!window.__VAPI_KEY__){console.error('Vapi config not loaded yet');return;}
+  console.log('Initialising Vapi...');
+  vapi = new window.Vapi(window.__VAPI_KEY__);
+  _attachVapiEvents();
+  console.log('Vapi initialised OK');
+}
+
+// SDK fires this event when it loads
+window.addEventListener('vapiReady', function(){
+  console.log('Vapi SDK ready');
+  if(window.__VAPI_KEY__) _initVapi();
+});
 
 // ── SESSION EXTENSION — silent masked restart at 45 min ──────────
 const SESSION_WARN_MS = 45 * 60 * 1000;
@@ -792,37 +798,16 @@ function _buildSystemPrompt(){
 async function _startVapiSession(){
   if(vapiActive||vapiStarting)return;
   if(!vapi){
-    // Vapi SDK not loaded yet — retry after short delay
     setTimeout(_startVapiSession, 500);
     return;
   }
   vapiStarting = true;
   setLabel('Connecting...');
-
-  // Build dynamic system prompt with current answers context
-  const answersSummary = Object.entries(answers)
-    .filter(function(_ref){return _ref[1]&&_ref[1].trim();})
-    .map(function(_ref2){return _ref2[0]+': '+_ref2[1].substring(0,80)+(_ref2[1].length>80?'...':'');})
-    .join('\n');
-  const refContext = _buildRefContext();
-  const sec = SECS[cs];
-  const q = sec ? sec.qs[cq] : null;
-  const currentQ = q ? 'Current question: \''+q.p+'\' Field: '+q.k+' Required: '+q.req : '';
-
+  console.log('Starting Vapi session, assistant:', window.__VAPI_ASSISTANT__);
   try{
-    await vapi.start(window.__VAPI_ASSISTANT__, {
-      assistantOverrides: {
-        variableValues: {
-          answersSummary: answersSummary || 'None yet.',
-          refContext: refContext || '',
-          questionPrompt: q ? q.p : '',
-          fieldKey: q ? q.k : '',
-          required: q ? String(q.req) : 'false'
-        }
-      }
-    });
+    await vapi.start(window.__VAPI_ASSISTANT__);
   } catch(err){
-    console.error('Vapi start error:', err);
+    console.error('Vapi start error full:', JSON.stringify(err, null, 2));
     vapiStarting = false;
     setLabel('Connection error — tap mic to retry');
     setViz('idle');
@@ -1055,7 +1040,11 @@ function runUITour(onComplete){
   var steps=[
     {
       ids:['mic-wrap'],
-      text:"The mic button here in the middle is your main control — tap to speak, tap again when you are done. You can also switch to typing any time using the Type button."
+      text:"The mic button here in the middle is your main control — tap to speak, tap again when you are done."
+    },
+    {
+      ids:['toggle-text-btn'],
+      text:"Prefer typing? Hit the Type button to switch to text input any time."
     },
     {
       ids:['ref-btn'],
@@ -1071,7 +1060,7 @@ function runUITour(onComplete){
     },
     {
       ids:['save-btn'],
-      text:"Save up top keeps your progress — so if you need to step away and come back, no problem. And feel free to ask me anything as we go. Alright, let us build your brand."
+      text:"And Save up top keeps your progress — so if you need to step away and come back, no problem. Feel free to ask me anything as we go. Alright, let us build your brand."
     }
   ];
 
