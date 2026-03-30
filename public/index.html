@@ -585,6 +585,12 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
     </div>
     <!-- Row 2: Skip + Go Back -->
     <div id="skip-row">
+      <button id="skip-intro-btn" onclick="skipIntro()" style="display:none">
+        Skip intro →
+      </button>
+      <button id="skip-tour-btn" onclick="skipTour()" style="display:none">
+        Skip overview →
+      </button>
       <button id="back-btn" onclick="goBackSection()">
         <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M9.5 2.5l-4 4 4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 2.5l-4 4 4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Back to section start
@@ -926,18 +932,17 @@ function _advanceVapi(){
 
 // ── MIC BUTTON — toggle Vapi ──────────────────────────────────────
 function toggleMic(){
+  // With Vapi, mic is handled automatically — button only interrupts Cass mid-speech
   if(vapiActive){
-    // Interrupt Cass mid-speech
-    vapi.stop();
-    vapiActive = false;
-    setViz('idle');
-    setLabel('Tap to answer');
-    setMicReady();
+    // Interrupt Cass — stop current Vapi session, restart for fresh response
+    _stopVapiSession();
+    setTimeout(_startVapiSession, 300);
     return;
   }
-  if(vapiStarting)return;
-  // User ready to answer — start Vapi now
-  _startVapiSession();
+  // If Vapi not active but we're in question flow — start it
+  if(!vapiStarting && cs < SECS.length){
+    _startVapiSession();
+  }
 }
 
 // ── STUB OUT OLD VOICE FUNCTIONS — replaced by Vapi ───────────────
@@ -980,7 +985,12 @@ function beginSession(){
   txInit();
 
   // PART 1 — Cass intro via local TTS (before Vapi starts)
+  // Show skip intro button during intro
+  var skipIntroBtn = document.getElementById('skip-intro-btn');
+  if(skipIntroBtn) skipIntroBtn.style.display='inline-flex';
+
   speakIt("Hey, I'm Cass — I'll be your brand strategy consultant today. Before we dive in, let me quickly show you around.", function(){
+    if(skipIntroBtn) skipIntroBtn.style.display='none';
     // PART 2 — UX orientation tour
     runUITour(function(){
       tourHighlight([],0);
@@ -1063,9 +1073,14 @@ function runUITour(onComplete){
     }
   ];
 
+  // Show skip tour button during tour
+  var skipTourBtn = document.getElementById('skip-tour-btn');
+  if(skipTourBtn) skipTourBtn.style.display='inline-flex';
+
   var stepIdx=0;
   function runStep(){
     if(stepIdx>=steps.length){
+      if(skipTourBtn) skipTourBtn.style.display='none';
       setTimeout(function(){
         tourHighlight([],0);
         if(onComplete)onComplete();
@@ -1074,14 +1089,13 @@ function runUITour(onComplete){
     }
     var step=steps[stepIdx];
     stepIdx++;
-    // Highlight element 1.5s BEFORE voice starts — user sees & reads it first
+    // Highlight element 600ms before voice starts — snappier flow
     tourHighlight(step.ids);
     setTimeout(function(){
       speakIt(step.text,function(){
-        // Pause between steps, then next
-        setTimeout(runStep,500);
+        setTimeout(runStep,200);
       });
-    },1500);
+    },600);
   }
 
   // Brief pause after dock slides in, then begin
@@ -1153,13 +1167,11 @@ function askQ(){
   // Auto-hide header
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
 
-  // Speak question via local TTS, then wait for user to tap mic
-  // Vapi only starts on mic tap — avoids silence timeout during intro
-  speakIt(q.p, function(){
-    setLabel('Tap to answer');
-    setMicReady();
-    positionMic();
-  });
+  // Start Vapi — it speaks the question and handles mic automatically
+  // Small delay to let any previous TTS finish cleanly
+  setTimeout(function(){
+    _startVapiSession();
+  }, 300);
   positionMic();
 }
 
@@ -1523,6 +1535,33 @@ function _buildRefContext(){
     refDocs.map(function(d){return '--- '+d.name+' ---\n'+d.content;}).join('\n\n');
 }
 
+
+// ── SKIP INTRO / TOUR ────────────────────────────────────────────
+var _tourSkipFn = null; // holds the onComplete callback for tour
+
+function skipIntro(){
+  // Stop current TTS, hide skip intro button, run tour immediately
+  sharedAudio.pause();
+  if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+  speaking=false;
+  document.getElementById('skip-intro-btn').style.display='none';
+  // Trigger tour directly
+  runUITour(function(){
+    tourHighlight([],0);
+    setTimeout(showSecIntro, 400);
+  });
+}
+
+function skipTour(){
+  // Stop current TTS, clear highlights, jump to questions
+  sharedAudio.pause();
+  if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
+  speaking=false;
+  tourHighlight([],0);
+  document.getElementById('skip-tour-btn').style.display='none';
+  document.getElementById('skip-intro-btn').style.display='none';
+  setTimeout(showSecIntro, 400);
+}
 
 function goBackSection(){
   clearIdleTimer();
