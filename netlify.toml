@@ -6,3 +6,13 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+# Allow binary audio bodies for the Deepgram transcription function
+# Without this Netlify corrupts binary POST bodies (base64-encodes them incorrectly)
+[functions.transcribe]
+  included_files = []
+
+[[headers]]
+  for = "/.netlify/functions/transcribe"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
