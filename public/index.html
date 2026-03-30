@@ -115,7 +115,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* TRANSCRIPT + BOT RESPONSE */
 #transcript-area{width:100%;max-width:560px;text-align:center;margin-top:20px;margin-bottom:4px;min-height:28px}
 #transcript{font-size:14px;color:rgba(240,238,255,0.65);font-style:italic;line-height:1.7}
-#bot-resp{font-size:15px;color:var(--acc2);font-style:italic;line-height:1.7;margin-top:4px;min-height:22px}
+#bot-resp{font-size:15px;color:var(--acc2);font-style:italic;line-height:1.7;margin-top:4px;min-height:22px;max-height:5.1em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;}
 /* Word-by-word animation — .reveal class triggers the animation */
 .bot-word{display:inline;opacity:0}
 .bot-word.reveal{animation:wordIn 0.15s ease forwards}
@@ -215,7 +215,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   #qtext{font-size:24px;max-width:600px;margin-top:10px}
   #slabel{font-size:11px}
   #transcript-area{margin-top:28px;max-width:600px}
-  #bot-resp{font-size:16px}
+  #bot-resp{font-size:16px;-webkit-line-clamp:3;}
   /* Desktop dock: generous padding from screen bottom */
   #bottom-dock{gap:0;padding:12px 40px 52px}
   /* Desktop: single row for all buttons */
@@ -907,6 +907,8 @@ vapi.on('call-end', function(){
 });
 
 vapi.on('speech-start', function(){
+  // User started speaking — mark that next Cass response is a new turn
+  _vapiNewTurn = true;
   setViz('listening');
   clearWaiting();
 });
@@ -917,50 +919,74 @@ vapi.on('speech-end', function(){
   var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
 });
 
-// Accumulate assistant transcript fragments into a full turn buffer
+// Accumulate FINAL assistant transcript fragments into turn buffer
+// Partials are display-only and must NOT go into the capture buffer
 var _vapiTurnBuffer = '';
 var _vapiTurnTimer = null;
+var _vapiNewTurn = true; // flag: next fragment starts a fresh Cass turn
 
 vapi.on('message', function(message){
   if(message.type === 'transcript'){
+    // ── User transcript — show what they said ──
     if(message.role === 'user' && message.transcriptType === 'final'){
       document.getElementById('transcript').textContent = message.transcript;
+      _vapiNewTurn = true; // user spoke — next Cass fragment starts a new display turn
     }
+
+    // ── Assistant transcript ──
     if(message.role === 'assistant'){
       var td=document.getElementById('thinking-dots');if(td)td.classList.remove('visible');
       setViz('speaking');
       setLabel('');
 
-      // Accumulate fragments
       var frag = message.transcript || '';
-      _vapiTurnBuffer += ' ' + frag;
 
-      // Show cleaned text in UI (strip token noise)
-      var cleaned = frag
-        .replace(/answer[,.]?\s*/gi,'')
-        .replace(/ready\s*next\.?/gi,'')
-        .trim();
-      if(cleaned){
-        var botEl=document.getElementById('bot-resp');
-        var words = cleaned.split(' ');
-        words.forEach(function(w){
-          if(!w.trim()) return;
-          var span=document.createElement('span');
-          span.className='bot-word reveal';
-          span.textContent=' '+w;
-          botEl.appendChild(span);
-        });
+      // ── SUBTITLE DISPLAY ──
+      // Only show meaningful speech — strip capture tokens and closing signals
+      // Clear bot-resp at the start of each new Cass turn (after user spoke)
+      var isCaptureLine = /\banswer[,.]?\s/i.test(frag) ||
+                          /\b(got it|moving on|next one|let.?s continue|moving forward|next up|solid|perfect|noted|logged|nice one|good stuff)\b/i.test(frag);
+
+      if(_vapiNewTurn && !isCaptureLine){
+        // First displayable fragment of new turn — clear old subtitles
+        var botEl = document.getElementById('bot-resp');
+        botEl.innerHTML = '';
+        _vapiNewTurn = false;
       }
 
-      // On final transcript fragment, process the full accumulated turn
+      // Only render non-capture content to subtitles
+      if(!isCaptureLine){
+        var cleaned = frag
+          .replace(/answer[,.]?\s*/gi,'')
+          .replace(/ready\s*next\.?/gi,'')
+          .replace(/\b(got it|moving on|next one|let.?s continue|moving forward|next up|solid|perfect|noted|logged|nice one|good stuff)\.?\b/gi,'')
+          .trim();
+        if(cleaned){
+          var botEl = document.getElementById('bot-resp');
+          if(_vapiNewTurn){ botEl.innerHTML = ''; _vapiNewTurn = false; }
+          var words = cleaned.split(' ');
+          words.forEach(function(w){
+            if(!w.trim()) return;
+            var span = document.createElement('span');
+            span.className = 'bot-word reveal';
+            span.textContent = ' ' + w;
+            botEl.appendChild(span);
+          });
+        }
+      }
+
+      // ── CAPTURE BUFFER — FINAL fragments only ──
+      // Partials are skipped entirely to avoid doubled text in the buffer
       if(message.transcriptType === 'final'){
+        _vapiTurnBuffer += ' ' + frag;
         clearTimeout(_vapiTurnTimer);
+        // Wait 900ms after last FINAL fragment — Cass may have more to say
         _vapiTurnTimer = setTimeout(function(){
           var fullTurn = _vapiTurnBuffer.trim();
-          console.log('Full turn:', JSON.stringify(fullTurn.substring(0,200)));
+          console.log('Full Cass turn:', JSON.stringify(fullTurn.substring(0,300)));
           _vapiTurnBuffer = '';
           _handleVapiReply(fullTurn);
-        }, 800);
+        }, 900);
       }
     }
   }
@@ -985,20 +1011,36 @@ function _handleVapiReply(text){
   // Match "ready next" or "ready_next" as the advance signal
   var lc = text.toLowerCase();
 
-  // Detect advance signal — any natural closing phrase Cass uses
-  var hasReadyNext = /ready.?next|moving on|let.?s continue|next one|let.?s keep going|moving forward|next up/i.test(text);
+  // ── ADVANCE SIGNAL: any of Cass's natural closing phrases ──
+  var CLOSING = /\b(got it moving on|perfect let.?s continue|noted next one|solid moving forward|good stuff moving on|nice one next up|logged let.?s go|great let.?s keep going|moving on|next one|moving forward|let.?s continue|let.?s keep going|next up|ready next)\b/i;
+  var hasAdvanceSignal = CLOSING.test(text);
 
-  // Extract answer — text after "answer" up to the closing signal or end
-  var am = text.match(/answer[,.]?\s*(.+?)(?:\s*(?:got it|perfect|noted|solid|good stuff|logged|nice one|moving on|next one|let.?s continue|moving forward|next up|ready))/i);
-  // Fallback: everything after "answer" if no closing phrase caught it
-  if(!am) am = text.match(/answer[,.]?\s*(.+?)[\.!]?\s*$/i);
+  // ── ANSWER CAPTURE ──
+  // Strategy 1: "answer [content] [closing phrase]" — tight match
+  var am = text.match(/\banswer[,.]?\s+(.+?)\s+(?:got it|perfect|noted|solid|good stuff|logged|nice one|moving on|next one|let.?s continue|moving forward|next up|ready)/i);
+  // Strategy 2: "answer [content]" to end of string (closing phrase might be a separate fragment)
+  if(!am) am = text.match(/\banswer[,.]?\s+(.+?)(?:[.!]\s*$|\s*$)/i);
+  // Strategy 3: entire turn is the answer (Cass said "answer" then spoke the value freely)
+  if(!am && hasAdvanceSignal){
+    // Strip everything before and after the content — get what's between acknowledgment and closing
+    var stripped = text
+      .replace(/^.{0,60}?\banswer[,.]?\s*/i, '')  // remove up to and including "answer"
+      .replace(/\s*\b(got it|perfect|noted|solid|good stuff|logged|nice one|moving on|next one|let.?s continue|moving forward|next up|ready.{0,10}).*$/i, '')
+      .trim();
+    if(stripped && stripped.length > 2) am = [null, stripped];
+  }
 
-  console.log('hasReadyNext:', hasReadyNext, '| answer capture:', am ? am[1].substring(0,60) : 'none');
+  console.log('hasAdvanceSignal:', hasAdvanceSignal, '| answer capture:', am ? am[1].substring(0,80) : 'none');
+  console.log('Full turn (300):', JSON.stringify(text.substring(0,300)));
 
-  if(hasReadyNext && am){
+  if(hasAdvanceSignal && am){
     var captured = am[1].trim();
-    // Sanity check — don't capture empty or token-only strings
-    if(captured && captured.length > 1){
+    // Strip any stray closing phrases that snuck into the capture
+    captured = captured
+      .replace(/\b(got it|moving on|next one|let.?s continue|moving forward|next up|solid|perfect|noted|logged|nice one|good stuff)\.?\s*$/i, '')
+      .trim();
+    // Sanity check — must be meaningful content, not just a signal word
+    if(captured && captured.length > 2 && !/^(got it|moving on|next|noted|solid|perfect)$/i.test(captured)){
       const sec = SECS[cs];
       const q = sec ? sec.qs[cq] : null;
       if(q){
@@ -1007,9 +1049,10 @@ function _handleVapiReply(text){
         console.log('Answer saved:', q.k, '->', captured.substring(0,60));
       }
       cq++;
+      // Breathing room — give the user a moment before Cass asks the next Q
       setTimeout(function(){
         _advanceVapi();
-      }, 400);
+      }, 1400);
     }
   }
 }
@@ -1038,7 +1081,7 @@ function _injectQuestionContext(){
       vapi.send({ type: 'add-message', message: { role: 'user', content: q.p } });
       console.log('Next question injected:', q.k);
     }catch(e){ console.warn('inject user failed:', e); }
-  }, 200);
+  }, 400); // 400ms gap between system ctx and question prompt — lets Cass digest context
 }
 
 function _advanceVapi(){
@@ -1324,9 +1367,9 @@ function askQ(){
       setTimeout(_waitForTTSThenStartVapi, 200);
       return;
     }
-    setTimeout(_startVapiSession, 800);
+    setTimeout(_startVapiSession, 200);
   }
-  setTimeout(_waitForTTSThenStartVapi, 300);
+  setTimeout(_waitForTTSThenStartVapi, 100);
   positionMic();
 }
 
