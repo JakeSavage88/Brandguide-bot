@@ -957,8 +957,10 @@ vapi.on('error', function(err){
 
 // ── PARSE VAPI ASSISTANT REPLY ────────────────────────────────────
 function _handleVapiReply(text){
+  console.log('Vapi reply raw:', JSON.stringify(text.substring(0,200)));
   const am = text.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
   const ready = text.includes('READY_NEXT');
+  console.log('ANSWER match:', am ? am[1].substring(0,60) : 'none', '| READY_NEXT:', ready);
 
   if(am && ready){
     const sec = SECS[cs];
