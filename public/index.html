@@ -186,7 +186,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #skip-intro-btn,#skip-tour-btn{background:none;border:none;color:rgba(240,238,255,0.3);font-size:11px;font-weight:400;cursor:pointer;font-family:var(--font);letter-spacing:0.3px;padding:3px 8px;transition:color 0.15s;display:none;align-items:center;gap:5px}
 #skip-intro-btn:hover,#skip-tour-btn:hover{color:rgba(240,238,255,0.6)}
 #skip-btn:hover{color:rgba(240,238,255,0.6)}
-.abtn{display:flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.12);border-radius:20px;color:rgba(240,238,255,0.55);font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all 0.15s;white-space:nowrap}
+.abtn{display:flex;align-items:center;gap:5px;padding:7px 13px;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.12);border-radius:20px;color:rgba(240,238,255,0.55);font-size:11px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all 0.15s,transform 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s ease;white-space:nowrap}
 .abtn:hover{border-color:rgba(124,106,255,0.45);color:var(--text)}
 .abtn svg{flex-shrink:0;opacity:0.7}
 /* Skip — plain text, no border, visually distinct from pills */
@@ -286,7 +286,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   width:40px;height:40px;background:var(--acc);border:none;border-radius:50%;
   color:white;cursor:pointer;display:none;align-items:center;justify-content:center;
   box-shadow:0 2px 12px rgba(124,106,255,0.35);
-  transition:top 0.45s cubic-bezier(0.4,0,0.2,1),transform 0.15s,box-shadow 0.15s;
+  transition:top 0.45s cubic-bezier(0.4,0,0.2,1),transform 0.5s cubic-bezier(0.4,0,0.2,1),box-shadow 0.4s ease;
 }
 #save-btn:hover{transform:scale(1.08);box-shadow:0 4px 20px rgba(124,106,255,0.5);}
 #save-btn.header-shown{top:90px;}
@@ -352,8 +352,9 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   animation:tourRise 0.7s cubic-bezier(0.34,1.2,0.64,1) forwards;
 }
 @keyframes tourRise{
-  0%{transform:translateY(12px);}
-  100%{transform:translateY(0px);}
+  0%{transform:translateY(0px);}
+  60%{transform:translateY(-11px);}
+  100%{transform:translateY(-8px);}
 }
 
 /* All pill buttons — glowing outline stroke + radial bloom */
@@ -717,6 +718,7 @@ const SAVE_KEY='stratiq_progress';
 const API='/api/claude';
 
 let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaking=false,textActive=false;
+let _questionsActive=false; // true once the first question is live — guards accidental mic taps
 let pendingAnswer=null;
 let wordTimings=null;
 let accumulatedFinal='';
@@ -895,17 +897,7 @@ function showSecIntro(){
   // Hide header as soon as speech starts (300ms grace to see it)
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},300);
   setTimeout(function(){document.querySelector('header').classList.add('hidden');var sb=document.getElementById('save-btn');if(sb)sb.classList.remove('header-shown');},300);
-  if(cs===0){
-    speakIt(sec.intro,function(){
-      runUITour(function(){
-        // Clear highlights then go to first question
-        tourHighlight([],0);
-        setTimeout(askQ,400);
-      });
-    });
-  } else {
-    speakIt(sec.intro,function(){askQ();});
-  }
+  speakIt(sec.intro,function(){askQ();});
 }
 
 function askQ(){
@@ -951,6 +943,7 @@ function askQ(){
       setTimeout(positionMic,100);
     },300);
   }
+  _questionsActive=true; // questions are now live — mic tap is intentional
 
   // Auto-hide header to reclaim screen space
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
@@ -1244,6 +1237,8 @@ function _stopDeepgramRecording(){
 
 
 function toggleMic(){
+  // Ignore taps during intro/tour before questions are live
+  if(!_questionsActive)return;
   // Interrupt Cass speaking
   if(speaking){
     sharedAudio.pause();
@@ -1288,7 +1283,7 @@ function toggleMic(){
 function startListen(){
   // Deepgram path uses _startDeepgramRecording directly via toggleMic
   if(_sttMode==='deepgram'){_startDeepgramRecording();return;}
-  if(!recog){setLabel('Voice not available');toggleText();return;}
+  if(!recog){if(_questionsActive){setLabel('Voice not available');toggleText();}return;}
   if(!sharedAudio.paused&&sharedAudio.currentTime>0){
     sharedAudio.pause();
     if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
@@ -2164,7 +2159,7 @@ function _handleUploadChoice(text){
     showSubmit();
   }
 }
-function startFresh(){localStorage.removeItem(SAVE_KEY);cs=0;cq=0;answers={};speakIt('Starting fresh. Let us kick things off from the top.',function(){showSecIntro();});}
+function startFresh(){localStorage.removeItem(SAVE_KEY);cs=0;cq=0;answers={};_questionsActive=false;speakIt('Starting fresh. Let us kick things off from the top.',function(){showSecIntro();});}
 function reviewAnswers(){showReviewWheel(false);}
 function advanceWithReaskQueue(){
   if(window._reaskQueue&&window._reaskQueue.length>0){const next=window._reaskQueue.shift();cs=next.sIdx;cq=next.qIdx;}
