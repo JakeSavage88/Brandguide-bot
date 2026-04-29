@@ -771,6 +771,7 @@ const API='/api/claude';
 
 let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaking=false,textActive=false;
 let _questionsActive=false; // true once the first question is live — guards accidental mic taps
+let _tourActive=false;      // true during UI tour — prevents dockHide() from hiding buttons
 let pendingAnswer=null;
 let wordTimings=null;
 let accumulatedFinal='';
@@ -904,6 +905,7 @@ function runUITour(onComplete){
 
   var stepIdx = 0;
   window._tourAborted = false;
+  _tourActive = true; // prevent dockHide during tour
 
   function runStep(){
     if(window._tourAborted) return;
@@ -913,6 +915,7 @@ function runUITour(onComplete){
       if(skipTourBtn) skipTourBtn.style.display='none';
       // Reverse-animate current highlight out, then complete
       tourHighlight([], 0);
+      _tourActive = false; // tour done — dockHide can work normally again
       setTimeout(function(){
         if(window._tourAborted) return;
         if(onComplete) onComplete();
@@ -999,6 +1002,14 @@ function askQ(){
   const dock=document.getElementById('bottom-dock');
   const micWrap=document.getElementById('mic-wrap');
   _questionsActive=true; // questions are now live — mic tap is intentional
+  // Re-initialise STT fresh for first question — clears any stale recog state from tour
+  if(cq===0&&cs===0){
+    if(_sttMode==='webspeech'){
+      try{if(recog)recog.abort();}catch(e){}
+      recog=null;
+      _setupWebSpeechSTT(); // fresh recog instance, clean state
+    }
+  }
   if(!dock.classList.contains('visible')){
     setTimeout(function(){
       dock.classList.add('visible');
@@ -1145,6 +1156,7 @@ function _setupWebSpeechSTT(){
 
   recog.onend=function(){
     if(speechPauseTimer){return;}
+    if(!_questionsActive){listening=false;accumulatedFinal='';return;} // don't restart if not in question flow
     var captured=accumulatedFinal.trim();
     if(listening&&captured){
       listening=false;
@@ -1871,6 +1883,7 @@ function skipTour(){
   speaking=false;
   busy=false;
   window._tourAborted=true;
+  _tourActive=false; // tour skipped — restore normal dock behaviour
   tourHighlight([],0);
   document.getElementById('skip-tour-btn').style.display='none';
   document.getElementById('skip-intro-btn').style.display='none';
@@ -2317,6 +2330,7 @@ function retryAnswer(){
 // ── DOCK AUTO-HIDE (while AI is speaking) ────────────────────────
 function dockHide(){
   if(pendingAnswer)return;
+  if(_tourActive)return; // never hide dock during UI tour — buttons must stay visible
   var dock=document.getElementById('bottom-dock');
   if(dock)dock.classList.add('autohide');
   // Mic stays visible — changes to "Tap to interrupt"
