@@ -202,8 +202,9 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 /* ══ LANDING PAGE ══════════════════════════════════════════════ */
 #start-ov{
   position:fixed;inset:0;z-index:100;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:0;padding:3rem 2rem;text-align:center;overflow-y:auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:0;padding:5vh 2rem 3rem;text-align:center;overflow-y:auto;
+  /* 5vh top padding: visually centres on desktop, scrolls cleanly on mobile */
 }
 /* Logo */
 #start-ov .so-logo{margin-bottom:1.8rem}
@@ -272,7 +273,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 
 /* Mobile */
 @media(max-width:520px){
-  #start-ov{padding:2.5rem 1.5rem}
+  #start-ov{padding:3rem 1.5rem 2.5rem}
   #start-ov h1{font-size:32px;letter-spacing:-0.5px}
   .feats{gap:28px}
   .feat{font-size:11px;max-width:76px}
