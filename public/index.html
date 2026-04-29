@@ -156,7 +156,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #mic-wrap{
   position:fixed;
   left:50%;
-  transform:translateX(-50%) translateY(200px);
+  transform:translateX(-50%) translateY(400px);
   z-index:20;
   display:flex;flex-direction:column;align-items:center;gap:8px;
   transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1),transform 0.6s cubic-bezier(0.34,1.2,0.64,1);
@@ -181,8 +181,8 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 #alts{display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;max-width:560px}
 #alts-row1{display:flex;gap:7px;flex-wrap:nowrap;justify-content:center}
 #skip-row{display:flex;justify-content:center;gap:16px}
-#back-btn{background:none;border:none;color:rgba(240,238,255,0.3);font-size:11px;font-weight:400;cursor:pointer;font-family:var(--font);letter-spacing:0.3px;padding:3px 8px;transition:color 0.15s;display:flex;align-items:center;gap:5px}
-#back-btn:hover{color:rgba(240,238,255,0.6)}
+#back-btn,#redo-btn{background:none;border:none;color:rgba(240,238,255,0.3);font-size:11px;font-weight:400;cursor:pointer;font-family:var(--font);letter-spacing:0.3px;padding:3px 8px;transition:color 0.15s;display:flex;align-items:center;gap:5px}
+#back-btn:hover,#redo-btn:hover{color:rgba(240,238,255,0.6)}
 #skip-intro-btn,#skip-tour-btn{background:none;border:none;color:rgba(240,238,255,0.3);font-size:11px;font-weight:400;cursor:pointer;font-family:var(--font);letter-spacing:0.3px;padding:3px 8px;transition:color 0.15s;display:none;align-items:center;gap:5px}
 #skip-intro-btn:hover,#skip-tour-btn:hover{color:rgba(240,238,255,0.6)}
 #skip-btn:hover{color:rgba(240,238,255,0.6)}
@@ -255,30 +255,7 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
   #skip-btn svg{display:inline-block}
 }
 /* ── CONFIRM + RETRY flanker buttons ── */
-#answer-actions{
-  position:fixed;left:50%;
-  transform:translateX(-50%) translateY(200px);
-  z-index:20;display:flex;align-items:center;gap:0;
-  pointer-events:none;
-  transition:bottom 0.4s cubic-bezier(0.4,0,0.2,1);
-  bottom:120px;
-}
-#answer-actions.visible{pointer-events:all;transform:translateX(-50%) translateY(0);}
-.action-flanker-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
-.flanker-label{font-size:9px;font-weight:500;letter-spacing:0.6px;text-transform:uppercase;color:rgba(240,238,255,0.35);pointer-events:none;white-space:nowrap;}
-.action-flanker{
-  width:34px;height:34px;border-radius:50%;background:none;
-  border:1.5px solid rgba(255,255,255,0.25);color:rgba(240,238,255,0.6);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:border-color 0.15s,color 0.15s,transform 0.15s;font-family:var(--font);
-}
-.action-flanker:hover{border-color:rgba(124,106,255,0.7);}
-.action-flanker.pop-in{animation:flankerIn 0.35s cubic-bezier(0.34,1.4,0.64,1) forwards;}
-.action-flanker.pop-out{animation:flankerOut 0.25s ease forwards;}
-@keyframes flankerIn{0%{opacity:0;transform:scale(0.4);}70%{transform:scale(1.12);}100%{opacity:1;transform:scale(1);}}
-@keyframes flankerOut{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(0.4);}}
-#answer-actions .action-flanker-wrap:first-child{margin-right:80px;}
-#answer-actions .action-flanker-wrap:last-child{margin-left:80px;}
+
 
 /* ── SAVE BUTTON ── */
 #save-btn{
@@ -677,6 +654,10 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
         <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M9.5 2.5l-4 4 4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 2.5l-4 4 4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Back to section start
       </button>
+      <button id="redo-btn" onclick="retryLastAnswer()" style="display:none">
+        <svg width="11" height="11" viewBox="0 0 14 14" fill="none"><path d="M2 7a5 5 0 1 1 1.5 3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M2 4v3h3" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Redo last answer
+      </button>
       <button id="skip-btn" onclick="skipQ()">
         <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M3.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><path d="M7.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Skip question
@@ -772,7 +753,6 @@ const API='/api/claude';
 let cs=0,cq=0,answers={},history=[],busy=false,recog=null,listening=false,speaking=false,textActive=false;
 let _questionsActive=false; // true once the first question is live — guards accidental mic taps
 let _tourActive=false;      // true during UI tour — prevents dockHide() from hiding buttons
-let pendingAnswer=null;
 let wordTimings=null;
 let accumulatedFinal='';
 let speechPauseTimer=null;
@@ -982,6 +962,9 @@ function askQ(){
   var _ta=document.getElementById('transcript-area-inner');if(_ta)_ta.classList.remove('scrolled');
   document.getElementById('slabel').textContent=SECS[cs].name+'  ·  '+(cs+1)+'/'+SECS.length;
   document.getElementById('qtext').textContent=q.k;
+  // Show redo button once past first question
+  var redoBtn=document.getElementById('redo-btn');
+  if(redoBtn)redoBtn.style.display=(cs>0||cq>0)?'flex':'none';
   document.getElementById('ptext').textContent='Question '+(done+1)+' of '+all;
 
   // Reset itext state for each new question
@@ -1152,8 +1135,7 @@ function _setupWebSpeechSTT(){
           if(mb){mb.classList.remove('on','ready','idle-pulse');}
           document.getElementById('mic-label').textContent='Tap to speak';
           setViz('idle');
-          showAnswerActions(captured);
-          setTimeout(function(){speakIt(approvePrompt(),null);},150);
+          setTimeout(function(){processAnswer(captured);},150);
         }
       },1400);
     }
@@ -1170,8 +1152,7 @@ function _setupWebSpeechSTT(){
       if(mb){mb.classList.remove('on','ready','idle-pulse');}
       document.getElementById('mic-label').textContent='Tap to speak';
       setViz('idle');
-      showAnswerActions(captured);
-      setTimeout(function(){speakIt(approvePrompt(),null);},150);
+      setTimeout(function(){processAnswer(captured);},150);
     } else if(listening&&!captured){
       setTimeout(function(){
         if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}}
@@ -1284,8 +1265,7 @@ async function _startDeepgramRecording(){
       if(transcript.trim()){
         document.getElementById('transcript').textContent=transcript.trim();
         setViz('idle');
-        showAnswerActions(transcript.trim());
-        setTimeout(function(){speakIt(approvePrompt(),null);},150);
+        setTimeout(function(){processAnswer(transcript.trim());},150);
       } else {
         // Nothing heard — prompt to try again
         document.getElementById('mic-label').textContent='Tap to speak';
@@ -1356,8 +1336,7 @@ function toggleMic(){
       if(mb){mb.classList.remove('on','ready','idle-pulse');}
       document.getElementById('mic-label').textContent='Tap to speak';
       setViz('idle');
-      showAnswerActions(captured);
-      setTimeout(function(){speakIt(approvePrompt(),null);},150);
+      setTimeout(function(){processAnswer(captured);},150);
     } else {
       stopListen();setMicReady();
     }
@@ -1436,21 +1415,8 @@ function _pickIdlePrompt(){
   return IDLE_PROMPTS[idx];
 }
 
-const RETRY_PHRASES=[
-  "No worries — give it another go.",
-  "All good — try again whenever you are ready.",
-  "That is fine — let us hear it.",
-  "No stress — take your time.",
-  "Easy — have another crack at it.",
-  "No problem — whenever you are ready.",
-];
 let _lastRetryIdx=-1;
-function _pickRetryPhrase(){
-  var pool=RETRY_PHRASES.map(function(_,i){return i;}).filter(function(i){return i!==_lastRetryIdx;});
-  var idx=pool[Math.floor(Math.random()*pool.length)];
-  _lastRetryIdx=idx;
-  return RETRY_PHRASES[idx];
-}
+
 
 function clearIdleTimer(){
   if(idleTimer){clearTimeout(idleTimer);idleTimer=null;}
@@ -1466,14 +1432,14 @@ function setMicReady(){
   idleCount=0;
   // 30s: visual idle pulse only — no audio interruption
   idleTimer=setTimeout(function(){
-    if(!listening&&!busy&&!speaking&&!pendingAnswer){
+    if(!listening&&!busy&&!speaking){
       setViz('waiting');
       var mb2=document.getElementById('mic-btn');
       if(mb2){mb2.classList.remove('ready');mb2.classList.add('idle-pulse');}
       idleCount++;
       // 45s later: one brief spoken nudge
       idleTimer=setTimeout(function(){
-        if(!listening&&!busy&&!speaking&&!pendingAnswer){
+        if(!listening&&!busy&&!speaking){
           var mb3=document.getElementById('mic-btn');
           if(mb3){mb3.classList.remove('idle-pulse');mb3.classList.add('ready');}
           speakIt(_pickIdlePrompt(),function(){
@@ -1481,7 +1447,7 @@ function setMicReady(){
             // 60s later: one final nudge, then silence
             if(!listening&&!busy){
               idleTimer=setTimeout(function(){
-                if(!listening&&!busy&&!speaking&&!pendingAnswer){
+                if(!listening&&!busy&&!speaking){
                   speakIt(_pickIdlePrompt(),function(){idleCount++;});
                 }
               },60000);
@@ -1786,16 +1752,14 @@ async function processAnswer(text){
         if(ready&&am){
           const captured=am[1].trim();
           answers[q.k]=captured;
-          if(!q.req){cq++;advanceWithReaskQueue();}
-          else{showAnswerActions(captured);window._pendingConfirmedAnswer={key:q.k,val:captured};}
+          cq++;advanceWithReaskQueue(); // auto-advance all questions — no approval step
         } else {setMicReady();}
       });
     } else if(ready&&am){
       busy=false;
       const captured=am[1].trim();
       answers[q.k]=captured;
-      if(!q.req){cq++;advanceWithReaskQueue();}
-      else{showAnswerActions(captured);window._pendingConfirmedAnswer={key:q.k,val:captured};}
+      cq++;advanceWithReaskQueue(); // auto-advance all questions — no approval step
     } else {busy=false;setMicReady();}
   }catch(e){
     clearTimeout(safetyTimer);
@@ -1939,8 +1903,7 @@ function toggleText(){
   }
 }
 
-const APPROVE_PROMPTS=["Got it. Tap the tick to confirm and move on.","Noted — confirm that below when you are ready.","Nice one. Tick it off to continue.","Got that. Confirm below when you are happy with it."];
-function approvePrompt(){return APPROVE_PROMPTS[Math.floor(Math.random()*APPROVE_PROMPTS.length)];}
+
 
 function sendText(){
   const inp=document.getElementById('tinput');
@@ -1957,8 +1920,7 @@ function sendText(){
     }
   }
   document.getElementById('transcript').textContent=t;
-  showAnswerActions(t);
-  setTimeout(function(){speakIt(approvePrompt(),null);},150);
+  setTimeout(function(){processAnswer(t);},150);
 }
 
 
@@ -2266,75 +2228,13 @@ function advanceWithReaskQueue(){
 }
 
 // ── CONFIRM / RETRY ──────────────────────────────────────────────
-function showAnswerActions(answer){
-  pendingAnswer=answer;
-  // Ensure dock + mic are visible before measuring/showing buttons
-  dockShow();
-  const mw=document.getElementById('mic-wrap');
-  if(mw&&!mw.classList.contains('visible'))mw.classList.add('visible');
 
-  const aa=document.getElementById('answer-actions');
-  const retry=document.getElementById('btn-retry');
-  const confirm=document.getElementById('btn-confirm');
 
-  // Show container immediately so it's in the layout
-  aa.style.display='flex';
-  retry.classList.remove('pop-out');confirm.classList.remove('pop-out');
-  retry.style.opacity='';confirm.style.opacity='';
 
-  // Position + animate after 120ms — lets autohide transition clear so measurements are accurate
-  setTimeout(function(){
-    const micWrap=document.getElementById('mic-wrap');
-    const micBtn=document.getElementById('mic-btn');
-    if(!micWrap.style.bottom||micWrap.style.bottom==='')positionMic();
-    const micBtnH=micBtn?micBtn.offsetHeight:68;
-    const raw=parseFloat(micWrap.style.bottom);
-    const micBottom=isNaN(raw)?120:raw;
-    aa.style.bottom=(micBottom+24+(micBtnH/2)-17)+'px';
-    void retry.offsetWidth;
-    retry.classList.add('pop-in');confirm.classList.add('pop-in');
-    aa.classList.add('visible');
-  },120);
 
-  // Auto-scroll transcript
-  const inner=document.getElementById('transcript-area-inner');
-  if(inner)setTimeout(function(){inner.scrollTop=inner.scrollHeight;},100);
-}
-function hideAnswerActions(cb){
-  const aa=document.getElementById('answer-actions');
-  const retry=document.getElementById('btn-retry');
-  const confirm=document.getElementById('btn-confirm');
-  retry.classList.remove('pop-in');confirm.classList.remove('pop-in');
-  retry.classList.add('pop-out');confirm.classList.add('pop-out');
-  setTimeout(function(){aa.classList.remove('visible');aa.style.display='none';if(cb)cb();},250);
-}
-function confirmAnswer(){
-  if(!pendingAnswer&&!window._pendingConfirmedAnswer)return;
-  sharedAudio.pause();
-  if(currentBlobUrl){URL.revokeObjectURL(currentBlobUrl);currentBlobUrl=null;}
-  if(window._pendingConfirmedAnswer){
-    var pca=window._pendingConfirmedAnswer;
-    window._pendingConfirmedAnswer=null;pendingAnswer=null;
-    hideAnswerActions(function(){cq++;advanceWithReaskQueue();});
-  } else {
-    const ans=pendingAnswer;pendingAnswer=null;
-    setLabel('Thinking...');setViz('speaking');
-    hideAnswerActions(function(){processAnswer(ans);});
-  }
-}
-function retryAnswer(){
-  pendingAnswer=null;
-  window._pendingConfirmedAnswer=null;
-  hideAnswerActions(function(){
-    document.getElementById('transcript').textContent='';
-    document.getElementById('bot-resp').innerHTML='';
-    speakIt(_pickRetryPhrase(),function(){setMicReady();startListen();});
-  });
-}
 
 // ── DOCK AUTO-HIDE (while AI is speaking) ────────────────────────
 function dockHide(){
-  if(pendingAnswer)return;
   if(_tourActive)return; // never hide dock during UI tour — buttons must stay visible
   var dock=document.getElementById('bottom-dock');
   if(dock)dock.classList.add('autohide');
@@ -2604,27 +2504,6 @@ function txInit() {
 <div id="header-swipe"></div>
 
 <!-- FLANKER BUTTONS -->
-<div id="answer-actions">
-  <div class="action-flanker-wrap">
-    <span class="flanker-label">Redo</span>
-    <button class="action-flanker" id="btn-retry" onclick="retryAnswer()" title="Re-record">
-      <svg width="11" height="11" viewBox="0 0 13 13" fill="none">
-        <g transform="scale(-1,1) translate(-13,0)">
-          <path d="M3.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M7.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/>
-        </g>
-      </svg>
-    </button>
-  </div>
-  <div class="action-flanker-wrap">
-    <span class="flanker-label">Approve</span>
-    <button class="action-flanker" id="btn-confirm" onclick="confirmAnswer()" title="Confirm answer">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-        <path d="M2.5 8.5l3.5 3.5 7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </button>
-  </div>
-</div>
 
 <!-- SAVE BUTTON -->
 <div id="stt-badge"></div>
