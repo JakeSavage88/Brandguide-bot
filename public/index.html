@@ -818,6 +818,7 @@ function beginSession(){
   var skipIntroBtn = document.getElementById('skip-intro-btn');
   if(skipIntroBtn) skipIntroBtn.style.display='inline-flex';
 
+  _tourActive=true; // block dockHide from intro onwards — dock must be visible for tour
   speakIt("Hey, I'm Cass — I'll be your brand strategy consultant today. Before we dive in, let me quickly show you around.", function(){
     if(skipIntroBtn) skipIntroBtn.style.display='none';
     // PART 2 — UX orientation tour
@@ -869,9 +870,13 @@ function runUITour(onComplete){
   var micWrap = document.getElementById('mic-wrap');
   var saveBtn = document.getElementById('save-btn');
 
-  // Dock + mic hidden at start — they slide in step-by-step during tour
-  // (dock already has .visible from beginSession so mic/buttons are visible)
-  // We rely on tourHighlight to draw attention to each element individually
+  // Force dock fully visible — remove any autohide/hidden state from intro TTS
+  dock.classList.add('visible');
+  dock.classList.remove('autohide');
+  micWrap.classList.add('visible');
+  micWrap.classList.remove('autohide');
+  saveBtn.style.display='flex';
+  setTimeout(positionMic, 100);
 
   var steps = [
     {
