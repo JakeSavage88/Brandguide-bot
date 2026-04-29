@@ -1153,9 +1153,10 @@ function _setupWebSpeechSTT(){
       document.getElementById('mic-label').textContent='Tap to speak';
       setViz('idle');
       setTimeout(function(){processAnswer(captured);},150);
-    } else if(listening&&!captured){
+    } else if(listening&&!captured&&!busy){
+      // Only restart if not already processing an answer
       setTimeout(function(){
-        if(listening){try{recog.start();}catch(err){listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}}
+        if(listening&&!busy){try{recog.start();}catch(err){listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}}
       },200);
     }
   };
@@ -1723,7 +1724,7 @@ async function processAnswer(text){
 
   const refContext=_buildRefContext();
 
-  const sys='You are a warm, patient, genuinely human-like brand strategy consultant. 20 years expertise across Brand Strategy, Creative Direction, Marketing, and Consumer Insights.\n\nCORE BEHAVIOUR:\n- Natural spoken English. Short punchy replies mixed with slightly longer ones.\n- Light fillers: Got it, Okay cool, Hmm interesting. Show you heard them.\n- Mirror user energy. Never scripted, never AI-sounding.\n\nANSWERS SO FAR:\n'+(answersSummary||'None yet.')+refContext+'\n\nCRITICAL: Check ANSWERS SO FAR before every question. If a prior answer already covers this field, say so and confirm rather than asking again. Example: \"You touched on this earlier — does that cover it here too?\"\n\nFOR EACH QUESTION:\n1. Acknowledge their answer warmly in 1 sentence.\n2. If sufficient: output ANSWER: [captured answer] then READY_NEXT on next line.\n3. If vague: ask ONE specific follow-up under 20 words. Do NOT auto-advance.\n4. After up to 2 follow-ups: synthesise, present starting \"So your answer is:\" confirm. If yes — ANSWER and READY_NEXT.\n\nCurrent question: \''+q.p+'\' Field: '+q.k+' Required: '+q.req+'\n\nRULES: Spoken response MAX 35 words. Natural contractions. Never mention being AI. ANSWER: and READY_NEXT on their own lines only.';
+  const sys='You are Cass — a warm, sharp brand strategy consultant. You conduct voice intake sessions that feel like natural conversations, not forms.\n\nCORE BEHAVIOUR:\n- Spoken English only. Short natural sentences. Fillers like \'Got it\', \'Okay\', \'Love that\'.\n- Mirror the user\'s energy. Never sound scripted or AI-like.\n- MAX 30 words in your spoken response before the tokens.\n\nANSWERS SO FAR:\n'+(answersSummary||'None yet.')+refContext+'\n\nCRITICAL RULES:\n- Always check ANSWERS SO FAR first. If a prior answer already covers this field, acknowledge it and advance.\n- Ask only ONE follow-up at a time. Max 2 follow-ups then synthesise and advance regardless.\n- Never ask for clarification on things like capitalisation, spacing, punctuation, or formatting — accept the answer as spoken.\n\nOUTPUT FORMAT (strictly follow this every time you have a sufficient answer):\n[Your spoken acknowledgment — max 30 words]\nANSWER: [the captured answer, cleaned up naturally]\nREADY_NEXT\n\nExample:\nLove that name.\nANSWER: Pretty Sweet Creative Studio\nREADY_NEXT\n\nIf you need a follow-up (answer was genuinely too vague):\n[One short follow-up question — max 20 words. No ANSWER or READY_NEXT yet.]\n\nCurrent question: \''+q.p+'\' Field: '+q.k+'\n\nIMPORTANT: Never ask for clarification about how a name or word is spelled, capitalised, or formatted. If the user gives you a business name, brand name, or any proper noun — accept it exactly as spoken and advance immediately with ANSWER and READY_NEXT.';
 
   try{
     const res=await fetch('/api/claude',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:350,system:sys,messages:history.slice(-12)})});
@@ -1744,7 +1745,8 @@ async function processAnswer(text){
     const reply=(data.content&&data.content[0])?data.content[0].text:'';
     history.push({role:'assistant',content:reply});
     const am=reply.match(/ANSWER:\s*(.+?)(?:\n|READY_NEXT|$)/s);
-    const ready=reply.includes('READY_NEXT');
+    // If ANSWER: is present, treat as ready even if Claude forgot READY_NEXT
+    const ready=reply.includes('READY_NEXT')||(!!am&&am[1]&&am[1].trim().length>1);
     let disp=reply.replace(/ANSWER:[\s\S]*$/m,'').replace(/READY_NEXT/g,'').replace(/\s+$/,'').trim();
     if(disp){
       busy=false;
@@ -1753,14 +1755,23 @@ async function processAnswer(text){
           const captured=am[1].trim();
           answers[q.k]=captured;
           cq++;advanceWithReaskQueue(); // auto-advance all questions — no approval step
-        } else {setMicReady();}
+        } else {
+          // Cass asked a follow-up — arm mic automatically so conversation flows
+          setMicReady();
+          setTimeout(function(){if(!listening&&!busy&&_questionsActive)startListen();},600);
+        }
       });
     } else if(ready&&am){
       busy=false;
       const captured=am[1].trim();
       answers[q.k]=captured;
       cq++;advanceWithReaskQueue(); // auto-advance all questions — no approval step
-    } else {busy=false;setMicReady();}
+    } else {
+      busy=false;
+      // No answer captured yet — Cass asked follow-up, arm mic automatically
+      setMicReady();
+      setTimeout(function(){if(!listening&&!busy&&_questionsActive)startListen();},600);
+    }
   }catch(e){
     clearTimeout(safetyTimer);
     var td4=document.getElementById('thinking-dots');if(td4)td4.classList.remove('visible');
