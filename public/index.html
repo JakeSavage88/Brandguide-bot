@@ -345,99 +345,152 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
 .submit-confirm-card p{font-size:14px;color:var(--muted);line-height:1.6;max-width:360px;}
 
 
-/* ── UI TOUR HIGHLIGHTS — slide up + glow bloom + outline stroke ── */
-.tour-highlight{
-  position:relative;
-  z-index:25;
-  animation:tourRise 0.7s cubic-bezier(0.34,1.2,0.64,1) forwards;
-}
-@keyframes tourRise{
-  0%{transform:translateY(0px);}
-  60%{transform:translateY(-11px);}
-  100%{transform:translateY(-8px);}
+/* ══ UI TOUR HIGHLIGHTS ════════════════════════════════════════════
+   Transition-based — no animation:forwards, no snap-back on removal.
+   
+   All highlightable elements have a CSS transition on transform + 
+   box-shadow. Adding .tour-highlight triggers the eased rise + glow.
+   Removing it triggers the eased return to rest. Clean both ways.
+   ═════════════════════════════════════════════════════════════════ */
+
+/* ── Base: all highlightable pill buttons get smooth transitions ── */
+.abtn,
+#toggle-text-btn,
+#download-btn,
+#upload-btn,
+#ref-btn{
+  transition: all 0.15s,
+              transform 0.6s cubic-bezier(0.34,1.1,0.64,1),
+              box-shadow 0.5s ease,
+              border-color 0.5s ease;
+  position: relative;
 }
 
-/* All pill buttons — glowing outline stroke + radial bloom */
+/* ── Pill button: rise UP + glow on ── */
 .abtn.tour-highlight,
 #toggle-text-btn.tour-highlight,
 #download-btn.tour-highlight,
 #upload-btn.tour-highlight,
 #ref-btn.tour-highlight{
-  border-color:rgba(124,106,255,0.9) !important;
-  box-shadow:0 0 0 1.5px rgba(124,106,255,0.9), 0 0 16px rgba(124,106,255,0.7), 0 0 32px rgba(124,106,255,0.3);
-  animation:tourRise 0.7s cubic-bezier(0.34,1.2,0.64,1) forwards, tourBtnPulse 2.4s ease-in-out 0.7s infinite;
+  transform: translateY(-10px);
+  border-color: rgba(124,106,255,0.95) !important;
+  box-shadow: 0 0 0 1.5px rgba(124,106,255,0.9),
+              0 0 18px rgba(124,106,255,0.75),
+              0 0 36px rgba(124,106,255,0.35);
+  z-index: 25;
+  animation: tourBtnFloat 2.8s ease-in-out 0.6s infinite;
 }
-@keyframes tourBtnPulse{
+/* Floating hover while elevated */
+@keyframes tourBtnFloat{
+  0%,100%{ transform:translateY(-10px); }
+  50%    { transform:translateY(-13px); }
+}
+/* Glow pulse while elevated */
+@keyframes tourBtnGlowPulse{
   0%,100%{box-shadow:0 0 0 1.5px rgba(124,106,255,0.8), 0 0 14px rgba(124,106,255,0.6), 0 0 28px rgba(124,106,255,0.25);}
-  50%{box-shadow:0 0 0 2px rgba(124,106,255,1), 0 0 24px rgba(124,106,255,0.9), 0 0 48px rgba(124,106,255,0.4);}
+  50%    {box-shadow:0 0 0 2px rgba(124,106,255,1),   0 0 26px rgba(124,106,255,0.95),0 0 52px rgba(124,106,255,0.4);}
+}
+.abtn.tour-highlight,
+#toggle-text-btn.tour-highlight,
+#download-btn.tour-highlight,
+#upload-btn.tour-highlight,
+#ref-btn.tour-highlight{
+  animation: tourBtnFloat 2.8s ease-in-out 0.6s infinite,
+             tourBtnGlowPulse 2.2s ease-in-out 0.6s infinite;
 }
 
-/* Soft radial bloom behind all highlighted elements */
-.tour-highlight::after{
-  content:'';
-  position:absolute;
-  inset:-14px;
-  border-radius:28px;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.25) 0%, rgba(124,106,255,0.08) 55%, transparent 75%);
-  pointer-events:none;
-  opacity:0;
-  animation:tourGlow 0.7s ease 0.1s forwards, tourPulse 2.6s ease-in-out 0.7s infinite;
+/* ── Radial bloom ::after for pill buttons ── */
+.abtn::after,
+#toggle-text-btn::after,
+#download-btn::after,
+#upload-btn::after,
+#ref-btn::after{
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 28px;
+  background: radial-gradient(ellipse at center,
+    rgba(124,106,255,0.28) 0%,
+    rgba(124,106,255,0.08) 55%,
+    transparent 75%);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.88);
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
-@keyframes tourGlow{
-  0%{opacity:0;transform:scale(0.85);}
-  100%{opacity:1;transform:scale(1);}
-}
-@keyframes tourPulse{
-  0%,100%{opacity:0.75;transform:scale(1);}
-  50%{opacity:1;transform:scale(1.05);}
+.abtn.tour-highlight::after,
+#toggle-text-btn.tour-highlight::after,
+#download-btn.tour-highlight::after,
+#upload-btn.tour-highlight::after,
+#ref-btn.tour-highlight::after{
+  opacity: 1;
+  transform: scale(1);
 }
 
-/* Mic button — circular glow on button itself, no transform conflict */
-#mic-wrap.tour-highlight{animation:none;}
+/* ── Mic button: glow only (no translateY — mic-wrap has fixed positioning) ── */
+#mic-wrap{ transition: box-shadow 0.5s ease; }
+#mic-wrap.tour-highlight{ z-index:25; }
+#mic-btn{ transition: box-shadow 0.5s ease; }
 #mic-wrap.tour-highlight #mic-btn{
-  animation:tourMicGlow 0.7s ease forwards, tourMicPulse 2.6s ease-in-out 0.7s infinite;
+  box-shadow: 0 0 42px rgba(124,106,255,0.85),
+              0 0 84px rgba(124,106,255,0.45),
+              0 0 0 8px rgba(124,106,255,0.18);
+  animation: tourMicFloat 2.8s ease-in-out 0.6s infinite,
+             tourMicPulse  2.2s ease-in-out 0.6s infinite;
 }
-@keyframes tourMicGlow{
-  0%{box-shadow:0 0 0px rgba(124,106,255,0);}
-  100%{box-shadow:0 0 40px rgba(124,106,255,0.8), 0 0 80px rgba(124,106,255,0.4), 0 0 0 8px rgba(124,106,255,0.15);}
+@keyframes tourMicFloat{
+  0%,100%{ transform:translateY(0px);  }
+  50%    { transform:translateY(-6px); }
 }
 @keyframes tourMicPulse{
-  0%,100%{box-shadow:0 0 30px rgba(124,106,255,0.6), 0 0 60px rgba(124,106,255,0.3), 0 0 0 6px rgba(124,106,255,0.10);}
-  50%{box-shadow:0 0 50px rgba(124,106,255,0.9), 0 0 90px rgba(124,106,255,0.5), 0 0 0 10px rgba(124,106,255,0.20);}
+  0%,100%{box-shadow:0 0 32px rgba(124,106,255,0.65), 0 0 68px rgba(124,106,255,0.3),  0 0 0 6px rgba(124,106,255,0.12);}
+  50%    {box-shadow:0 0 55px rgba(124,106,255,0.98), 0 0 100px rgba(124,106,255,0.5), 0 0 0 10px rgba(124,106,255,0.24);}
+}
+/* Mic bloom ::after */
+#mic-wrap::after{
+  content: '';
+  position: absolute;
+  inset: -24px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center,
+    rgba(124,106,255,0.38) 0%,
+    rgba(124,106,255,0.12) 50%,
+    transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.88);
+  transition: opacity 0.5s ease, transform 0.5s ease;
 }
 #mic-wrap.tour-highlight::after{
-  inset:-24px;
-  border-radius:50%;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.35) 0%, rgba(124,106,255,0.12) 50%, transparent 70%);
-  opacity:0;
-  animation:tourGlow 0.7s ease 0.1s forwards, tourPulseMic 2.6s ease-in-out 0.7s infinite;
-}
-@keyframes tourPulseMic{
-  0%,100%{opacity:0.7;transform:scale(1);}
-  50%{opacity:1;transform:scale(1.09);}
+  opacity: 1;
+  transform: scale(1);
 }
 
-/* Save button — circular outline + bloom */
+/* ── Save button: rise UP + circular glow ── */
+#save-btn{
+  transition: top 0.45s cubic-bezier(0.4,0,0.2,1),
+              transform 0.6s cubic-bezier(0.34,1.1,0.64,1),
+              box-shadow 0.5s ease;
+}
 #save-btn.tour-highlight{
-  box-shadow:0 0 0 2px rgba(124,106,255,0.9), 0 0 20px rgba(124,106,255,0.7), 0 0 40px rgba(124,106,255,0.3) !important;
-  animation:tourRise 0.7s cubic-bezier(0.34,1.2,0.64,1) forwards, tourSavePulse 2.4s ease-in-out 0.7s infinite;
+  transform: translateY(-10px);
+  box-shadow: 0 0 0 2px rgba(124,106,255,0.95),
+              0 0 22px rgba(124,106,255,0.8),
+              0 0 48px rgba(124,106,255,0.4) !important;
+  animation: tourSaveFloat 2.8s ease-in-out 0.6s infinite,
+             tourSavePulse 2.2s ease-in-out 0.6s infinite;
+}
+@keyframes tourSaveFloat{
+  0%,100%{ transform:translateY(-10px); }
+  50%    { transform:translateY(-14px); }
 }
 @keyframes tourSavePulse{
-  0%,100%{box-shadow:0 0 0 2px rgba(124,106,255,0.8), 0 0 16px rgba(124,106,255,0.6), 0 0 32px rgba(124,106,255,0.25);}
-  50%{box-shadow:0 0 0 3px rgba(124,106,255,1), 0 0 28px rgba(124,106,255,0.9), 0 0 52px rgba(124,106,255,0.4);}
-}
-#save-btn.tour-highlight::after{
-  inset:-16px;
-  border-radius:50%;
-  background:radial-gradient(ellipse at center, rgba(124,106,255,0.30) 0%, rgba(124,106,255,0.10) 50%, transparent 70%);
+  0%,100%{box-shadow:0 0 0 2px rgba(124,106,255,0.8), 0 0 16px rgba(124,106,255,0.6), 0 0 34px rgba(124,106,255,0.28);}
+  50%    {box-shadow:0 0 0 3px rgba(124,106,255,1),   0 0 30px rgba(124,106,255,0.95),0 0 56px rgba(124,106,255,0.45);}
 }
 
 /* ── THINKING DOTS ── */
-#thinking-dots{display:none;align-items:center;gap:5px;justify-content:center;margin-top:8px;height:20px}
-#thinking-dots.visible{display:flex}
-.t-dot{width:6px;height:6px;border-radius:50%;background:var(--acc);opacity:0.35;animation:tdot 1.2s ease-in-out infinite}
-.t-dot:nth-child(1){animation-delay:0s}.t-dot:nth-child(2){animation-delay:0.2s}.t-dot:nth-child(3){animation-delay:0.4s}
-@keyframes tdot{0%,80%,100%{opacity:0.35;transform:scale(1)}40%{opacity:1;transform:scale(1.3)}}
+
 /* ── REFERENCE BADGE ── */
 .abtn-ref{position:relative}
 #ref-badge{display:none;position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;padding:0 3px;background:var(--acc);border-radius:8px;font-size:9px;font-weight:700;color:white;align-items:center;justify-content:center;line-height:1;}
@@ -555,7 +608,6 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
     </div>
 
     <div id="thinking-dots"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
-    <div id="thinking-dots"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>
     <div id="transcript-area">
       <div id="transcript-area-inner">
         <div id="transcript"></div>
@@ -593,11 +645,11 @@ header.hidden{max-height:0;opacity:0;padding-top:0;padding-bottom:0;pointer-even
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M9.5 1.5l3 3-7.5 7.5H2v-3l7.5-7.5z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 3l3 3" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg>
         Type instead
       </button>
-      <button class="abtn" onclick="openForm()">
+      <button class="abtn" id="download-btn" onclick="openForm()">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 1.5v7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4 6l3 3.5 3-3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12.5" x2="12" y2="12.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
         Download form
       </button>
-      <button class="abtn" onclick="uploadForm()">
+      <button class="abtn" id="upload-btn" onclick="uploadForm()">
         <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M7 9.5v-7" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/><path d="M4 5l3-3.5 3 3.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"/><line x1="2" y1="12.5" x2="12" y2="12.5" stroke="currentColor" stroke-width="1.35" stroke-linecap="round"/></svg>
         Upload doc
       </button>
@@ -812,75 +864,85 @@ function tourHighlight(ids, durationMs){
 }
 
 function runUITour(onComplete){
-  // Slide dock and mic fully into view BEFORE tour starts
-  var dock=document.getElementById('bottom-dock');
-  var micWrap=document.getElementById('mic-wrap');
-  var saveBtn=document.getElementById('save-btn');
-  dock.classList.add('visible');
-  micWrap.classList.add('visible');
-  saveBtn.style.display='flex';
-  setTimeout(positionMic,100);
+  var dock    = document.getElementById('bottom-dock');
+  var micWrap = document.getElementById('mic-wrap');
+  var saveBtn = document.getElementById('save-btn');
 
-  var steps=[
+  // Dock + mic hidden at start — they slide in step-by-step during tour
+  // (dock already has .visible from beginSession so mic/buttons are visible)
+  // We rely on tourHighlight to draw attention to each element individually
+
+  var steps = [
     {
-      ids:['mic-wrap'],
-      text:"The mic button here in the middle is your main control — tap to speak, tap again when you are done."
+      ids:  ['mic-wrap'],
+      text: "This mic button is your main control — tap to speak your answer, tap again when you are done."
     },
     {
-      ids:['toggle-text-btn'],
-      text:"Prefer typing? Hit the Type button to switch to text input any time."
+      ids:  ['toggle-text-btn'],
+      text: "Prefer typing? Hit Type instead any time to switch to text input."
     },
     {
-      ids:['ref-btn'],
-      text:"Add Reference is a handy one — if you have existing brand docs, strategy files, or guidelines, drop them in here and I will draw on them throughout our whole conversation."
+      ids:  ['ref-btn'],
+      text: "Add Reference is handy — drop in any existing brand docs or guidelines and I will draw on them throughout our whole session."
     },
     {
-      ids:['download-btn'],
-      text:"Download grabs all your answers as a file any time — handy if you want to keep a copy."
+      ids:  ['download-btn'],
+      text: "Download grabs all your answers as a file — useful if you want a copy for your records."
     },
     {
-      ids:['upload-btn'],
-      text:"Upload lets you drop in a pre-filled brief if you have one ready to go."
+      ids:  ['upload-btn'],
+      text: "Upload lets you drop in a pre-filled brief if you have one ready to go."
     },
     {
-      ids:['save-btn'],
-      text:"And Save up top keeps your progress — so if you need to step away and come back, no problem. Feel free to ask me anything as we go. Alright, let us build your brand."
+      ids:  ['save-btn'],
+      text: "And Save up top keeps your progress — step away and come back any time, no problem. Alright, let us build your brand."
     }
   ];
 
-  // Show skip tour button during tour
   var skipTourBtn = document.getElementById('skip-tour-btn');
   if(skipTourBtn) skipTourBtn.style.display='inline-flex';
 
-  var stepIdx=0;
-  // Reset abort flag when tour starts
+  var stepIdx = 0;
   window._tourAborted = false;
 
   function runStep(){
     if(window._tourAborted) return;
-    if(stepIdx>=steps.length){
+
+    // All steps done
+    if(stepIdx >= steps.length){
       if(skipTourBtn) skipTourBtn.style.display='none';
+      // Reverse-animate current highlight out, then complete
+      tourHighlight([], 0);
       setTimeout(function(){
         if(window._tourAborted) return;
-        tourHighlight([],0);
-        if(onComplete)onComplete();
-      },800);
+        if(onComplete) onComplete();
+      }, 700);
       return;
     }
-    var step=steps[stepIdx];
+
+    var step = steps[stepIdx];
     stepIdx++;
+
+    // ── PHASE 1: Highlight button (floats up with glow) ──
     tourHighlight(step.ids);
+
+    // ── PHASE 2: 1500ms pause — user sees the button animate before Cass speaks ──
     setTimeout(function(){
       if(window._tourAborted) return;
-      speakIt(step.text,function(){
+
+      // ── PHASE 3: Cass speaks about this button ──
+      speakIt(step.text, function(){
         if(window._tourAborted) return;
-        setTimeout(runStep,200);
+
+        // ── PHASE 4: Remove highlight (floats back down) — brief pause then next step ──
+        tourHighlight([], 0);
+        setTimeout(runStep, 600); // 600ms: button eases back down before next one rises
       });
-    },600);
+    }, 1500); // 1.5s button is highlighted before voice starts
   }
 
-  // Brief pause after dock slides in, then begin
-  setTimeout(runStep,700);
+  // Small initial pause after dock is visible, then start
+  setTimeout(runStep, 500);
 }
 
 function showSecIntro(){
@@ -936,6 +998,7 @@ function askQ(){
   // Slide dock + mic in from bottom on first question (only once)
   const dock=document.getElementById('bottom-dock');
   const micWrap=document.getElementById('mic-wrap');
+  _questionsActive=true; // questions are now live — mic tap is intentional
   if(!dock.classList.contains('visible')){
     setTimeout(function(){
       dock.classList.add('visible');
@@ -943,7 +1006,6 @@ function askQ(){
       setTimeout(positionMic,100);
     },300);
   }
-  _questionsActive=true; // questions are now live — mic tap is intentional
 
   // Auto-hide header to reclaim screen space
   setTimeout(function(){document.querySelector('header').classList.add('hidden');},400);
@@ -1115,8 +1177,15 @@ function _setupWebSpeechSTT(){
     } else if(e.error==='no-speech'){
       if(listening){setTimeout(function(){if(listening)try{recog.start();}catch(err){}},200);}
     } else {
-      stopListen();
-      setMicReady();
+      // Any other error (aborted, audio-capture, etc) — just reset mic silently
+      listening=false;
+      accumulatedFinal='';
+      if(speechPauseTimer){clearTimeout(speechPauseTimer);speechPauseTimer=null;}
+      if(recog)try{recog.abort();}catch(ex){}
+      var mb3=document.getElementById('mic-btn');
+      if(mb3){mb3.classList.remove('on','idle-pulse');mb3.classList.add('ready');}
+      setViz('idle');
+      // Do NOT call toggleText() — mic errors should never force text mode
     }
   };
 }
@@ -1302,7 +1371,20 @@ function startListen(){
   try{recog.abort();}catch(e){}
   setTimeout(function(){
     try{recog.start();setLabel('Speak now');}
-    catch(e){setLabel('Mic error — tap to retry');listening=false;setViz('idle');var mb2=document.getElementById('mic-btn');if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}}
+    catch(e){
+      // recog.start() failed — likely already started or aborted. Reset silently.
+      listening=false;setViz('idle');
+      var mb2=document.getElementById('mic-btn');
+      if(mb2){mb2.classList.remove('on');mb2.classList.add('ready');}
+      setLabel('');
+      // Brief delay then retry once before giving up
+      setTimeout(function(){
+        if(!listening&&_questionsActive){
+          try{recog.abort();}catch(ex){}
+          setTimeout(function(){var mb3=document.getElementById('mic-btn');if(mb3)mb3.classList.add('ready');setLabel('Tap to speak');},200);
+        }
+      },300);
+    }
   },100);
 }
 
@@ -1640,7 +1722,6 @@ async function processAnswer(text){
   setLabel('Thinking...');setViz('speaking');
   document.getElementById('transcript').textContent=text;
   document.getElementById('bot-resp').innerHTML='';
-  var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
   var td=document.getElementById('thinking-dots');if(td)td.classList.add('visible');
   positionMic();
 
