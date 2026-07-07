@@ -1,0 +1,14 @@
+# ELEUSYS — Netlify config v2.0
+# v2: removed the [functions.transcribe] included_files block — it did nothing.
+#     Binary POST bodies work because Netlify base64-encodes unrecognised
+#     content types (isBase64Encoded=true), handled inside transcribe.js.
+#     Per-function CORS headers are set by the functions themselves.
+
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
